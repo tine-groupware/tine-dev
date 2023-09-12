@@ -36,11 +36,14 @@ class ComposerCommand extends DockerCommand
 
         $env = $this->getComposeEnv();
 
+        $tineDir = $this->getTineDir($io);
+
         // NOTE: we can't use getComposeCommand here as mutagen has a ro filesystem and even if we skip mutagen here
         //       it runs in the existing web container with ro filesystem (well we could kill the web-container but
         //       this tradeoff seems to big
         passthru('docker run --rm --user ' . trim(`id -u`) . ':' . trim(`id -g`) .
-            ' -v ' . $this->getTineDir($io) . ':/usr/share/tine20' .
+            ' -v ' . $tineDir . ':/usr/share/tine20' .
+            ' -v ' . $tineDir . '/../tests:/usr/share/tests' .
             ' -v ' . $this->baseDir . '/data/composer:/.composer' .
             ' -v ' . $localCacheDir . ':/composercache' .
             ' '. $env['WEB_IMAGE'] . ' sh -c "cd /usr/share/tine20; composer config --global cache-dir /composercache; composer ' . $input->getArgument('cmd') . '"', $result_code);
