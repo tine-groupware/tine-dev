@@ -70,7 +70,7 @@ class TineTestCommand extends TineCommand
                 . " exec -T --user tine20 web sh -c \"cd /usr/share/tests/tine20/ && php -d include_path=.:/etc/tine20/ /usr/share/tine20/vendor/bin/phpunit --color --debug "
                 . ($stopOnFailure === true ? ' --stop-on-failure ' : '')
                 . (!empty($input->getOption('exclude')) ? ' --exclude ' . implode(",", $input->getOption('exclude')) . " ": "")
-                . ($filter ? ' --filter ' . $filter . " ": "")
+                . ($filter ? ' --filter \'' . $filter . '\' ' : '')
                 . $path
                 . "\""
                 . ' 2>&1', $result_code
