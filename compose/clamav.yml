@@ -12,6 +12,7 @@ services:
       #- ./logs/clamav:/var/log/clamav
     networks:
       - internal_network
+      - external_network
   web:
     volumes:
       - ./configs/clamav/clamav.inc.php:/etc/tine20/conf.d/clamav.inc.php:ro
