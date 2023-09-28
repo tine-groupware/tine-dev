@@ -74,8 +74,8 @@ class DockerUpCommand extends DockerCommand
 
         $io->info('Starting containers ...');
 
-        passthru($this->getComposeString() . ' up' .
-        ($input->getOption('detached') === true ? ' -d' : ''), $result_code);
+        passthru($this->getComposeString() . ' up --remove-orphans' .
+            ($input->getOption('detached') === true ? ' -d' : ''), $result_code);
 
         return $result_code;
     }

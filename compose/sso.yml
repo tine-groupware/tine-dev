@@ -7,6 +7,28 @@ version: '3'
 #  ('6c73a12f91f2d05fd33883db35ad294602c83006', 'saml-test-sp', 'saml-test-sp', '', NULL, 'SSO_Model_Saml2RPConfig', '{\"name\":\"saml-test-sp\",\"entityid\":\"saml-test-sp\",\"metaUrl\":\"\",\"AssertionConsumerServiceBinding\":\"\",\"AssertionConsumerServiceLocation\":\"\",\"singleLogoutServiceLocation\":\"\",\"attributeMapping\":\"\",\"customHooks\":\"\",\"id\":\"0\"}', '9b078a5e7b67c51fbefe9441c1179996942bf1c0', '2023-03-30 15:46:17', NULL, NULL, 1, NULL, '1970-01-01 00:00:00', 0);
 
 services:
+  oidc-server-mock:
+    container_name: oidc-server-mock
+    image: soluto/oidc-server-mock
+    ports:
+      - 4903:80
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      USERS_CONFIGURATION_INLINE: |
+        [
+          {
+            "SubjectId":"1",
+            "Username":"User1",
+            "Password":"pwd"
+          }
+        ]
+      CLIENTS_CONFIGURATION_PATH: /tmp/config/clients-config.json
+    volumes:
+      - ./configs/sso/oidc_mock_server_client.json:/tmp/config/clients-config.json:ro
+    networks:
+      - external_network
+      - internal_network
+
   oidc-test-client:
     image: ghcr.io/beryju/oidc-test-client
     depends_on:
