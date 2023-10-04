@@ -10,5 +10,4 @@ services:
       - internal_network
   web:
     volumes:
-      # mount supervisor worker config
       - ./configs/docservice/docservice.inc.php:/etc/tine20/conf.d/docservice.inc.php:ro

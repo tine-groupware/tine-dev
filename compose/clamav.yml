@@ -6,9 +6,16 @@ services:
     container_name: clamav
     environment:
       - ZABBIX_HOSTNAME=clamav
-    # need to be created on the host
     volumes:
+      # need to be created on the host
       - ./data/clamav:/data
       #- ./logs/clamav:/var/log/clamav
     networks:
       - internal_network
+      - external_network
+  web:
+    volumes:
+      - ./configs/clamav/clamav.inc.php:/etc/tine20/conf.d/clamav.inc.php:ro
+      # install ubuntu package "clamav-testfiles" first
+      # TODO only mount if existing?
+      # - /usr/share/clamav-testfiles/:/usr/share/clamav-testfiles/:ro
