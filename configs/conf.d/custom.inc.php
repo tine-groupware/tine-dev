@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'sso' => ['active' => true],
+//'features' => ['featureSearchPath' => true,],
 //    'userPin' => true,
 //    'userPinMinLength' => 4,
 //    'areaLocks' => [

@@ -11,7 +11,7 @@ services:
     container_name: oidc-server-mock
     image: soluto/oidc-server-mock
     ports:
-      - 4903:80
+      - 80:80
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       USERS_CONFIGURATION_INLINE: |
@@ -19,8 +19,37 @@ services:
           {
             "SubjectId":"1",
             "Username":"User1",
-            "Password":"pwd"
-          }
+            "Password":"pwd",
+            "Claims": [
+                  {
+                    "Type": "name",
+                    "Value": "Sam Tailor",
+                    "ValueType": "string"
+                  },
+                  {
+                    "Type": "email",
+                    "Value": "sam.tailor@gmail.com",
+                    "ValueType": "string"
+                  }
+            ]
+          },
+          {
+              "SubjectId":"2",
+              "Username":"User2",
+              "Password":"pwd",
+              "Claims": [
+                    {
+                      "Type": "name",
+                      "Value": "Sam Tailor",
+                      "ValueType": "string"
+                    },
+                    {
+                      "Type": "email",
+                      "Value": "tine20admin@mail.test",
+                      "ValueType": "string"
+                    }
+              ]
+            }
         ]
       CLIENTS_CONFIGURATION_PATH: /tmp/config/clients-config.json
     volumes:

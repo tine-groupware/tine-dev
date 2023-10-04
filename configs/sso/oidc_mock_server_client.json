@@ -1,12 +1,14 @@
 [
   {
-    "ClientId": "implicit-mock-client",
-    "Description": "Client for implicit flow",
-    "AllowedGrantTypes": ["implicit"],
+    "ClientId": "tine20",
+    "ClientSecrets": ["tine20"],
+    "Description": "Client for auth code flow",
+    "AllowedGrantTypes": ["authorization_code"],
     "AllowAccessTokensViaBrowser": true,
-    "RedirectUris": ["http://localhost:3000/auth/oidc", "http://localhost:4004/auth/oidc"],
+    "RedirectUris": ["http://localhost:4000/sso/oid/auth/response", "http://web:4000/sso/oid/auth/response"],
     "AllowedScopes": ["openid", "profile", "email"],
     "IdentityTokenLifetime": 3600,
-    "AccessTokenLifetime": 3600
+    "AccessTokenLifetime": 3600,
+    "RequirePkce": false
   }
 ]
