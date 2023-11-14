@@ -35,10 +35,9 @@ test:
     - ./console docker:pull
     - ./console docker:start
     - ./console tine:awaitdb
-    # TODO make this work again, tine:install fails atm - why? we need logs ...
-#    - ./console tine:install
-#    - ./console tine:test -e nogitlabci -e nodockerci Addressbook/AllTests Tinebase/Alltests Calendar/AllTests
-#    - ./console tine:uninstall
+    - ./console tine:install
+    - ./console tine:test -e nogitlabci -e nodockerci Addressbook/AllTests Tinebase/Alltests Calendar/AllTests
+    - ./console tine:uninstall
 
 # TODO run this only on master
 .full_test:
