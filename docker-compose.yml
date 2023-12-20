@@ -16,7 +16,7 @@ services:
       - "3306:3306"
 
   cache:
-    image: redis:5.0.14
+    image: redis:6.0.16
     networks:
       - internal_network
       - external_network
