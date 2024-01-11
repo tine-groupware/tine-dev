@@ -118,7 +118,7 @@ class Pullup {
 
         echo "Flushing redis ...\n";
         passthru($this->getComposeString() . ' exec -T cache sh -c "redis-cli flushall"', $err);
-        echo "Installing Tine 2.0 ...\n";
+        echo "Installing tine ...\n";
         passthru($this->getComposeString() . ' exec -T web tine20_install', $err);
 
         return $err;
