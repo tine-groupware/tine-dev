@@ -24,7 +24,7 @@ class TineReinstallCommand extends TineCommand
 
         $io = new ConsoleStyle($input, $output);
 
-        $io->notice("Uninstalling Tine 2.0...");
+        $io->notice("Uninstalling tine...");
         passthru($this->getComposeString() . ' exec -T web sh -c "cd /usr/share/tine20/ && vendor/bin/phing -D configdir=/etc/tine20 tine-uninstall"', $result_code);
 
         if ($this->active('mailstack')) {
@@ -32,7 +32,7 @@ class TineReinstallCommand extends TineCommand
         }
 
         passthru($this->getComposeString() . ' exec -T cache sh -c "redis-cli flushall"', $result_code);
-        $io->notice("Installing Tine 2.0 ...");
+        $io->notice("Installing tine ...");
         passthru($this->getComposeString() . ' exec -T web tine20_install', $result_code);
         passthru($this->getComposeString() . ' exec -T web sh -c "test -f ${TINE20ROOT}/scripts/postInstallDocker.sh && ${TINE20ROOT}/scripts/postInstallDocker.sh"', $result_code);
 

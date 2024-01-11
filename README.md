@@ -221,7 +221,7 @@ note: this only works with tine20.com/2018.11* branches
 ),
 ```
 
-# Add Tine 2.0 Broadcasthub
+# Add tine Broadcasthub
 ## Clone, Initialize and Link Repository
 
     git clone git@gitlab.metaways.net:tine20/tine20-broadcasthub.git broadcasthub
@@ -232,33 +232,33 @@ note: this only works with tine20.com/2018.11* branches
     cd /path/to/tine20-docker
     ln -s /patch/to/broadcasthub broadcasthub
 
-Make sure to always fetch the latest production docker image for the Tine 2.0 broadcasthub, change the tag in file `compose/broadcasthub` accordingly.
+Make sure to always fetch the latest production docker image for the tine broadcasthub, change the tag in file `compose/broadcasthub` accordingly.
 
 
 ## Configure
-There is a setup task in the Tine 2.0 repository for adding an `auth_token` record: `setup.php --add_auth_token --`.
+There is a setup task in the tine repository for adding an `auth_token` record: `setup.php --add_auth_token --`.
 
-Formerly this record had to be inserted manually via [phpMyAdmin](#open-tine20-in-browser) in order to connect with a websocket client to the Tine 2.0 Broadcasthub websocket server:
+Formerly this record had to be inserted manually via [phpMyAdmin](#open-tine20-in-browser) in order to connect with a websocket client to the tine Broadcasthub websocket server:
 
     INSERT INTO tine20_auth_token (id, auth_token, account_id, valid_until, channels) VALUES ('longlongid', 'longlongtoken', (select id from tine20_accounts where login_name = "tine20admin"), ADDDATE(NOW(), INTERVAL 1 YEAR), '["broadcasthub"]');
 
 ## Development
-Follow the setup instructions above. Make sure to link your local Tine 2.0 Broadcasthub repository into the docker setup. Prior to run `./console docker:up` copy `.pullup.json` to `pullup.json` and change the entry `broadcasthub` to `broadcasthub-dev`. This way a development container for the Tine 2.0 Broadcasthub is ran rather than the production container. The development container has the following features (see `compose/broadcasthub-dev.yml` for complete setup):
+Follow the setup instructions above. Make sure to link your local tine Broadcasthub repository into the docker setup. Prior to run `./console docker:up` copy `.pullup.json` to `pullup.json` and change the entry `broadcasthub` to `broadcasthub-dev`. This way a development container for the tine Broadcasthub is ran rather than the production container. The development container has the following features (see `compose/broadcasthub-dev.yml` for complete setup):
 
-* The Tine 2.0 Broadcasthub code is mounted from localhost into the container
+* The tine Broadcasthub code is mounted from localhost into the container
 * DEBUG is set to full debug output. This output is displayed along with all other logs when `./console docker:up` is used to pullup the `tine20/docker` setup
-* Node is executed by `nodemon` within the container. `nodemon` automatically restarts `node` in the container on file changes in the local Tine 2.0 Broadcasthub repository. A file change can also be simulated with `touch app.js` on localhost
+* Node is executed by `nodemon` within the container. `nodemon` automatically restarts `node` in the container on file changes in the local tine Broadcasthub repository. A file change can also be simulated with `touch app.js` on localhost
 
-Adapt the websocket URL in `broadcasthub/dev/client.js` to match the URL of the Tine 2.0 Broadcasthub in the docker setup, i.e. change the port in `ws://localhost:8080` to whatever port the Tine 2.0 Broadcasthub is exposed to in the docker setup (see `compose/broadcasthub-dev.yml`).
+Adapt the websocket URL in `broadcasthub/dev/client.js` to match the URL of the tine Broadcasthub in the docker setup, i.e. change the port in `ws://localhost:8080` to whatever port the tine Broadcasthub is exposed to in the docker setup (see `compose/broadcasthub-dev.yml`).
 
 Now you can start the development websocket client: `node broadcasthub/dev/client.js` and check if broadcast messages are received.
 
-In order to trigger a websocket broadcast message, either log into the Redis CLI of the `tine20/docker` setup using something like `docker exec -it cache redis-cli` and execute something like `publish broadcasthub "A broadcast message!"`. Or log into the Tine 2.0 frontend, open the file manager and upload a file. Running `dev/trigger.js` does not work here because the `tine20/docker` Redis service is not exposed to the localhost and only available from within the `docker-compose` environment.
+In order to trigger a websocket broadcast message, either log into the Redis CLI of the `tine20/docker` setup using something like `docker exec -it cache redis-cli` and execute something like `publish broadcasthub "A broadcast message!"`. Or log into the tine frontend, open the file manager and upload a file. Running `dev/trigger.js` does not work here because the `tine20/docker` Redis service is not exposed to the localhost and only available from within the `docker-compose` environment.
 
-NOTE (2021-09-29): The websocket client in the Tine 2.0 client and the markup of changed files in file manager do not exist yet.
+NOTE (2021-09-29): The websocket client in the tine client and the markup of changed files in file manager do not exist yet.
 
 
-# Clear Tine 2.0 Cache
+# Clear tine Cache
 
     docker exec --user nginx tine20 sh -c "cd /tine/tine20/ && php tine20.php --method=Tinebase.clearCache --username test --password test"
     
