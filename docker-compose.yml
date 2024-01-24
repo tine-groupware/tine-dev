@@ -2,7 +2,7 @@ version: '3'
 name: "tine20"
 services:
   db:
-    image: mariadb:10.6.14
+    image: mariadb:10.9.8
     command: --max-allowed-packet=209715210
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root}"
