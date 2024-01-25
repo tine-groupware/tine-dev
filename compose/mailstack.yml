@@ -18,7 +18,7 @@ services:
     #  - "465:465"
 
   dovecot:
-    image: dockerregistry.metaways.net/tine20/docker/dovecot:1.0.2
+    image: dockerregistry.metaways.net/tine20/docker/dovecot:1.0.3
     environment:
       MYSQL_HOST: db
       MYSQL_DB: &dovecotdb dovecot
