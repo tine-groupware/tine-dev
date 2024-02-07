@@ -57,12 +57,19 @@ class TineSetupTestCommand extends TineCommand{
         }
 
         foreach($paths as $path) {
+            $filter = null;
+            if (strpos($path, "::")) {
+                [$path, $filter] = explode("::", $path);
+            } else if (!empty($input->getOption('filter'))) {
+                $filter = $input->getOption('filter');
+            }
+
             passthru(
                 $this->getComposeString()
                 . " exec -T --user tine20 web sh -c \"cd /usr/share/tests/setup/ && php -d include_path=.:/etc/tine20/ /usr/share/tine20/vendor/bin/phpunit --color --debug "
                 . ($stopOnFailure === true ? ' --stop-on-failure ' : '')
                 . (!empty($input->getOption('exclude')) ? ' --exclude ' . implode(",", $input->getOption('exclude')) . " ": "")
-                . (!empty($input->getOption('filter')) ? ' --filter ' . $input->getOption('filter') . " ": "")
+                . ($filter ? ' --filter \'' . $filter . '\' ' : '')
                 . $path
                 . "\""
                 . ' 2>&1', $result_code
