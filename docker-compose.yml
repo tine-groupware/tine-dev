@@ -9,6 +9,9 @@ services:
       MYSQL_DATABASE: &MYSQL_DATABASE "${MYSQL_DATABASE:-tine20}"
       MYSQL_USER: &MYSQL_USER "${MYSQL_USER:-tine20}"
       MYSQL_PASSWORD: &MYSQL_PASSWORD "${MYSQL_PASSWORD:-tine20pw}"
+      # [ERROR] Incorrect definition of table mysql.column_stats
+      # see https://github.com/wallabag/wallabag/issues/6572
+      MARIADB_AUTO_UPGRADE: 1
     networks:
       - internal_network
       - external_network
