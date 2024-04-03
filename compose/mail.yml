@@ -1,7 +1,5 @@
 # this is a override file to add a mail (dovecot & postfix) container
-version: '3'
 services:
-
   mail:
     image: antespi/docker-imap-devel:latest
     container_name: mail

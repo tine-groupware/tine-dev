@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   mkdocs:
     image: dockerregistry.metaways.net/tine20/tine20/mkdocs:latest${IMAGE_SUFFIX}

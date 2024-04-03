@@ -1,5 +1,4 @@
 # this is a override file to add a confroom container
-version: '3'
 services:
   # link confroom dir into this dir like this:
   #    $ ln -s /data/workspace/conference_room confroom

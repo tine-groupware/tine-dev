@@ -1,6 +1,5 @@
 # run this with
 # $ docker-compose -f docker-compose.yml -f compose/macos.yml up
-version: '3'
 services:
   web:
     environment:

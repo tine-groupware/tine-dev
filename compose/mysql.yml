@@ -1,5 +1,4 @@
 # use mysql instead of mariadb
-version: '3'
 services:
   db:
     image: mysql:8.0.17

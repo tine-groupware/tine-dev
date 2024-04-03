@@ -1,5 +1,4 @@
 # this is a override file to add a clamav container
-version: '3'
 services:
   clamav:
     image: tiredofit/clamav

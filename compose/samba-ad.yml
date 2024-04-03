@@ -1,4 +1,3 @@
-version: '3'
 services:
   samba:
     image: rsippl/samba-ad-dc
