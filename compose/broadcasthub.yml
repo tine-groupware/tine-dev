@@ -1,5 +1,4 @@
 # this is a override file to add a broadcasthub container
-version: '3'
 services:
   web:
     volumes:

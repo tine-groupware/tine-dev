@@ -1,7 +1,5 @@
 # this is a override file to add a documentserver container
-version: '3'
 services:
-
   documentserver:
     image: onlyoffice/documentserver:latest
 #    volumes:

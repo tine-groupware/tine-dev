@@ -1,6 +1,4 @@
-version: '3'
-
-# @todo: make shure rp's are preconfigured. demodata or here?
+# @todo: make sure rp's are preconfigured. demodata or here?
 #  INSERT INTO `202311_sso_relying_party` (`id`, `name`, `label`, `description`, `logo`, `config_class`, `config`, `created_by`, `creation_time`, `last_modified_by`, `last_modified_time`, `seq`, `deleted_by`, `deleted_time`, `is_deleted`) VALUES
 #  ('e070a5e46dc3d3ce6e0d94c8c71ed06b67bd4fdf', 'test-id', 'test-id', '', NULL, 'SSO_Model_OAuthOIdRPConfig', '{\"redirect_urls\":\"[\\\"http:\\\\\\/\\\\\\/localhost:4901\\\\\\/auth\\\\\\/callback\\\"]\",\"secret\":\"test-secret\",\"is_confidential\":false,\"id\":\"0\"}', '9b078a5e7b67c51fbefe9441c1179996942bf1c0', '2023-03-29 08:01:03', '9b078a5e7b67c51fbefe9441c1179996942bf1c0', '2023-03-30 09:22:17', 7, NULL, '1970-01-01 00:00:00', 0);
 #  INSERT INTO `202311_sso_relying_party` (`id`, `name`, `label`, `description`, `logo`, `config_class`, `config`, `created_by`, `creation_time`, `last_modified_by`, `last_modified_time`, `seq`, `deleted_by`, `deleted_time`, `is_deleted`) VALUES

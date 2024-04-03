@@ -1,5 +1,4 @@
 # this is a override file to add a phpldapadmin container
-version: '3'
 services:
 
   pla:
