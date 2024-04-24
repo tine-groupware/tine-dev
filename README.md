@@ -317,3 +317,10 @@ tldr: https://localhost:4430/
 Https is served at port 4430 with a self singed certificate. Subject Names of the cert are: localhost, web, tine.local, tine.test and 127.0.0.1. Accessing tine with a browser you can add an exception for the cert. With curl you need to specify the option --insecure, to not verify the certificate.
 
 Other service in docker compose can not access tine by https. Maybe they could be configured to not verify the certificate.
+
+# Activate tine Cronjob
+
+~~~shell
+$ docker exec --user root -it tine20-web-1 sh
+$ cat > /etc/crontabs/tine20
+*/1    *   *   *   *   tine20.php --method Tinebase.triggerAsyncEvents
