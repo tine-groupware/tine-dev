@@ -60,6 +60,7 @@ services:
       DEBUG_COLORS: "true"
       TERM: xterm-256color
       COLORTERM: truecolor
+      PHP_DISPLAY_ERRORS: "On"
     volumes:
       - ./tine20/tine20:/usr/share/tine20/:ro
       - ./tine20/tests:/usr/share/tests/:ro
