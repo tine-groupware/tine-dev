@@ -1,0 +1,10 @@
+# this is a override file to add the edocument-services container
+services:
+  web:
+    volumes:
+      - ./configs/edocument-services/edocument-services.inc.php:/etc/tine20/conf.d/edocument-services.inc.php:ro
+
+  edocument-services:
+    image: registry.rz1.metaways.net/tine/edocument-services:0.0.1-amd64
+    networks:
+      - internal_network
