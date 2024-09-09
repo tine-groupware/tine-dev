@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Listen for Xdebug",
+            "type": "php",
+            "request": "launch",
+            "port": 9001,
+            "pathMappings": {
+                "/usr/share/tine20": "${workspaceRoot}/tine20/tine20",
+                "/usr/share/tests": "${workspaceRoot}/tine20/tests",
+                "/usr/share/scripts": "${workspaceRoot}/tine20/scripts"
+            },
+            "log": true
+        },
+    ]
+}

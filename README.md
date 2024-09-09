@@ -82,7 +82,8 @@ https://hub.docker.com/r/tinegroupware/dev
     docker image ls -a      # shows all containers, as well as deps
     docker image rm <image id/name>
 
-# Debugging with PhpStorm
+# Debugging with Xdebug
+## Debugging with PhpStorm
 
 this is the default xdebug.ini:
 
@@ -115,6 +116,9 @@ open Xdebug port in PhpStorm
     - [x] can accept external connections 
     
 if you have a different IP, you might need to use the XDEBUG_CONFIG env vars in docker-compose.yml
+
+## Debugging with vscode:
+You will need to install the "PHP Debug" extension by xdebug. The launch configuration to listen for xdebug connection, is already configured in this repo. Just start listening with "Listen for Xdebug".
 
 ## Troubleshooting
 
@@ -160,7 +164,6 @@ you might need to remove old / unused docker networks:
 OR
 
     ➜  docker network prune
-
 
 # Debug / Test Stuff with Fake Previews
 
