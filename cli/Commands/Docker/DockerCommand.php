@@ -37,10 +37,12 @@ class DockerCommand extends BaseCommand
         ],
         // repo https://github.com/tine-groupware/tine
         'main' => [
-            'web' => 'tinegroupware/dev:2024.11-8.2',
+            'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.2',
             'webpack' => 'node:18.9.0-alpine',
         ],
     ];
+
+    # 
 
     protected function configure()
     {
