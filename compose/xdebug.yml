@@ -9,4 +9,5 @@ services:
       XDEBUG_CONFIG: "remote_host=172.118.0.1 remote_enable=on remote_port=9001"
     volumes:
       - ./configs/xdebug/xdebug.ini:/etc/php/conf.d/50_xdebug.ini:ro
-
+      - ./configs/xdebug/xdebug-ubuntu.ini:/etc/php/default/cli/conf.d/50_xdebug.ini:ro
+      - ./configs/xdebug/xdebug-ubuntu.ini:/etc/php/default/fpm/conf.d/50_xdebug.ini:ro
