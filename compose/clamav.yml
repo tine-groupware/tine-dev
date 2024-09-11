@@ -1,14 +1,15 @@
 # this is a override file to add a clamav container
 services:
   clamav:
-    image: tiredofit/clamav
+    image: clamav/clamav
     container_name: clamav
-    environment:
-      - ZABBIX_HOSTNAME=clamav
     volumes:
       # need to be created on the host
-      - ./data/clamav:/data
-      #- ./logs/clamav:/var/log/clamav
+      - ./data/clamav/var/lib:/var/lib/clamav
+      - ./data/clamav/run:/run/clamav
+      - ./configs/clamav/clamd.conf:/etc/clamav/clamd.conf:ro
+      - ./configs/clamav/freshclam.conf:/etc/clamav/freshclam.conf:ro
+      - ./configs/clamav/init:/init
     networks:
       - internal_network
       - external_network

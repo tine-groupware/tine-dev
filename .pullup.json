@@ -1,12 +1,10 @@
 {
   "composeFiles":[
     "webpack",
-    "docservice",
-    "broadcasthub",
-    "pma",
-    "rediscommander",
     "mailstack",
     "xdebug",
-    "spam"
+    "spam",
+    "clamav",
+    "xdebug"
   ]
 }
