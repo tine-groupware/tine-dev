@@ -4,7 +4,6 @@
     "mailstack",
     "xdebug",
     "spam",
-    "clamav",
-    "xdebug"
+    "clamav"
   ]
 }
