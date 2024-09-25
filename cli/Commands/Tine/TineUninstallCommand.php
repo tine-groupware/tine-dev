@@ -34,7 +34,7 @@ class TineUninstallCommand extends TineCommand
         if(empty($inputArguments)) {
             passthru($this->getComposeString() . ' exec -T --user tine20 web sh -c "cd /usr/share/tine20 && vendor/bin/phing -D configdir=/etc/tine20 tine-uninstall"', $result_code);
 
-            if ($this->active('mailstack')) {
+            if ($this->active('mailstack') || $this->active('mailstack-mac')) {
                 $this->mailstackReset($io);
             }
         } else {

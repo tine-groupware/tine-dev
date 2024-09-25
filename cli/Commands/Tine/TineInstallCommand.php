@@ -31,7 +31,7 @@ class TineInstallCommand extends TineCommand
         $inputOptions = $input->getArgument('modules');
         
         if(empty($inputOptions)) {
-            if ($this->active('mailstack')) {
+            if ($this->active('mailstack') || $this->active('mailstack-mac')) {
                 $this->mailstackInit($io);
                 $this->mailstackReset($io);
             }
