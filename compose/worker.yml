@@ -8,5 +8,7 @@ services:
       # mount supervisor worker config
       - ./configs/worker/worker.ini:/etc/supervisor.d/worker.ini:ro
       - ./configs/worker/tail-worker.ini:/etc/supervisor.d/tail-worker.ini:ro
+      - ./configs/worker/worker.ini:/etc/supervisor/conf.d/worker.ini:ro
+      - ./configs/worker/tail-worker.ini:/etc/supervisor/conf.d/tail-worker.ini:ro
       - ./configs/worker/worker.inc.php:/etc/tine20/conf.d/worker.inc.php:ro
       - ./configs/worker/actionQueue.ini:/etc/tine20/conf.d/actionQueue.ini:ro

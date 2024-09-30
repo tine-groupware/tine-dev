@@ -4,3 +4,4 @@ services:
       TINE20_LOGGER_FILENAME: /var/log/tine20/tine20.log
     volumes:
     - ./configs/centralLog/tail.ini:/etc/supervisor.d/tail.ini:ro
+    - ./configs/centralLog/tail.ini:/etc/supervisor/conf.d/tail.ini:ro
