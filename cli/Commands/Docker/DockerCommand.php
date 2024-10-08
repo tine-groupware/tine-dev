@@ -40,6 +40,10 @@ class DockerCommand extends BaseCommand
             'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.2',
             'webpack' => 'node:18.9.0-alpine',
         ],
+        'erzbistum/main' => [
+            'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.2',
+            'webpack' => 'node:18.9.0-alpine',
+        ],
     ];
 
     # 
