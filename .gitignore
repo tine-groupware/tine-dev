@@ -10,3 +10,4 @@
 /vendor
 /cache
 /cli/config.yml
+/npm-cache
