@@ -11,3 +11,4 @@
 /cache
 /cli/config.yml
 /npm-cache
+.DS_Store
