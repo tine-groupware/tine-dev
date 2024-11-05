@@ -7,9 +7,9 @@ tine-dev (docker dev setup)
 
 ## Quickstart
 
-prerequisites: git, docker, php, composer and your user is in the docker group. If not see [below](#install-docker-io-and-docker-compose)
+prerequisites: git, docker, php, composer, npm and your user is in the docker group. If not see "Install and Setup Docker"
 
-1. clone this git and open it `git clone https://github.com/tine-groupware/tine-dev.git tine-dev` and `cd tine20-dev`
+1. clone this git and open it `git clone https://github.com/tine-groupware/tine-dev.git tine-dev` and `cd tine-dev`
 2. install symfony/console dependencies `composer install`
 3. start tine20-docker setup `./console docker:up`, if you have not done this, install 4 to 6 answer y to clone repos
 4. install tine `./console tine:install`
@@ -27,7 +27,6 @@ prerequisites: git, docker, php, composer and your user is in the docker group. 
 ## Console Commands
 run `./console` in tine-dev directory to see available Commands
 
-
 ## pullup.json
 
 to override default settings copy .pullup.json to pullup.json
@@ -36,15 +35,23 @@ to override default settings copy .pullup.json to pullup.json
 + build: if true images will be build locally
 + more: any wishes? > issue tracker 
 
-
 # Links
 
 * https://linuxize.com/post/how-to-remove-docker-images-containers-volumes-and-networks/
 
-# Install and Setup Docker
+# Install and Setup Docker & other Prerequisites
+
+## Docker
 
 https://docs.docker.com/engine/install/
 
+## Add user to docker group (Linux)
+
+https://docs.docker.com/engine/install/linux-postinstall/
+
+## Install composer & npm (Ubuntu)
+
+    sudo apt install composer npm
 
 # Check/Get Docker Image
 
