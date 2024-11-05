@@ -12,8 +12,9 @@ prerequisites: git, docker, php, composer, npm and your user is in the docker gr
 1. clone this git and open it `git clone https://github.com/tine-groupware/tine-dev.git tine-dev` and `cd tine-dev`
 2. install symfony/console dependencies `composer install`
 3. start tine20-docker setup `./console docker:up`, if you have not done this, install 4 to 6 answer y to clone repos
-4. install tine `./console tine:install`
-5. visit localhost:4000, login as tine20admin pw: tine20admin
+4. initialize icon-set submodule: `cd tine20 && git submodule init && git submodule update && cd ..`
+5. install tine `./console tine:install`
+6. visit http://localhost:4000, login as tine20admin pw: tine20admin
 
 ## Optional
 
@@ -55,7 +56,7 @@ https://docs.docker.com/engine/install/linux-postinstall/
 
 # Check/Get Docker Image
 
-Our dev image (latest: `tinegroupware/dev:2023.11-8.1`) is on docker hub:
+Our dev image is on docker hub:
 https://hub.docker.com/r/tinegroupware/dev
 
 # Show Containers
