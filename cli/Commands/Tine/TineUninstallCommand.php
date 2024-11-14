@@ -30,18 +30,7 @@ class TineUninstallCommand extends TineCommand
 
         $io = new ConsoleStyle($input, $output);
         $inputArguments = $input->getArgument('modules');
-
-        if(empty($inputArguments)) {
-            passthru($this->getComposeString() . ' exec -T --user tine20 web sh -c "cd /usr/share/tine20 && vendor/bin/phing -D configdir=/etc/tine20 tine-uninstall"', $result_code);
-
-            if ($this->active('mailstack') || $this->active('mailstack-mac')) {
-                $this->mailstackReset($io);
-            }
-        } else {
-            passthru($this->getComposeString() . ' exec -T --user tine20 web sh -c "cd /usr/share/tine20 && php setup.php --uninstall "'
-            . implode(" ", $inputArguments), $result_code);
-        }
         
-        return $result_code;
+        return $this->tineUninstall($io, $inputArguments);
     }
 }
