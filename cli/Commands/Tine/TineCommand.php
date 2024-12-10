@@ -90,15 +90,15 @@ class TineCommand extends DockerCommand
     }
 
     public function tineUninstall($io, $inputOptions) {
-        if(empty($inputOptions)) {
-            passthru($this->getComposeString() . ' exec -T --user tine20 web sh -c "cd /usr/share/tine20 && vendor/bin/phing -D configdir=/etc/tine20 tine-uninstall"', $result_code);
-
-            if ($this->active('mailstack') || $this->active('mailstack-mac')) {
-                $this->mailstackReset($io);
-            }
-        } else {
-            passthru($this->getComposeString() . ' exec -T --user tine20 web sh -c "cd /usr/share/tine20 && php setup.php --uninstall "'
+        passthru($this->getComposeString() . ' exec -T --user tine20 web sh -c "cd /usr/share/tine20 && php setup.php --uninstall "'
             . implode(" ", $inputOptions), $result_code);
+
+        if ($this->active('mailstack') || $this->active('mailstack-mac')) {
+            if (empty($inputOptions)) {
+                $this->mailstackReset($io);
+            } else {
+                $io->success("skipping mailstack reset - uninstall options set");
+            }
         }
         
         return $result_code;
