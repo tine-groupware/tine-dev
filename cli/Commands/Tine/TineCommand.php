@@ -89,9 +89,9 @@ class TineCommand extends DockerCommand
         return $result_code;
     }
 
-    public function tineUninstall($io, $inputOptions) {
+    public function tineUninstall($io, ?array $inputOptions) {
         passthru($this->getComposeString() . ' exec -T --user tine20 web sh -c "cd /usr/share/tine20 && php setup.php --uninstall "'
-            . implode(" ", $inputOptions), $result_code);
+            . implode(" ", $inputOptions ?? []), $result_code);
 
         if ($this->active('mailstack') || $this->active('mailstack-mac')) {
             if (empty($inputOptions)) {
