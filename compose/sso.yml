@@ -12,6 +12,13 @@ services:
       - 80:80
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      SERVER_OPTIONS_INLINE: |
+        {
+          "Authentication": {
+            "CookieSameSiteMode": "Lax",
+            "CheckSessionCookieSameSiteMode": "Lax"
+          }
+        }
       USERS_CONFIGURATION_INLINE: |
         [
           {
@@ -43,7 +50,7 @@ services:
                     },
                     {
                       "Type": "email",
-                      "Value": "tine20admin@mail.test",
+                      "Value": "sam.tailor@mail.test",
                       "ValueType": "string"
                     }
               ]
