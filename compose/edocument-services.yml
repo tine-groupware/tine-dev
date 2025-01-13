@@ -5,6 +5,6 @@ services:
       - ./configs/edocument-services/edocument-services.inc.php:/etc/tine20/conf.d/edocument-services.inc.php:ro
 
   edocument-services:
-    image: registry.rz1.metaways.net/tine/edocument-services:0.0.7-amd64
+    image: registry.rz1.metaways.net/tine/edocument-services:0.0.8-amd64
     networks:
       - internal_network
