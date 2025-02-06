@@ -8,8 +8,6 @@ services:
 
   webpack:
     image: ${WEBPACK_IMAGE:-node:18.9.0-alpine}
-    ports:
-      - "10443:10443"
     depends_on:
       - web
     networks:
@@ -18,3 +16,12 @@ services:
     volumes:
       - ./tine20/tine20:/usr/share/tine20/:ro
     command: "npm --prefix /usr/share/tine20/Tinebase/js/ start"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.webpack.rule=Host(`tine.local.tine-dev.de`) && (PathPrefix(`/webpack-dev-server`) || PathPrefix(`/sockjs-node`) || PathRegexp(`\.js$`))
+      - traefik.http.routers.webpack.entrypoints=websecure
+      - traefik.http.routers.webpack.tls=true
+      - traefik.http.services.webpack.loadbalancer.server.port=10443
+      - traefik.http.routers.webpackport.rule=Host(`tine.local.tine-dev.de`)
+      - traefik.http.routers.webpackport.entrypoints=webpacksecure
+      - traefik.http.routers.webpackport.tls=true

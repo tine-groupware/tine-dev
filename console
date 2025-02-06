@@ -16,6 +16,7 @@ use App\Commands\Docker\DockerCliCommand;
 use App\Commands\Docker\DockerPullCommand;
 use App\Commands\Docker\DockerLogCommand;
 use App\Commands\Docker\DockerWebpackRestartCommand;
+use App\Commands\Docker\DockerGenerateCertCommand;
 
 use App\Commands\Tine\TineInstallCommand;
 use App\Commands\Tine\TineUninstallCommand;
@@ -46,6 +47,7 @@ $app->add(new DockerCliCommand());
 $app->add(new DockerPullCommand());
 $app->add(new DockerLogCommand());
 $app->add(new DockerWebpackRestartCommand());
+$app->add(new DockerGenerateCertCommand());
 
 //Tine Commands
 $app->add(new TineInstallCommand());

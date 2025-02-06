@@ -1,0 +1,9 @@
+keys:
+- &mmertens age1rvcntlua0z49w6alfgh4kxc4fuwhfee4gqv9nkawmv8xl8277v4qpmcmq2
+- &seshared age1etyvp36udca7gs82tjvkluvmxawxz3zefa5zh4ezeyyv22qs64eq0qr5tj
+creation_rules:
+- path_regex: .*\.sops\..*
+  key_groups:
+  - age:
+    - *seshared
+    - *mmertens

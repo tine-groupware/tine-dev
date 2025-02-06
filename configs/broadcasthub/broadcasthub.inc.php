@@ -3,7 +3,7 @@
 return [
     'broadcasthub' => [
         'active' => true,
-        'url'    => 'ws://localhost:4003',
+        'url'    => 'wss://broadcasthub.local.tine-dev.de',
         'redis'  => [
             'host' => 'cache',
         ],
