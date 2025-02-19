@@ -64,6 +64,10 @@ class TineTestCommand extends TineCommand
             } else if (!empty($input->getOption('filter'))) {
                 $filter = $input->getOption('filter');
             }
+            // sanitize test file path for phpunit 10+
+            if (strpos($path, '_') && !str_contains($path, '.php')) {
+                $path = str_replace('_', '/', $path) . '.php';
+            }
 
             passthru(
                 $this->getComposeString()
