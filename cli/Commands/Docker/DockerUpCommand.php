@@ -53,6 +53,8 @@ class DockerUpCommand extends DockerCommand
         $this->getBroadcasthubDir($io);
         $this->anotherConfig($io);
 
+        $this->set_up_tls_certs($io);
+
         // TODO improve this / use console commands
         $io->info('Init vendor: ' . $tinedir . '/tine20/vendor');
         passthru('./console src:composer install');
@@ -78,5 +80,44 @@ class DockerUpCommand extends DockerCommand
             ($input->getOption('detached') === true ? ' -d' : ''), $result_code);
 
         return $result_code;
+    }
+
+
+    protected function set_up_tls_certs(ConsoleStyle $io) {
+        $configFile = 'configs/traefik/dynamic/certs.yaml';
+        $prefix = $this->ensure_tls_cert($io);
+
+        if (is_file($configFile)) {
+            unlink($configFile);
+        }
+
+        if ($prefix !== null) {
+            file_put_contents($configFile, "
+tls:
+  certificates:
+    - certFile: /etc/traefik/{$prefix}fullchain.pem
+      keyFile: /etc/traefik/{$prefix}privkey.pem
+            ");
+        }
+    }
+
+    protected function ensure_tls_cert(ConsoleStyle $io) {
+        $certFolder = 'configs/traefik/';
+        $letsencryptPrefix = 'letsencrypt.';
+
+        foreach (['', $letsencryptPrefix] as $prefix) {
+            if(is_file("{$certFolder}{$prefix}privkey.pem")) {
+                $io->info('found tls certificate');
+                return $prefix;
+            }
+        }
+
+        passthru("sops --decrypt --output {$certFolder}{$letsencryptPrefix}privkey.pem {$certFolder}{$letsencryptPrefix}privkey.sops.pem", $result_code);
+        if ($result_code === 0) {
+            $io->info('decrypted tls certificate');
+            return $letsencryptPrefix;
+        }
+
+        return null;
     }
 }

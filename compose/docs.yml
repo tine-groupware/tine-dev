@@ -6,8 +6,11 @@ services:
       - ./tine20:/docs
     tmpfs:
       - /docs/docs/developers/api/
-    ports:
-      - "4030:8000"
     networks:
       - external_network
-      - internal_network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mkdocs.rule=Host(`docs.local.tine-dev.de`)
+      - traefik.http.routers.mkdocs.entrypoints=websecure
+      - traefik.http.routers.mkdocs.tls=true
+      - traefik.http.services.mkdocs.loadbalancer.server.port=8000

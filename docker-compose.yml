@@ -1,5 +1,33 @@
 name: "tine20"
 services:
+  traefik:
+    image: "traefik:v3.3"
+    restart: always
+    container_name: "traefik"
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.webpacksecure.address=:10443
+      - --accesslog=true
+      - --api.insecure=true
+    ports:
+      - 80:80
+      - 443:443
+      - 10443:10443
+      - 8080:8080
+    volumes:
+      - ./configs/traefik/:/etc/traefik/:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - external_network
+      - internal_network
+
   db:
     image: mariadb:10.9.8
     command: --max-allowed-packet=209715210
@@ -72,13 +100,15 @@ services:
       - ${HOMEDIR}/.dockertine20web_bash_history:/root/.bash_history
       # tine filesdir
       - tinefiles:/var/lib/tine20/files
-
     networks:
       - external_network
       - internal_network
-    ports:
-      - "4000:4000"
-      - "4430:4430"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`tine.local.tine-dev.de`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls=true"
+      - "traefik.http.services.web.loadbalancer.server.port=80"
 
 networks:
   internal_network:

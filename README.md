@@ -14,7 +14,7 @@ Prerequisites: git, docker, php, composer, npm and your user is in the docker gr
 3. start tine20-docker setup `./console docker:up`, if you have not done this, install 4 to 6 answer y to clone repos
 4. initialize icon-set submodule: `cd tine20 && git submodule init && git submodule update && cd ..`
 5. install tine `./console tine:install`
-6. visit http://localhost:4000, login as tine20admin pw: tine20admin
+6. visit https://tine.local.tine-dev.de, login as tine20admin pw: tine20admin
 
 Note:
 In case tine stops working after a branch switch or computer restart run "./console tine:reinstall" WITHOUT stopping tine before that.
@@ -72,11 +72,11 @@ https://hub.docker.com/r/tinegroupware/dev
 
 # Open tine in Browser
 
-[localhost:4000](http://localhost:4000/) - nginx
+[tine.local.tine-dev.de](https://tine.local.tine-dev.de/) - nginx
 
-[localhost:4000](http://localhost:4000/) - webpack served
+[tine.local.tine-dev.de](https://tine.local.tine-dev.de/) - webpack served
 
-[localhost:4000/setup.php](http://localhost:4000/setup.php) - webpack served setup
+[tine.local.tine-dev.de/setup.php](https://tine.local.tine-dev.de/setup.php) - webpack served setup
 
 [localhost:4002](http://localhost:4002) Phpmyadmin Username:tine20 Password:tine20pw
 
@@ -326,12 +326,87 @@ First boot:
 add "mysql" to your pullup.json!
 
 # https
-tldr: https://localhost:4430/
+(From now ) Only https on port 443 is supported for services integrated in tine. Like tine itself (tine.local.tine-dev.de), broadcasthub (broadcasthub.local.tine-dev.de) or onlyoffice (onlyoffice.local.tine-dev.de). Backend only services like documentpreview and utility applications like phpmyadmin (localhost:4002
+) still use http without domain nam
 
-Https is served at port 4430 with a self singed certificate. Subject Names of the cert are: localhost, web, tine.local, tine.test and 127.0.0.1. Accessing tine with a browser you can add an exception for the cert. With curl you need to specify the option --insecure, to not verify the certificate.
+Certificates are set up automatically. There are several options that are tried in this order:
+1. Custom certificates: If there ist a certificate in configs/traefik/privatekey.pem and configs/traefik/fullchain.pem, it will be used. See Generate self-signed certificates
+2. (Metaways only): letsencrypt certificate: real certificate signed by letsencrypt usefull for e.g. webauth testing. See Configure letsencrypt certificate
+3. Generated cert: if no certificate is found, our web server will generate a self-signed certificate for you
 
-Other service in docker compose can not access tine by https. Maybe they could be configured to not verify the certificate.
+## Generate self-signed certificates
+It is easist to use a wildcard certificate for *.local.tine-dev.de. You can generate one with ./console docker:generateCert.
 
+The resulting certificate and private key will be placed in configs/traefik/fullchain.pem or configs/traefik/privatekey.pem.
+
+You may import your self-signed certificate into your browser. Be aware of the security implications.
+
+## Configure letsencrypt certificate
+Note: You can also obtain a letsencrypt certificate by other means and use it as a custom certificate.
+
+Our letsencrypt private key is part of this repo. It will be automatically decrypted and used if properly configured. Therefore, you will need to set up sops with age and have your age key added.
+
+* SOPS](https://github.com/getsops/sops) is a secret management tool that can be used to encrypt and decrypt secrets (files), and manage multiple keys per secret. It supports a wide range of keys and key services, such as aws kms, vault, gpg, or age. 
+* age](https://github.com/FiloSottile/age) is a simple asymmetric encryption tool.
+
+### Setup
+1. download and install the sops binary (there is no ubuntu package). download and instructions. (move to /bin): https://github.com/getsops/sops/releases.
+2. install age `sudo apt install age`
+3. acquire age key. You can either use your own age key (preferred see: Generating and adding a new age key) or use a shared age key. It can be found in our tine dev password store as `age - seshared`.
+5. add age key to `~/.config/sops/age/keys.txt`. This file may contain multiple keys. It may look like this:
+```
+personal test key
+# created: 2025-02-20T11:05:48+01:00
+# public key: age14nlgzt9mk6g6vrxj29y5vm4zz0els2y8qlcl7cdmfdxuwvgl2e3scupx0k
+AGE-SECRET-KEY-1UZH4UNCDX8XV87RZ8JA7FW2LMFP0MV4G0L0DZZ6W8433RLX0WPKQVV936Y
+
+# another example key
+# created: 2025-02-20T11:10:08+01:00
+# public key: age1qx8l72pa56u5ddjj60quvzhsp3wmkx60z5tu43h55n7rkhxzvvgsn3ce09
+AGE-SECRET-KEY-1UN8LUTH3FE74GKJ0Z749LZEUW9Q0N27AGEEKDKYGHHE95R3AUMPQYCUQVS
+```
+
+### Generating and adding a new age key
+1. a new age key can be generated with `age-keygen`. (It still needs to be added to `~/.config/sops/age/keys.txt`)
+2. add the public key to `.sops.yaml` in this repo. It needs to be added under `keys` and all (required) `key_groups`
+3. git commit and push to master
+4. ask someone to run `find -- "$(git rev-parse --show-toplevel)" -type d -name .git -prune -o -type f \( -name '*.sops.*' \! -name .sops.yaml \) -exec sops updatekeys -- {} \;` to enrolle the new key. (This obviously requires an already enrolled key)
+5. git commit and push all update secrets
+
+### Cert is expired
+When the cert is expiered, it needs to be update. This requires access to dns. Ask a dev ops.
+1. `sudo certbot certonly --manual --preferred-challenges=dns -d '*.local.tine-dev.de'`
+2. `echo -e 'server dns0.metaways.net\nupdate add _acme-challenge.local.tine-dev.de. 60 txt oNs2fcFzTYm47o-ltnWRyi0VR8EgTG5oht1MBtbiiq0\nsend' | nsupdate -k ~/.mwclouddns\n`
+3. `sudo cat /etc/letsencrypt/live/local.tine-dev.de/fullchain.pem > configs/traefik/letsencrypt.fullchain.pem`
+4. copy content manually `sudo cat /etc/letsencrypt/live/local.tine-dev.de/fullchain.pem ` to `sops configs/traefik/letsencrypt.privkey.sops.pem`
+
+### Adding more service
+* take a look at the other service. (broadcasthub is a good example)
+* the service should use there own domain -> <service-name>.local.tine-dev.de
+* we use traefik and traefik labeles to configure our reverse proxy
+    ```
+        - traefik.enable=true
+        - traefik.http.routers.broadcasthub.rule=Host(`broadcasthub.local.tine-dev.de`)
+        - traefik.http.routers.broadcasthub.entrypoints=websecure
+        - traefik.http.routers.broadcasthub.tls=true
+        - traefik.http.services.broadcasthub.loadbalancer.server.port=80
+    ```
+* if a service needs to be accessable under its domain, you can use links. Example: make tine accessable to the broadcasthub throug the revers proxy as `tine.local.tine-dev.de`. Docker will add an /etc/hosts `tine.local.tine-dev.de <traefik internal ip>` in the broadcasthub continer:
+    ```
+    # this is a override file to add a broadcasthub container
+    services:
+    broadcasthub-service: # technical debt: should be simply named broadcasthub
+        ...
+        links:
+        - traefik:tine.local.tine-dev.de
+        ...
+    ```
+* routing based on path (webpack):
+    ```
+    ...
+        labels:
+            - traefik.http.routers.webpack.rule=Host(`tine.local.tine-dev.de`) && (PathPrefix(`/webpack-dev-server`) || PathPrefix(`/sockjs-node`) || PathRegexp(`\.js$`))
+    ```
 # Activate tine Cronjob
 
 ~~~shell
