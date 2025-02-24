@@ -11,4 +11,8 @@ class ConsoleStyle extends SymfonyStyle {
         $this->block($message, 'Notice', 'fg=black;bg=#ebb134', ' ', true);
     }
 
+    public function debug($message)
+    {
+        $this->block($message, 'debug');
+    }
 }

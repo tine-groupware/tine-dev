@@ -112,10 +112,18 @@ tls:
             }
         }
 
-        passthru("sops --decrypt --output {$certFolder}{$letsencryptPrefix}privkey.pem {$certFolder}{$letsencryptPrefix}privkey.sops.pem", $result_code);
+        $result_code = 0;
+        $output = null;
+        exec('which sops', $null, $result_code);
+
         if ($result_code === 0) {
-            $io->info('decrypted tls certificate');
-            return $letsencryptPrefix;
+            $output = "";
+            exec("sops --decrypt --output {$certFolder}{$letsencryptPrefix}privkey.pem {$certFolder}{$letsencryptPrefix}privkey.sops.peme 2> /dev/stdout", $output, $result_code);
+            $io->debug($output);
+            if ($result_code === 0) {
+                $io->info('decrypted tls certificate');
+                return $letsencryptPrefix;
+            }
         }
 
         return null;
