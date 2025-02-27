@@ -32,7 +32,7 @@ class DockerCommand extends BaseCommand
             'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r1',
         ],
         '2024.11' => [
-            'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.2',
+            'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.3',
             'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r1',
         ],
         // repo https://github.com/tine-groupware/tine
