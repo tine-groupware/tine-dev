@@ -118,7 +118,7 @@ tls:
 
         if ($result_code === 0) {
             $output = "";
-            exec("sops --decrypt --output {$certFolder}{$letsencryptPrefix}privkey.pem {$certFolder}{$letsencryptPrefix}privkey.sops.peme 2> /dev/stdout", $output, $result_code);
+            exec("sops --decrypt --output {$certFolder}{$letsencryptPrefix}privkey.pem {$certFolder}{$letsencryptPrefix}privkey.sops.pem 2> /dev/stdout", $output, $result_code);
             $io->debug($output);
             if ($result_code === 0) {
                 $io->info('decrypted tls certificate');
