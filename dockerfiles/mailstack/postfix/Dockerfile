@@ -4,8 +4,9 @@ WORKDIR /root
 
 RUN apk add postfix postfix-mysql
 
-RUN wget https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-amd64 &&\
-    mv confd-0.16.0-linux-amd64 /usr/bin/confd &&\
+RUN case $(uname -m) in x86_64) architecture="amd64" ;;  aarch64) architecture="arm64";; esac &&\
+    wget https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-$architecture &&\
+    mv confd-0.16.0-linux-$architecture /usr/bin/confd &&\
     chmod +x /usr/bin/confd &&\
     mkdir /etc/confd &&\
     mkdir /etc/confd/conf.d &&\
