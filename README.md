@@ -9,6 +9,10 @@ tine-dev (docker dev setup)
 
 Prerequisites: git, docker, php, composer, npm and your user is in the docker group. If not see "Install and Setup Docker"
 
+Note Mac User: install composer and npm via homebrew
+`brew install composer`
+`brew install node`
+
 1. clone this git and open it `git clone https://github.com/tine-groupware/tine-dev.git tine-dev` and `cd tine-dev`
 2. install symfony/console dependencies `composer install`
 3. start tine20-docker setup `./console docker:up`, if you have not done this, install 4 to 6 answer y to clone repos
