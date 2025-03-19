@@ -46,6 +46,9 @@ services:
       POSTFIX_DATABASE: *postfixdb
     volumes:
       - ./configs/mailstack/scripts:/scripts
+      - ./tine20/etc/sql/dovecot_tables.sql:/root/dovecot_init.sql
+      - ./tine20/etc/sql/postfix_tables.sql:/root/postfix_init.sql
+      - ./tine20/etc/sql/postfixmultiinstance_tables.sql:/root/postfixmultiinstance_init.sql
     networks:
       - internal_network
 
