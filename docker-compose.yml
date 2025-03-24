@@ -85,6 +85,8 @@ services:
       TINE20_ACTIONQUEUE: "false"
       TINE20_LICENSE_PATH: /usr/share/tests/tine20/Tinebase/License/license_contract_MW-TEST-3.0.0.pem
       TINE20_SETUP_HTPASSWD: "dev:$$apr1$$Ivpb7VfS$$kLnOg/uI0eNpTUhbeZF7n/" # dev:dev
+      TINE20_FQDN: tine.local.tine-dev.de
+      TINE20_URL: https://tine.local.tine-dev.de
       DEBUG_COLORS: "true"
       TERM: xterm-256color
       COLORTERM: truecolor
