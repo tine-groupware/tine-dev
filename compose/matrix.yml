@@ -1,0 +1,28 @@
+services:
+  web:
+    links:
+      - traefik:matrix.local.tine-dev.de
+    volumes:
+      - ./configs/matrix/matrix.inc.php:/etc/tine20/conf.d/matrix.inc.php:ro
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    user: 991:991
+    environment:
+      SYNAPSE_CONFIG_PATH: /etc/synapse/homeserver.yaml
+    volumes:
+      - ./configs/matrix/synapse:/etc/synapse/
+      - synapse:/data
+    networks:
+      - internal_network
+    links:
+      - traefik:tine.local.tine-dev.de
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.broadcasthub.rule=Host(`matrix.local.tine-dev.de`)
+      - traefik.http.routers.broadcasthub.entrypoints=websecure
+      - traefik.http.routers.broadcasthub.tls=true
+      - traefik.http.services.broadcasthub.loadbalancer.server.port=8008
+
+volumes:
+  synapse:
