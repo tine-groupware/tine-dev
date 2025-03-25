@@ -15,18 +15,23 @@ services:
       - --entrypoints.websecure.address=:443
       - --entrypoints.webpacksecure.address=:10443
       - --accesslog=true
-      - --api.insecure=true
+      - --api=true
     ports:
       - 80:80
       - 443:443
       - 10443:10443
-      - 8080:8080
     volumes:
       - ./configs/traefik/:/etc/traefik/:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - external_network
       - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.local.tine-dev.de`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.service=api@internal"
 
   db:
     image: mariadb:10.9.8
@@ -111,6 +116,7 @@ services:
       - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.tls=true"
       - "traefik.http.services.web.loadbalancer.server.port=80"
+    stop_grace_period: 1s
 
 networks:
   internal_network:

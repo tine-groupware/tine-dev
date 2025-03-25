@@ -25,3 +25,4 @@ services:
       - traefik.http.routers.webpackport.rule=Host(`tine.local.tine-dev.de`)
       - traefik.http.routers.webpackport.entrypoints=webpacksecure
       - traefik.http.routers.webpackport.tls=true
+    stop_grace_period: 1s

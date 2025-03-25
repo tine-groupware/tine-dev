@@ -15,6 +15,7 @@ services:
     - "4025:25"
     #  - "587:587"
     #  - "465:465"
+    stop_grace_period: 1s
 
   dovecot:
     image: dockerregistry.metaways.net/tine20/docker/dovecot:1.0.3
@@ -35,6 +36,7 @@ services:
     #  - "110:110"
     #  - "993:993"
     #  - "995:995"
+    stop_grace_period: 1s
 
   mailstack:
     image: dockerregistry.metaways.net/tine20/docker/mailstackcontrol:1.0.5
