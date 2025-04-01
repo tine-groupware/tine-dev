@@ -32,6 +32,7 @@ services:
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls=true"
       - "traefik.http.routers.traefik.service=api@internal"
+    stop_grace_period: 1s
 
   db:
     image: mariadb:10.9.8

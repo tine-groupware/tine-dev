@@ -21,3 +21,8 @@ form_secret: "874Ve~GUEtg~WV-22avVn~:~k.ezlbiuO#kq9#70t1UB-G,61="
 signing_key_path: "/etc/synapse//matrix.local.tine-dev.de.signing.key"
 trusted_key_servers:
   - server_name: "matrix.org"
+enable_registration: true
+enable_registration_without_verification: true
+password_config:
+  policy:
+    enabled: false
