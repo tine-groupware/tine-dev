@@ -12,6 +12,7 @@ services:
       SYNAPSE_CONFIG_PATH: /etc/synapse/homeserver.yaml
     volumes:
       - ./configs/matrix/synapse:/etc/synapse/
+      - ./tine20/docs/operators/matrix/rest_auth_provider.py:/usr/local/lib/python3.12/site-packages/rest_auth_provider.py
       - synapse:/data
     networks:
       - internal_network

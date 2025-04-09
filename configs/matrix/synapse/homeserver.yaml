@@ -26,3 +26,10 @@ enable_registration_without_verification: true
 password_config:
   policy:
     enabled: false
+modules:
+  - module: rest_auth_provider.RestAuthProvider
+    config:
+      endpoint: http://web
+user_directory:
+  search_all_users: true
+  prefer_local_users: true
