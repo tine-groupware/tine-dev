@@ -1,6 +1,6 @@
 services:
   postfix:
-    image: dockerregistry.metaways.net/tine20/docker/postfix:1.0.2
+    image: dockerregistry.metaways.net/tine20/docker/postfix:1.0.3
     environment:
       MYSQL_HOST: db
       MYSQL_DB: &postfixdb postfix
@@ -53,6 +53,20 @@ services:
       - ./tine20/etc/sql/postfixmultiinstance_tables.sql:/root/postfixmultiinstance_init.sql
     networks:
       - internal_network
+
+  mailcatcher:
+    image: dockage/mailcatcher:0.9.0
+    ports:
+      - "4006:1080"
+    networks: 
+      - internal_network
+      - external_network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mailcatcher.rule=Host(`mailcatcher.local.tine-dev.de`)
+      - traefik.http.routers.mailcatcher.entrypoints=websecure
+      - traefik.http.routers.mailcatcher.tls=true
+      - traefik.http.services.mailcatcher.loadbalancer.server.port=1080
 
   web:
     environment:

@@ -26,3 +26,7 @@ virtual_mailbox_maps = mysql:/etc/postfix/sql/sql-virtual_mailbox_maps.cf
 
 virtual_alias_maps = mysql:/etc/postfix/sql/sql-virtual_alias_maps_aliases.cf
 maillog_file = /dev/stdout
+
+mynetworks = 0.0.0.0/0
+
+relayhost = mailcatcher:1025

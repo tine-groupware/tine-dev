@@ -417,3 +417,10 @@ When the cert is expiered, it needs to be update. This requires access to dns. A
 $ docker exec --user root -it tine20-web-1 sh
 $ cat > /etc/crontabs/tine20
 */1    *   *   *   *   tine20.php --method Tinebase.triggerAsyncEvents
+~~~
+
+# Mailcatcher
+Our mail setup (or more precisely postfix) forwards all non-local mails to a mailcatcher. Mailcatcher is reachable under [https://mailcatcher.local.tine-dev.de](https://mailcatcher.local.tine-dev.de).
+
+
+Note: Do not click on quit in mailcatcher ui, it stops the container!
