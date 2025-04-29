@@ -1,0 +1,4 @@
+services:
+  web:
+    volumes:
+      - ./configs/sms/sms.inc.php:/etc/tine20/conf.d/sms.inc.php:ro
