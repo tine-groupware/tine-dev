@@ -341,9 +341,14 @@ Certificates are set up automatically. There are several options that are tried 
 ## Generate self-signed certificates
 It is easist to use a wildcard certificate for *.local.tine-dev.de. You can generate one with ./console docker:generateCert.
 
-The resulting certificate and private key will be placed in configs/traefik/fullchain.pem or configs/traefik/privatekey.pem.
+The resulting ca, certificate and private key will be placed in configs/traefik/ca.pem, configs/traefik/fullchain.pem or configs/traefik/privatekey.pem.
 
 You may import your self-signed certificate into your browser. Be aware of the security implications.
+1. (firefox) goto Settings -> search("Certificates")  -> Certificates -> View Certificates… or (chrome) goto chrome://settings/certificates  
+3. press Authorities -> Import
+4. select `/<path to docker setup>/configs/traefik/ca.pem`
+5. check `Trust this CA to identify websites.` or `Trust this certificate for identifying websites`
+6. press OK
 
 ## Configure letsencrypt certificate
 Note: You can also obtain a letsencrypt certificate by other means and use it as a custom certificate.

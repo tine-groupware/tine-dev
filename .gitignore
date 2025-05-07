@@ -14,5 +14,6 @@
 .DS_Store
 /configs/traefik/*privkey.pem
 /configs/traefik/fullchain.pem
+/configs/traefik/ca.pem
 /configs/traefik/dynamic/certs.yaml
 **/.decrypted~*

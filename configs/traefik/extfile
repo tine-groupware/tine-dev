@@ -1,0 +1,6 @@
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = *.local.tine-dev.de
+DNS.2 = local.tine-dev.de
