@@ -385,9 +385,10 @@ AGE-SECRET-KEY-1UN8LUTH3FE74GKJ0Z749LZEUW9Q0N27AGEEKDKYGHHE95R3AUMPQYCUQVS
 ### Cert is expired
 When the cert is expiered, it needs to be update. This requires access to dns. Ask a dev ops.
 1. `sudo certbot certonly --manual --preferred-challenges=dns -d '*.local.tine-dev.de'`
-2. `echo -e 'server dns0.metaways.net\nupdate add _acme-challenge.local.tine-dev.de. 60 txt oNs2fcFzTYm47o-ltnWRyi0VR8EgTG5oht1MBtbiiq0\nsend' | nsupdate -k ~/.mwclouddns\n`
+2. `echo -e 'server dns0.metaways.net\nupdate add _acme-challenge.local.tine-dev.de. 60 txt oNs2fcFzTYm47o-ltnWRyi0VR8EgTG5oht1MBtbiiq0\nsend' | nsupdate -k ~/.mwclouddns`
 3. `sudo cat /etc/letsencrypt/live/local.tine-dev.de/fullchain.pem > configs/traefik/letsencrypt.fullchain.pem`
-4. copy content manually `sudo cat /etc/letsencrypt/live/local.tine-dev.de/fullchain.pem ` to `sops configs/traefik/letsencrypt.privkey.sops.pem`
+4. copy content manually `sudo cat /etc/letsencrypt/live/local.tine-dev.de/privkey.pem ` to `sops configs/traefik/letsencrypt.privkey.sops.pem`
+5. `echo -e 'server dns0.metaways.net\nupdate delete _acme-challenge.local.tine-dev.de. 60 txt oNs2fcFzTYm47o-ltnWRyi0VR8EgTG5oht1MBtbiiq0\nsend' | nsupdate -k ~/.mwclouddns`
 
 ### Adding more service
 * take a look at the other service. (broadcasthub is a good example)
