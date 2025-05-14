@@ -40,5 +40,20 @@ services:
     healthcheck:
       test: [CMD, "true"]
 
+  matrix-wellknwon:
+    image: nginx
+    volumes:
+      - ./configs/matrix/client.well-known.json:/usr/share/nginx/html/.well-known/matrix/client
+      - ./configs/matrix/well-known.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - internal_network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.matrixwellknwon.rule=Host(`matrix.local.tine-dev.de`) && PathPrefix(`/.well-known/matrix`)
+      - traefik.http.routers.matrixwellknwon.entrypoints=websecure
+      - traefik.http.routers.matrixwellknwon.tls=true
+      - traefik.http.services.matrixwellknwon.loadbalancer.server.port=80
+    
+
 volumes:
   synapse:

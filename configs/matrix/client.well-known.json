@@ -1,0 +1,9 @@
+{
+  "m.homeserver": {
+    "base_url": "https://matrix.local.tine-dev.de/"
+  },
+  "io.element.e2ee": {
+    "secure_backup_required": true
+  }
+}
+
