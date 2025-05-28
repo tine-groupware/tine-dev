@@ -4,8 +4,8 @@ WORKDIR /root
 
 RUN apk add dovecot dovecot-mysql dovecot-pop3d dovecot-lmtpd dovecot-pigeonhole-plugin
 
-RUN wget https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-arm64 &&\
-    mv confd-0.16.0-linux-arm64 /usr/bin/confd &&\
+RUN wget https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-darwin-amd64  &&\
+    mv confd-0.16.0-darwin-amd64 /usr/bin/confd &&\
     chmod +x /usr/bin/confd &&\
     mkdir /etc/confd &&\
     mkdir /etc/confd/conf.d &&\
