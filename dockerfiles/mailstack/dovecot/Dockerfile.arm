@@ -18,7 +18,9 @@ RUN mkdir /var/vmail && chown vmail:vmail /var/vmail
 COPY files/docker-entrypoint.sh /root
 COPY conf.d /etc/dovecot/conf.d
 COPY confd /etc/confd/conf.d
-COPY templates /etc/confd/templates
+COPY templates/dovecot-dict-sql.conf.ext.template /etc/confd/templates/dovecot-dict-sql.conf.ext
+COPY templates/dovecot-master-sql.conf.ext.template /etc/confd/templates/dovecot-master-sql.conf.ext
+COPY templates/dovecot-sql.conf.ext.template /etc/confd/templates/dovecot-sql.conf.ext
 
 ENV MYSQL_HOST=255.255.255.255 MYSQL_DB=dovecot MYSQL_USER=dovecot MYSQL_PASSWORD=doofecat
 

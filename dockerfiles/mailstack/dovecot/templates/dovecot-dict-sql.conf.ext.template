@@ -1,6 +1,6 @@
 # This file is commonly accessed via dict {} section in dovecot.conf
 
-connect = host={{getv "/mysql/host"}} dbname={{getv "/mysql/db"}} user={{getv "/mysql/user"}} password={{getv "/mysql/password"}}
+connect = host=db dbname=dovecot user=tine20 password=tine20pw
 
 # CREATE TABLE quota (
 #   username varchar(100) not null,
