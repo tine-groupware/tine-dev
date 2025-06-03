@@ -13,6 +13,7 @@ services:
     volumes:
       - ./configs/matrix/synapse:/etc/synapse/
       - ./tine20/docs/operators/matrix/rest_auth_provider.py:/usr/local/lib/python3.12/site-packages/rest_auth_provider.py
+      - ./configs/matrix/synapse/shared_secret_authenticator.py:/usr/local/lib/python3.12/site-packages/shared_secret_authenticator.py
       - synapse:/data
     networks:
       - internal_network
