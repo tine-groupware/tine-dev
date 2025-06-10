@@ -26,6 +26,7 @@ use App\Commands\Tine\TineSetupTestCommand;
 use App\Commands\Tine\TineUpdateCommand;
 use App\Commands\Tine\TineDemodataCommand;
 use App\Commands\Tine\TineCliCommand;
+use App\Commands\Tine\TineSetupCliCommand;
 use App\Commands\Tine\TineAwaitDbCommand;
 use App\Commands\Tine\TineClearCacheCommand;
 
@@ -58,6 +59,7 @@ $app->add(new TineSetupTestCommand());
 $app->add(new TineUpdateCommand());
 $app->add(new TineDemodataCommand());
 $app->add(new TineCliCommand());
+$app->add(new TineSetupCliCommand());
 $app->add(new TineAwaitDbCommand());
 $app->add(new TineClearCacheCommand());
 
