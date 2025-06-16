@@ -43,8 +43,10 @@ class NpmCommand extends DockerCommand
         //       this tradeoff seems to big
         passthru("docker run --rm \
             --user " . trim(`id -u`) . ':' . trim(`id -g`) . " \
+            -p 9229:9229 \
             -v $localCacheDir:/.npm \
-            -v {$this->getTineDir($io)}/Tinebase/js:/usr/share/tine20/Tinebase/js \
+            -v {$this->getTineDir($io)}:/usr/share/tine20 \
+            -v {$this->getTineDir($io)}/../tests:/usr/share/tests \
             {$env['WEBPACK_IMAGE']} \
             sh -c 'cd /usr/share/tine20/Tinebase/js && npm {$input->getArgument('cmd')}'", $result_code); // --loglevel verbose
         return $result_code;
