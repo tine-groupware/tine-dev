@@ -38,11 +38,11 @@ class DockerCommand extends BaseCommand
         // repo https://github.com/tine-groupware/tine
         'main' => [
             'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.3',
-            'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r1',
+            'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r2',
         ],
         'erzbistum/main' => [
             'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.2',
-            'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r1',
+            'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r2',
         ],
     ];
 
