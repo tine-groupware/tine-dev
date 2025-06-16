@@ -11,9 +11,9 @@ services:
       REDIS_CHANNEL: broadcasthub
       AUTH_TIMEOUT: 5000
       WS_PORT: 80
-      ENABLE_MULTITENANCY_MODE: 'false'
-      TINE20_JSON_API_URL: https://tine.local.tine-dev.de
-      TINE20_JSON_API_URL_PATTERN: (https://tine.local.tine-dev.de)|(http://tenant(1|2|3).my-domain.test)
+      ENABLE_MULTITENANCY_MODE: false
+      TINE20_JSON_API_URL: http://web/ # internally connect w.o. ssl as node doesn't have cert
+#      TINE20_JSON_API_URL_PATTERN: (http://tine.local.tine-dev.de)|(http://tenant(1|2|3).my-domain.test)
       DEBUG_DEFAULT_LOGGING: "on"
       DEBUG_LOG_TO_FILE: "off"
       DEBUG_LOG_FILE: ../../stdout.log
