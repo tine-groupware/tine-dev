@@ -15,6 +15,8 @@ services:
       - internal_network
     volumes:
       - ./tine20/tine20:/usr/share/tine20/:ro
+      - ./tine20/tine20/Tinebase/css/build:/usr/share/tine20/Tinebase/css/build/
+      - ./tine20/tine20/Tinebase/js/build:/usr/share/tine20/Tinebase/js/build/
     command: "npm --prefix /usr/share/tine20/Tinebase/js/ start"
     labels:
       - traefik.enable=true
