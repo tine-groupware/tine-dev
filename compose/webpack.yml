@@ -20,7 +20,7 @@ services:
     command: "npm --prefix /usr/share/tine20/Tinebase/js/ start"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.webpack.rule=Host(`tine.local.tine-dev.de`) && (PathPrefix(`/webpack-dev-server`) || PathPrefix(`/sockjs-node`) || (PathRegexp(`\.js$`) && !PathPrefix(`library/ExtJS`)))
+      - traefik.http.routers.webpack.rule=Host(`tine.local.tine-dev.de`) && (PathPrefix(`/webpack-dev-server`) || PathPrefix(`/sockjs-node`) || (PathRegexp(`\.js$`) &&  !PathPrefix(`/library/ExtJS`)))
       - traefik.http.routers.webpack.entrypoints=websecure
       - traefik.http.routers.webpack.tls=true
       - traefik.http.services.webpack.loadbalancer.server.port=10443
