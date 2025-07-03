@@ -1,0 +1,5 @@
+user     = tine20
+password = tine20pw
+hosts    = db
+dbname   = postfix
+query    = SELECT 1 FROM smtp_virtual_domains WHERE domain='%s';

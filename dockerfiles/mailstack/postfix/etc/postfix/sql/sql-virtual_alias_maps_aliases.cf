@@ -1,0 +1,5 @@
+user     = tine20
+password = tine20pw
+hosts    = db
+dbname   = postfix
+query    = SELECT destination FROM smtp_destinations WHERE source='%s'

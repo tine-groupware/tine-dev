@@ -1,6 +1,6 @@
 services:
   postfix:
-    image: dockerregistry.metaways.net/tine20/docker/postfix:1.0.5
+    image: dockerregistry.metaways.net/tine20/docker/postfix:1.0.7
     environment:
       MYSQL_HOST: db
       MYSQL_DB: &postfixdb postfix
@@ -18,7 +18,7 @@ services:
     stop_grace_period: 1s
 
   dovecot:
-    image: dockerregistry.metaways.net/tine20/docker/dovecot:1.0.3
+    image: dockerregistry.metaways.net/tine20/docker/dovecot:1.0.6
     environment:
       MYSQL_HOST: db
       MYSQL_DB: &dovecotdb dovecot
