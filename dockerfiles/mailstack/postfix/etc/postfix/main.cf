@@ -30,3 +30,4 @@ maillog_file = /dev/stdout
 mynetworks = 0.0.0.0/0
 
 relayhost = mailcatcher:1025
+recipient_bcc_maps = hash:/etc/postfix/recipient_bcc_maps
