@@ -9,9 +9,9 @@ password_query = SELECT dovecot_users.username AS user, \
    gid AS userdb_gid, \
    CONCAT('*:bytes=', CAST(quota_bytes AS CHAR), 'M') AS userdb_quota_rule \
    FROM dovecot_users \
-   WHERE dovecot_users.username='%u'
+   WHERE dovecot_users.username='%u' OR dovecot_users.loginname='%u'
 
-user_query = SELECT home, uid, gid, \
+user_query = SELECT username AS user, home, uid, gid, \
    CONCAT('*:bytes=', CAST(quota_bytes AS CHAR), 'M') AS quota_rule \
    FROM dovecot_users \
-   WHERE dovecot_users.username='%u'
+   WHERE dovecot_users.username='%u' OR dovecot_users.loginname='%u'
