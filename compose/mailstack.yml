@@ -1,6 +1,7 @@
 services:
   postfix:
     image: dockerregistry.metaways.net/tine20/docker/postfix:1.0.8
+    build: ./dockerfiles/mailstack/postfix
     environment:
       MYSQL_HOST: db
       MYSQL_DB: &postfixdb postfix
@@ -19,6 +20,7 @@ services:
 
   dovecot:
     image: dockerregistry.metaways.net/tine20/docker/dovecot:1.0.6
+    build: ./dockerfiles/mailstack/dovecot
     environment:
       MYSQL_HOST: db
       MYSQL_DB: &dovecotdb dovecot
@@ -40,6 +42,7 @@ services:
 
   mailstack:
     image: dockerregistry.metaways.net/tine20/docker/mailstackcontrol:1.0.5
+    build: ./dockerfiles/mailstack/control
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root}"
       MYSQL_USER: *mysqluser
