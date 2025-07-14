@@ -1,7 +1,7 @@
 # this is a override file to add a ldap container
 services:
   ldap:
-    image: dockerregistry.metaways.net/tine20/docker/ldap:1.2.5-r0
+    image: ghcr.io/tine-groupware/tine-dev/ldap:1.2.5-tine1
     volumes:
       - /var/lib/ldap
       - /etc/ldap/slapd.d
