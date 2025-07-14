@@ -1,6 +1,6 @@
 services:
   postfix:
-    image: dockerregistry.metaways.net/tine20/docker/postfix:1.0.7
+    image: dockerregistry.metaways.net/tine20/docker/postfix:1.0.8
     environment:
       MYSQL_HOST: db
       MYSQL_DB: &postfixdb postfix
