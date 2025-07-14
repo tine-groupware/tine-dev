@@ -24,24 +24,24 @@ class DockerCommand extends BaseCommand
             'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:2022.11', // should be the same setup
         ],
         '2022.11' => [
-            'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2022.11-8.0',
+            'web' => 'tinegroupware/dev:2022.11-8.0',
             'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:2022.11',
         ],
         '2023.11' => [
-            'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2023.11-8.1',
+            'web' => 'tinegroupware/dev:2023.11-8.1',
             'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r1',
         ],
         '2024.11' => [
-            'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.3',
+            'web' => 'tinegroupware/dev:2024.11-8.3',
             'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r1',
         ],
         // repo https://github.com/tine-groupware/tine
         'main' => [
-            'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.3',
+            'web' => 'tinegroupware/dev:2024.11-8.3',
             'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r2',
         ],
         'erzbistum/main' => [
-            'web' => 'dockerregistry.metaways.net/tine20/tine20/dev:2024.11-8.2',
+            'web' => 'tinegroupware/dev:2024.11-8.2',
             'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r2',
         ],
     ];
