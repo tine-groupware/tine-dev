@@ -1,10 +1,12 @@
 workflow:
   rules:
-    - if: $RUN_CI_PIPELINE == "false"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME =~ /(^feat)|(^pu)|(change)/
-      when: never
-    - when: always
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+stages:
+  - package
+  - test
 
 .docker:
   variables:
@@ -20,6 +22,8 @@ workflow:
 
 # TODO run this only on merge requests
 test:
+  stage: test
+  needs: []
   extends: .docker
   script:
     - cp $DOCKER_GIT_CONFIG /root/.gitconfig
@@ -67,3 +71,44 @@ test:
     - ./console tine:uninstall
   only:
     - master
+
+include:
+  - component: $CI_SERVER_FQDN/gitlabci-components/image-build-multiplatform/build@1
+    inputs:
+      name: dovecot
+      context_path: dockerfiles/mailstack/dovecot
+      containerfile_path: dockerfiles/mailstack/dovecot/Dockerfile
+      registry_auth:
+        - registry: ghcr.io
+          user: $GHCR_USER
+          password: $GHCR_PASSWORD
+      image_repos:
+        - $CI_REGISTRY_IMAGE
+      image_repos_release:
+        - ghcr.io/tine-groupware/tine-dev
+  - component: $CI_SERVER_FQDN/gitlabci-components/image-build-multiplatform/build@1
+    inputs:
+      name: postfix
+      context_path: dockerfiles/mailstack/postfix
+      containerfile_path: dockerfiles/mailstack/postfix/Dockerfile
+      registry_auth:
+        - registry: ghcr.io
+          user: $GHCR_USER
+          password: $GHCR_PASSWORD
+      image_repos:
+        - $CI_REGISTRY_IMAGE
+      image_repos_release:
+        - ghcr.io/tine-groupware/tine-dev
+  - component: $CI_SERVER_FQDN/gitlabci-components/image-build-multiplatform/build@1
+    inputs:
+      name: mailstackcontrol
+      context_path: dockerfiles/mailstack/control
+      containerfile_path: dockerfiles/mailstack/control/Dockerfile
+      registry_auth:
+        - registry: ghcr.io
+          user: $GHCR_USER
+          password: $GHCR_PASSWORD
+      image_repos:
+        - $CI_REGISTRY_IMAGE
+      image_repos_release:
+        - ghcr.io/tine-groupware/tine-dev
