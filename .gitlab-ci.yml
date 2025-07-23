@@ -23,7 +23,6 @@ stages:
 # TODO run this only on merge requests
 test:
   stage: test
-  needs: []
   extends: .docker
   script:
     - cp $DOCKER_GIT_CONFIG /root/.gitconfig
