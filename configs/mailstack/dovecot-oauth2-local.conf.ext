@@ -1,0 +1,3 @@
+introspection_mode = local
+debug = yes
+local_validation_key_dict = fs:posix:prefix=/etc/dovecot/keys/

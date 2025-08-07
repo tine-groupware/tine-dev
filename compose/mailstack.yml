@@ -1,6 +1,6 @@
 services:
   postfix:
-    image: ghcr.io/tine-groupware/tine-dev/postfix:1.0.8
+    image: ghcr.io/tine-groupware/tine-dev/postfix:1.0.9
     build: ./dockerfiles/mailstack/postfix
     environment:
       MYSQL_HOST: db
@@ -19,7 +19,7 @@ services:
     stop_grace_period: 1s
 
   dovecot:
-    image: ghcr.io/tine-groupware/tine-dev/dovecot:1.0.6
+    image: ghcr.io/tine-groupware/tine-dev/dovecot:1.0.8
     build: ./dockerfiles/mailstack/dovecot
     environment:
       MYSQL_HOST: db
@@ -30,6 +30,8 @@ services:
       - db
     volumes:
       - ./configs/mailstack/sieve-trace-log.conf:/etc/dovecot/conf.d/90-sieve-trace-log.conf
+      - ./configs/mailstack/keys:/etc/dovecot/keys
+      - ./configs/sso/sso_cert.crt:/etc/dovecot/keys/email.tine.local.tine-dev.de/RS256/tine-sso
     networks:
       - internal_network
       - external_network
@@ -39,6 +41,9 @@ services:
     #  - "993:993"
     #  - "995:995"
     stop_grace_period: 1s
+    links:
+      - traefik:tine.local.tine-dev.de
+
 
   mailstack:
     image: ghcr.io/tine-groupware/tine-dev/mailstackcontrol:1.0.5

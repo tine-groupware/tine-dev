@@ -18,6 +18,12 @@ meta_directory = /etc/postfix
 shlib_directory = /usr/lib/postfix
 smtpd_tls_security_level=may
 # smtpd_tls_security_level=encrypt
+
+smtpd_sasl_path = inet:dovecot:12345
+smtpd_sasl_type = dovecot
+smtpd_sasl_auth_enable = yes
+smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
+
 virtual_transport = lmtp:[dovecot]:24
 
 virtual_mailbox_domains = mysql:/etc/postfix/sql/sql-virtual_mailbox_domains.cf
