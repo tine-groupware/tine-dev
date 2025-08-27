@@ -105,6 +105,14 @@ tls:
         $certFolder = 'configs/traefik/';
         $letsencryptPrefix = 'letsencrypt.';
 
+        // in case the sops.pem file has been updated we need to delete the decrypted privkey
+        if (($sopsMTime = @filemtime("{$certFolder}{$letsencryptPrefix}privkey.sops.pem")) &&
+                ($privKeyMTime = @filemtime("{$certFolder}{$letsencryptPrefix}privkey.pem")) &&
+                $sopsMTime > $privKeyMTime) {
+            $io->info('found outdated tls certificate, deleting');
+            unlink("{$certFolder}{$letsencryptPrefix}privkey.pem");
+        }
+
         foreach (['', $letsencryptPrefix] as $prefix) {
             if(is_file("{$certFolder}{$prefix}privkey.pem")) {
                 $io->info('found tls certificate');
