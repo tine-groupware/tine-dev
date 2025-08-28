@@ -111,3 +111,16 @@ include:
         - $CI_REGISTRY_IMAGE
       image_repos_release:
         - ghcr.io/tine-groupware/tine-dev
+  - component: $CI_SERVER_FQDN/gitlabci-components/image-build-multiplatform/build@1
+    inputs:
+      name: ldap
+      context_path: dockerfiles/ldap
+      containerfile_path: dockerfiles/ldap/Dockerfile
+      registry_auth:
+        - registry: ghcr.io
+          user: $GHCR_USER
+          password: $GHCR_PASSWORD
+      image_repos:
+        - $CI_REGISTRY_IMAGE
+      image_repos_release:
+        - ghcr.io/tine-groupware/tine-dev
