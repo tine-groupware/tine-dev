@@ -29,20 +29,24 @@ class DockerCommand extends BaseCommand
         ],
         '2023.11' => [
             'web' => 'tinegroupware/dev:2023.11-8.1',
-            'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r1',
+            'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw',
         ],
         '2024.11' => [
             'web' => 'tinegroupware/dev:2024.11-8.3',
-            'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r1',
+            'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw',
+        ],
+        '2025.11' => [
+            'web' => 'tinegroupware/dev:2025.11-8.3',
+            'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw',
         ],
         // repo https://github.com/tine-groupware/tine
         'main' => [
             'web' => 'tinegroupware/dev:2024.11-8.3',
-            'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r2',
+            'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw',
         ],
         'erzbistum/main' => [
             'web' => 'tinegroupware/dev:2024.11-8.2',
-            'webpack' => 'dockerregistry.metaways.net/tine20/tine20/node:18.9.0-alpine-r2',
+            'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw1',
         ],
     ];
 
