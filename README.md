@@ -363,7 +363,11 @@ Our letsencrypt private key is part of this repo. It will be automatically decry
 2. install age `sudo apt install age`
 3. acquire age key. You can either use your own age key (preferred see: Generating and adding a new age key) or use a shared age key. It can be found in our tine dev password store as `age - seshared`.
 5. add age key to `~/.config/sops/age/keys.txt`. This file may contain multiple keys. It may look like this:
-```
+6. delete generated private key, if present `rm -f ./configs/traefik/privkey.pem`
+7. run `./console docker:up` docker up decrypts the lets encrypt private key and configures the web server. The first time it should log `[INFO] decrypted tls certificate`, after that `[INFO] found tls certificate`
+8. Open tine and ensure it uses a lets encrypt certificate
+```bash
+$ cat ~/.config/sops/age/keys.txt
 personal test key
 # created: 2025-02-20T11:05:48+01:00
 # public key: age14nlgzt9mk6g6vrxj29y5vm4zz0els2y8qlcl7cdmfdxuwvgl2e3scupx0k
@@ -383,7 +387,11 @@ AGE-SECRET-KEY-1UN8LUTH3FE74GKJ0Z749LZEUW9Q0N27AGEEKDKYGHHE95R3AUMPQYCUQVS
 5. git commit and push all update secrets
 
 ### Cert is expired
-When the cert is expiered, it needs to be update. This requires access to dns. Ask a dev ops.
+The certificate is distributed in our git repo. If its outdate, try pulling. After pulling a `./console docker:up` is needed to load the new private key.
+
+If there is no new certificate available in git. It is in the file `configs/traefik/letsencrypt.privkey.sops.pem`, ask a devops to update the certificat. The certe needs to be generated manualy. 
+
+Updateing the certificate requries updateing the dns. This can be done using nsupdate, but requires a key.
 1. `sudo certbot certonly --manual --preferred-challenges=dns -d '*.local.tine-dev.de'`
 2. `echo -e 'server dns0.metaways.net\nupdate add _acme-challenge.local.tine-dev.de. 60 txt oNs2fcFzTYm47o-ltnWRyi0VR8EgTG5oht1MBtbiiq0\nsend' | nsupdate -k ~/.mwclouddns`
 3. `sudo cat /etc/letsencrypt/live/local.tine-dev.de/fullchain.pem > configs/traefik/letsencrypt.fullchain.pem`
