@@ -1,6 +1,6 @@
 services:
   mkdocs:
-    image: dockerregistry.metaways.net/tine20/tine20/mkdocs:latest${IMAGE_SUFFIX}
+    image: dockerregistry.metaways.net/tine20/tine20/mkdocs:1${IMAGE_SUFFIX}
     restart: unless-stopped
     volumes:
       - ./tine20:/docs
