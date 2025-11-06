@@ -1,4 +1,8 @@
 # this is a override file to add a phpldapadmin container
+# login via
+#   http://localhost:4007
+#   user: cn=admin,dc=tine,dc=test
+#   pass: admin
 services:
 
   pla:
