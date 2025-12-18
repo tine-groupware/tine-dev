@@ -41,12 +41,13 @@ class DockerUpCommand extends DockerCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if ($input->getOption('default') && is_file('pullup.json')) {
-            unlink('pullup.json');
-        }
-
         parent::execute($input, $output);
         $io = new ConsoleStyle($input, $output);
+
+        if ($input->getOption('default') && is_file('pullup.json')) {
+            $io->info('default options does nothing, if you want to delete your pullup.json file do it yourself!');
+        }
+
         $inputContainer = $input->getArgument('container');
 
         $tinedir = $this->getTineDir($io);
