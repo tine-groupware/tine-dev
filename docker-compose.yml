@@ -1,7 +1,7 @@
 name: "tine20"
 services:
   traefik:
-    image: "traefik:v3.3"
+    image: "traefik:v3.6"
     restart: always
     container_name: "traefik"
     command:
@@ -35,7 +35,7 @@ services:
     stop_grace_period: 1s
 
   db:
-    image: mariadb:10.9.8
+    image: mariadb:11.8
     command: --max-allowed-packet=209715210
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root}"
@@ -52,7 +52,7 @@ services:
       - "3306:3306"
 
   cache:
-    image: redis:6.0.16
+    image: valkey/valkey:9.0
     networks:
       - internal_network
       - external_network
