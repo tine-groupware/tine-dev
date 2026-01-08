@@ -106,11 +106,11 @@ tls:
         $certFolder = 'configs/traefik/';
         $letsencryptPrefix = 'letsencrypt.';
 
-        // in case the sops.pem file has been updated we need to delete the decrypted privkey
-        if (($sopsMTime = @filemtime("{$certFolder}{$letsencryptPrefix}privkey.sops.pem")) &&
+        // in case the letsencrypt.privkey.pem.aes file has been updated we need to delete the decrypted privkey
+        if (($letsencryptMTime = @filemtime("{$certFolder}{$letsencryptPrefix}privkey.pem.aes")) &&
                 ($privKeyMTime = @filemtime("{$certFolder}{$letsencryptPrefix}privkey.pem")) &&
-                $sopsMTime > $privKeyMTime) {
-            $io->info('found outdated tls certificate, deleting');
+                $letsencryptMTime > $privKeyMTime) {
+            $io->info('found outdated letsencrypt tls certificate, deleting');
             unlink("{$certFolder}{$letsencryptPrefix}privkey.pem");
         }
 
@@ -123,16 +123,18 @@ tls:
 
         $result_code = 0;
         $output = null;
-        exec('which sops', $null, $result_code);
+        exec('which openssl', $null, $result_code);
 
         if ($result_code === 0) {
             $output = "";
-            exec("sops --decrypt --output {$certFolder}{$letsencryptPrefix}privkey.pem {$certFolder}{$letsencryptPrefix}privkey.sops.pem 2> /dev/stdout", $output, $result_code);
+            exec("cat {$certFolder}{$letsencryptPrefix}privkey.pem.aes | openssl enc -aes-256-cbc -a -d -salt -pbkdf2 -pass pass:well-known 1> {$certFolder}{$letsencryptPrefix}privkey.pem", $output, $result_code);
             $io->debug($output);
             if ($result_code === 0) {
                 $io->info('decrypted tls certificate');
                 return $letsencryptPrefix;
             }
+        } else {
+            $io->info('openssl binary not found. Openssl is needed to decrypt the lets encrypt private key');
         }
 
         return null;

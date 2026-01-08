@@ -351,40 +351,11 @@ You may import your self-signed certificate into your browser. Be aware of the s
 6. press OK
 
 ## Configure letsencrypt certificate
-Note: You can also obtain a letsencrypt certificate by other means and use it as a custom certificate.
-
-Our letsencrypt private key is part of this repo. It will be automatically decrypted and used if properly configured. Therefore, you will need to set up sops with age and have your age key added.
-
-* SOPS](https://github.com/getsops/sops) is a secret management tool that can be used to encrypt and decrypt secrets (files), and manage multiple keys per secret. It supports a wide range of keys and key services, such as aws kms, vault, gpg, or age. 
-* age](https://github.com/FiloSottile/age) is a simple asymmetric encryption tool.
+Our private key for *.local.tine-dev.de is included in this repo. It is encrypted with the password "well-known". This should only hide it from
+automatic security scanners. (Who will otherwise spam as that we leaked a key.)
 
 ### Setup
-1. download and install the sops binary (there is no ubuntu package). download and instructions. (move to /bin): https://github.com/getsops/sops/releases.
-2. install age `sudo apt install age`
-3. acquire age key. You can either use your own age key (preferred see: Generating and adding a new age key) or use a shared age key. It can be found in our tine dev password store as `age - seshared`.
-5. add age key to `~/.config/sops/age/keys.txt`. This file may contain multiple keys. It may look like this:
-6. delete generated private key, if present `rm -f ./configs/traefik/privkey.pem`
-7. run `./console docker:up` docker up decrypts the lets encrypt private key and configures the web server. The first time it should log `[INFO] decrypted tls certificate`, after that `[INFO] found tls certificate`
-8. Open tine and ensure it uses a lets encrypt certificate
-```bash
-$ cat ~/.config/sops/age/keys.txt
-personal test key
-# created: 2025-02-20T11:05:48+01:00
-# public key: age14nlgzt9mk6g6vrxj29y5vm4zz0els2y8qlcl7cdmfdxuwvgl2e3scupx0k
-AGE-SECRET-KEY-1UZH4UNCDX8XV87RZ8JA7FW2LMFP0MV4G0L0DZZ6W8433RLX0WPKQVV936Y
-
-# another example key
-# created: 2025-02-20T11:10:08+01:00
-# public key: age1qx8l72pa56u5ddjj60quvzhsp3wmkx60z5tu43h55n7rkhxzvvgsn3ce09
-AGE-SECRET-KEY-1UN8LUTH3FE74GKJ0Z749LZEUW9Q0N27AGEEKDKYGHHE95R3AUMPQYCUQVS
-```
-
-### Generating and adding a new age key
-1. a new age key can be generated with `age-keygen`. (It still needs to be added to `~/.config/sops/age/keys.txt`)
-2. add the public key to `.sops.yaml` in this repo. It needs to be added under `keys` and all (required) `key_groups`
-3. git commit and push to master
-4. ask someone to run `find -- "$(git rev-parse --show-toplevel)" -type d -name .git -prune -o -type f \( -name '*.sops.*' \! -name .sops.yaml \) -exec sops updatekeys -- {} \;` to enrolle the new key. (This obviously requires an already enrolled key)
-5. git commit and push all update secrets
+1. install openssl
 
 ### Cert is expired
 The certificate is distributed in our git repo. If its outdate, try pulling. After pulling a `./console docker:up` is needed to load the new private key.
@@ -394,9 +365,10 @@ If there is no new certificate available in git. It is in the file `configs/trae
 Updateing the certificate requries updateing the dns. This can be done using nsupdate, but requires a key.
 1. `sudo certbot certonly --manual --preferred-challenges=dns -d '*.local.tine-dev.de'`
 2. `echo -e 'server dns0.metaways.net\nupdate add _acme-challenge.local.tine-dev.de. 60 txt oNs2fcFzTYm47o-ltnWRyi0VR8EgTG5oht1MBtbiiq0\nsend' | nsupdate -k ~/.mwclouddns`
-3. `sudo cat /etc/letsencrypt/live/local.tine-dev.de/fullchain.pem > configs/traefik/letsencrypt.fullchain.pem`
-4. copy content manually `sudo cat /etc/letsencrypt/live/local.tine-dev.de/privkey.pem ` to `sops configs/traefik/letsencrypt.privkey.sops.pem`
-5. `echo -e 'server dns0.metaways.net\nupdate delete _acme-challenge.local.tine-dev.de. 60 txt oNs2fcFzTYm47o-ltnWRyi0VR8EgTG5oht1MBtbiiq0\nsend' | nsupdate -k ~/.mwclouddns`
+3. press enter (to contine requesting a certificate) and wait for cert to be acquired
+4. `sudo cat /etc/letsencrypt/live/local.tine-dev.de/fullchain.pem > configs/traefik/letsencrypt.fullchain.pem`
+5. `sudo cat /etc/letsencrypt/live/local.tine-dev.de/privkey.pem | openssl enc -aes-256-cbc -a -e -salt -pbkdf2 -pass pass:well-known > configs/traefik/letsencrypt.privkey.pem.aes`
+6. `echo -e 'server dns0.metaways.net\nupdate delete _acme-challenge.local.tine-dev.de. 60 txt oNs2fcFzTYm47o-ltnWRyi0VR8EgTG5oht1MBtbiiq0\nsend' | nsupdate -k ~/.mwclouddns`
 
 ### Adding more service
 * take a look at the other service. (broadcasthub is a good example)
