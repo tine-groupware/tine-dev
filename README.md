@@ -333,10 +333,11 @@ add "mysql" to your pullup.json!
 (From now ) Only https on port 443 is supported for services integrated in tine. Like tine itself (tine.local.tine-dev.de), broadcasthub (broadcasthub.local.tine-dev.de) or onlyoffice (onlyoffice.local.tine-dev.de). Backend only services like documentpreview and utility applications like phpmyadmin (localhost:4002
 ) still use http without domain nam
 
+Update: Letsencrypt now works for every one. It is recommended. See [Configure letsencrypt certificate](#Configure-letsencrypt-certificate)
+
 Certificates are set up automatically. There are several options that are tried in this order:
 1. Custom certificates: If there ist a certificate in configs/traefik/privatekey.pem and configs/traefik/fullchain.pem, it will be used. See Generate self-signed certificates
-2. (Metaways only): letsencrypt certificate: real certificate signed by letsencrypt usefull for e.g. webauth testing. See Configure letsencrypt certificate
-3. Generated cert: if no certificate is found, our web server will generate a self-signed certificate for you
+2. letsencrypt certificate: real certificate signed by letsencrypt. See Configure letsencrypt certificate
 
 ## Generate self-signed certificates
 It is easist to use a wildcard certificate for *.local.tine-dev.de. You can generate one with ./console docker:generateCert.
@@ -355,7 +356,10 @@ Our private key for *.local.tine-dev.de is included in this repo. It is encrypte
 automatic security scanners. (Who will otherwise spam as that we leaked a key.)
 
 ### Setup
+
+0. if a custom cert was used before, remove it `rm configs/traefik/privkey.pem`
 1. install openssl
+2. run `./console docker:up` for the changes to take effect
 
 ### Cert is expired
 The certificate is distributed in our git repo. If its outdate, try pulling. After pulling a `./console docker:up` is needed to load the new private key.
