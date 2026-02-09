@@ -31,7 +31,8 @@ return [
                         'target' => [
                             //'accountid' => 'd74368b57ca6f26e853d6d31700818aa895d41ad' , // optional shared account to use instead of own account
                             'folder' => 'INBOX/SPAM' // folder called spam at root level
-                        ]
+                        ],
+                        'addFlags' => ['SPAM']
                     ]
                 ], 
                 [   // copy mail to local directory
@@ -48,6 +49,7 @@ return [
                         'target' => [
                             'folder' => '#trash' // use configured trash folder of current user
                         ],
+                        'addFlags' => ['SPAM'] // array of flags to add
                     ]
                 ]
             ],
