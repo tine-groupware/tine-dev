@@ -4,9 +4,14 @@ services:
       - traefik:matrix.local.tine-dev.de
     volumes:
       - ./configs/matrix/matrix.inc.php:/etc/tine20/conf.d/matrix.inc.php:ro
-
+  # after tine ins installed - start synapse
+  # docker compose -f docker-compose.yml -f compose/matrix.yml up --detach
+  # inti volume permissions
+  # docker compose -f docker-compose.yml -f compose/matrix.yml run --user root --entrypoint /usr/bin/env synapse bash -c "chown 991:991 /data"
+  # setup corporal user
+  # docker compose -f docker-compose.yml -f compose/matrix.yml exec synapse register_new_matrix_user --config /etc/synapse/homeserver.yaml --admin --password=corporalpassword --user corporal
   synapse:
-    image: matrixdotorg/synapse:latest
+    image: matrixdotorg/synapse:v1.135.2
     user: 991:991
     environment:
       SYNAPSE_CONFIG_PATH: /etc/synapse/homeserver.yaml
@@ -55,6 +60,24 @@ services:
       - traefik.http.routers.matrixwellknwon.tls=true
       - traefik.http.services.matrixwellknwon.loadbalancer.server.port=80
     
+  corporal:
+    image: devture/matrix-corporal:3.1.2
+    volumes:
+      - ./configs/matrix/corporal.json:/etc/corporal/config.json
+      - corporal:/data
+    command:
+      - /matrix-corporal
+      - -config
+      - /etc/corporal/config.json
+    networks:
+      - internal_network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.matrixcorporal.rule=Host(`matrix.local.tine-dev.de`) && PathPrefix(`/_matrix/corporal/`)
+      - traefik.http.routers.matrixcorporal.entrypoints=websecure
+      - traefik.http.routers.matrixcorporal.tls=true
+      - traefik.http.services.matrixcorporal.loadbalancer.server.port=41081
 
 volumes:
   synapse:
+  corporal:

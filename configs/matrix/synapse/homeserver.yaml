@@ -32,6 +32,7 @@ modules:
       endpoint: http://web
   - module: shared_secret_authenticator.SharedSecretAuthProvider
     config:
+      m_login_password_support_enabled: true
       shared_secret: "SynapseSharedSecretAuthenticatorTineSharedSecret"
 user_directory:
   search_all_users: true
@@ -60,3 +61,14 @@ sso:
     - https://element.local.tine-dev.de
     - http://localhost:8081
   update_profile_information: true
+
+rc_login:
+  address:
+    per_second: 100
+    burst_count: 100
+  account:
+    per_second: 100
+    burst_count: 100
+  failed_attempts:
+    per_second: 100
+    burst_count: 100
