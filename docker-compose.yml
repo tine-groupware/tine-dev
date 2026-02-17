@@ -2,7 +2,6 @@ name: "tine20"
 services:
   traefik:
     image: "traefik:v3.6"
-    restart: always
     container_name: "traefik"
     command:
       - --providers.docker=true
