@@ -41,7 +41,7 @@ class DockerCommand extends BaseCommand
         ],
         // repo https://github.com/tine-groupware/tine
         'main' => [
-            'web' => 'tinegroupware/dev:main-8.3',
+            'web' => 'tinegroupware/dev:main-8.4',
             'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw1',
         ],
         'erzbistum/main' => [
