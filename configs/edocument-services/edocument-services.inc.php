@@ -3,6 +3,7 @@
 return [
     'Sales' => [
         'edocument' => [
+            'svc_base_url'  => 'http://edocument-services:3000',
             'validation_svc' => 'http://edocument-services:3000/ubl',
             'view_svc' => 'http://edocument-services:3000/ublView',
         ]

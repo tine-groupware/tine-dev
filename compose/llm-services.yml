@@ -1,0 +1,4 @@
+services:
+  web:
+    volumes:
+      - ./configs/llm-services/llm-services.inc.php:/etc/tine20/conf.d/llm-services.inc.php:ro
