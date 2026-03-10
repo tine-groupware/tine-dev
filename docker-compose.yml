@@ -35,7 +35,7 @@ services:
 
   db:
     image: mariadb:11.8
-    command: --max-allowed-packet=209715210
+    command: --max-allowed-packet=209715210 --innodb_ft_cache_size=209715210
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root}"
       MYSQL_DATABASE: &MYSQL_DATABASE "${MYSQL_DATABASE:-tine20}"
