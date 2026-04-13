@@ -44,13 +44,19 @@ class DockerCommand extends BaseCommand
             'web' => 'tinegroupware/dev:main-8.4',
             'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw1',
         ],
+        'mw' => [
+            'web' => 'tinegroupware/dev:main-8.4',
+            'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw1',
+        ],
+        'metaways/main' => [
+            'web' => 'tinegroupware/dev:main-8.4',
+            'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw1',
+        ],
         'erzbistum/main' => [
-            'web' => 'tinegroupware/dev:main-8.2',
+            'web' => 'tinegroupware/dev:main-8.3',
             'webpack' => 'ghcr.io/tine-groupware/tine-dev/node:18.9.0-mw1',
         ],
     ];
-
-    # 
 
     protected function configure()
     {
