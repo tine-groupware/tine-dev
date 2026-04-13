@@ -36,7 +36,7 @@ test:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
     - composer install
     - ./console docker:pull
-    - ./console docker:start
+    - ./console docker:up -d
     - ./console tine:awaitdb
     - ./console tine:install
     - ./console tine:test -e nogitlabci -e nodockerci Addressbook/AllTests Tinebase/Alltests Calendar/AllTests
@@ -63,7 +63,7 @@ test:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
     - composer install
     - ./console docker:pull
-    - ./console docker:start
+    - ./console docker:up -d
     - ./console tine:awaitdb
     - ./console tine:install
     - ./console tine:test -e nogitlabci -e nodockerci Addressbook/AllTests Tinebase/Alltests Calendar/AllTests

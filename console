@@ -40,7 +40,6 @@ $app = new ConsoleApplication();
 
 //Docker Commands
 $app->add(new DockerUpCommand());
-$app->add(new DockerStartCommand());
 $app->add(new DockerStopCommand());
 $app->add(new DockerDownCommand());
 $app->add(new DockerComposeStringCommand());
