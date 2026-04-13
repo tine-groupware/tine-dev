@@ -8,7 +8,6 @@ use Symfony\Component\Console\Application;
 
 use App\ConsoleApplication;
 use App\Commands\Docker\DockerUpCommand;
-use App\Commands\Docker\DockerStartCommand;
 use App\Commands\Docker\DockerStopCommand;
 use App\Commands\Docker\DockerDownCommand;
 use App\Commands\Docker\DockerComposeStringCommand;
