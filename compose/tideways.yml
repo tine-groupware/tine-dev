@@ -1,0 +1,23 @@
+services:
+  tideways:
+    image: ghcr.io/tideways/daemon
+    command: "--env=dev --debug --hostname=dev.local.pm --log-outgoing"
+    networks:
+      - internal_network
+      - external_network
+
+  web:
+    environment:
+      TIDEWAYS_APIKEY: xxx
+      TIDEWAYS_SERVICE: app
+      TIDEWAYS_SAMPLERATE: 1
+      TIDEWAYS_COLLECT: full
+      TIDEWAYS_CONNECTION: "tcp://tideways:9135"
+    volumes:
+      - ./configs/tideways/tideways.ini:/etc/php/default/cli/conf.d/50_tideways.ini:ro
+      - ./configs/tideways/tideways.ini:/etc/php/default/fpm/conf.d/50_tideways.ini:ro
+      - type: image
+        source: ghcr.io/tideways/php:latest
+        target: /tideways
+        image:
+          subpath: tideways
