@@ -52,6 +52,7 @@ class DockerUpCommand extends DockerCommand
 
         $tinedir = $this->getTineDir($io);
         $this->getBroadcasthubDir($io);
+        $this->getElementIntegrationDir($io);
         $this->anotherConfig($io);
 
         $this->set_up_tls_certs($io);

@@ -126,9 +126,9 @@ include:
         - ghcr.io/tine-groupware/tine-dev
   - component: $CI_SERVER_FQDN/gitlabci-components/image-build-multiplatform/build@1
     inputs:
-      name: node
-      context_path: dockerfiles/node
-      containerfile_path: dockerfiles/node/Dockerfile
+      name: node-element
+      context_path: dockerfiles/node-element
+      containerfile_path: dockerfiles/node-element/Dockerfile
       registry_auth:
         - registry: ghcr.io
           user: $GHCR_USER

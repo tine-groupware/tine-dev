@@ -17,6 +17,7 @@ class DockerCommand extends BaseCommand
     protected $homeDir = null;
     protected array $composeCommand = ['docker', 'compose'];
     protected string $bchub_repo = 'https://github.com/tine-groupware/broadcasthub.git';
+    protected string $elementWebRepo = 'https://github.com/ecclesias-de/element-web/';
 
     protected static $imageMap = [
         '2021.11' => [
@@ -105,6 +106,26 @@ class DockerCommand extends BaseCommand
 
                 case 'no':
                     $io->notice('link broadcasthub dir: ln -s /path/to/broadcasthub/repo broadcasthub');
+                    exit;
+
+                case 'ignore':
+                    break;
+            }
+        }
+    }
+
+    public function getElementIntegrationDir($io)
+    {
+        if ($this->active('matrix-element-dev') && ! is_file('element-web/package.json')) {
+            $input = $io->choice('element-web dir is not linked. Should it be cloned and installed?', ['yes', 'no', 'ignore'], 'yes');
+
+            switch($input) {
+                case 'yes':
+                    system('git clone --branch tine-integration ' . $this->elementWebRepo . ' element-web 2>&1');
+                    break;
+
+                case 'no':
+                    $io->notice('link element-web dir: ln -s /path/to/element-web/repo element-web');
                     exit;
 
                 case 'ignore':

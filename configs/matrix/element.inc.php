@@ -2,6 +2,6 @@
 
 return [
     'MatrixSynapseIntegrator' => [
-        'elementUrl' => 'https://element-integration.local.tine-dev.de',
+        'elementUrl' => 'https://{MATRIX_USER_ID}-element-integration.local.tine-dev.de',
     ],
 ];

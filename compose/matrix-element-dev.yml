@@ -1,0 +1,29 @@
+services:
+  # todo setup:
+  # create element web repo link: ln -s /path/to/element-web-repo element-web
+  # yarn install first: docker compose -f docker-compose.yml -f compose/matrix-element-dev.yml run element-integration yarn install
+  element-integration:
+    image: ghcr.io/tine-groupware/tine-dev/node-element:24
+    volumes:
+      - ./element-web:/app/
+      - ./configs/matrix/element-config.json:/app/config.json
+    working_dir: /app/apps/web
+    user: "${UID:-1000}"
+    environment:
+      # prevent nx from waiting for jobs in no longer existing docker containers - dose not help - https://github.com/nrwl/nx/issues/30359
+      NX_DAEMON: 'false'
+      NX_ISOLATE_PLUGINS: 'false'
+    command:
+      - bash
+      - -c
+      - |
+        pnpm install
+        pnpm nx reset # otherwise start hangs after container restarts
+        echo install done starting ...
+        pnpm start
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.elementintegration.rule=HostRegexp(`^(.*-)?element-integration.local.tine-dev.de$`)
+      - traefik.http.routers.elementintegration.entrypoints=websecure
+      - traefik.http.routers.elementintegration.tls=true
+      - traefik.http.services.elementintegration.loadbalancer.server.port=8080

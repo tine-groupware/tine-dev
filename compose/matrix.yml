@@ -12,14 +12,14 @@ services:
   # setup corporal user
   # docker compose -f docker-compose.yml -f compose/matrix.yml exec synapse register_new_matrix_user --config /etc/synapse/homeserver.yaml --admin --password=corporalpassword --user corporal
   synapse:
-    image: matrixdotorg/synapse:v1.135.2
+    image: matrixdotorg/synapse:v1.151.0
     user: 991:991
     environment:
       SYNAPSE_CONFIG_PATH: /etc/synapse/homeserver.yaml
     volumes:
       - ./configs/matrix/synapse:/etc/synapse/
-      - ./tine20/docs/operators/matrix/rest_auth_provider.py:/usr/local/lib/python3.12/site-packages/rest_auth_provider.py
-      - ./configs/matrix/synapse/shared_secret_authenticator.py:/usr/local/lib/python3.12/site-packages/shared_secret_authenticator.py
+      - ./tine20/docs/operators/matrix/rest_auth_provider.py:/usr/local/lib/python3.13/site-packages/rest_auth_provider.py
+      - ./configs/matrix/synapse/shared_secret_authenticator.py:/usr/local/lib/python3.13/site-packages/shared_secret_authenticator.py
       - synapse:/data
     networks:
       - internal_network
@@ -52,7 +52,7 @@ services:
     volumes:
       - ./configs/matrix/element-config.json:/app/config.json
     networks:
-      - internal_network
+      - external_network
     labels:
       - traefik.enable=true
       - traefik.http.routers.elementintegration.rule=Host(`element-integration.local.tine-dev.de`)

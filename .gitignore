@@ -17,3 +17,4 @@
 /configs/traefik/ca.pem
 /configs/traefik/dynamic/certs.yaml
 **/.decrypted~*
+/element-web
