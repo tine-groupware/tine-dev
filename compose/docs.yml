@@ -14,3 +14,15 @@ services:
       - traefik.http.routers.mkdocs.entrypoints=websecure
       - traefik.http.routers.mkdocs.tls=true
       - traefik.http.services.mkdocs.loadbalancer.server.port=8000
+
+      - traefik.http.middlewares.mkdocs-cors.headers.accesscontrolalloworiginlist=*
+      - traefik.http.middlewares.mkdocs-cors.headers.accesscontrolallowmethods=GET,OPTIONS,PUT,POST
+      - traefik.http.middlewares.mkdocs-cors.headers.accesscontrolallowheaders=*
+      - traefik.http.middlewares.mkdocs-cors.headers.accesscontrolallowcredentials=true
+
+      - traefik.http.middlewares.mkdocs-cors.headers.addvaryheader=true
+
+      - traefik.http.routers.mkdocs.middlewares=mkdocs-cors
+  web:
+    volumes:
+      - ./configs/docs/docs.inc.php:/etc/tine20/conf.d/docs.inc.php:ro
