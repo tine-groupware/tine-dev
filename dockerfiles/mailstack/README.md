@@ -36,7 +36,10 @@ Docker images are created and pushed manually atm. for example
 + home: path to mailbox folder, if null /var/vmail/%domain/%username (at least in the docker stack)
 + last_login: not used by dovecot
 + last_login_unix: not used by dovecot
++ last_modified_time: last modified time
 + instancename: tine instancename, not used by dovecot
++ status: email user status
++ expiryDate: email user expiry date
 
 
 ### dovecot_usage

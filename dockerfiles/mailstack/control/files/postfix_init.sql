@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS `smtp_users` (
   `passwd` varchar(256) NOT NULL,
   `email` varchar(80) DEFAULT NULL,
   `forward_only` tinyint(1) NOT NULL DEFAULT 0,
+  `status` varchar(80) DEFAULT NULL,
+  `expiry_date` datetime DEFAULT NULL,
+  `last_modified_time` datetime DEFAULT NULL,
   PRIMARY KEY (`userid`, `client_idnr`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
@@ -23,6 +26,9 @@ CREATE TABLE IF NOT EXISTS `smtp_destinations` (
   `source` VARCHAR( 80 ) NOT NULL ,
   `destination` VARCHAR( 80 ) NOT NULL ,
   `dispatch_address` tinyint(1) NOT NULL DEFAULT 1,
+  `status` varchar(80) DEFAULT NULL,
+  `expiry_date` datetime DEFAULT NULL,
+  `last_modified_time` datetime DEFAULT NULL,
   CONSTRAINT `smtp_destinations::userid--smtp_users::userid` FOREIGN KEY (`userid`)
   REFERENCES `smtp_users` (`userid`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=Innodb DEFAULT CHARSET=utf8;
@@ -34,5 +40,8 @@ CREATE TABLE IF NOT EXISTS `smtp_destinations` (
 CREATE TABLE IF NOT EXISTS `smtp_virtual_domains` (
   `domain` varchar(50) NOT NULL,
   `instancename` varchar(40) NOT NULL,
+  `status` varchar(80) DEFAULT NULL,
+  `expiry_date` datetime DEFAULT NULL,
+  `last_modified_time` datetime DEFAULT NULL,
   PRIMARY KEY (`domain`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
