@@ -14,8 +14,8 @@ stages:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:20.10.19-dind
-  image: docker:20.10.19
+    - docker:29.3.0-dind
+  image: docker:29.3.0
   before_script:
     - export DOCKER_BUILDKIT=0
     - export PROGRESS_NO_TRUNC=1
