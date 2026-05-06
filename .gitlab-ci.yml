@@ -142,5 +142,9 @@ include:
       name: docker
       context_path: dockerfiles/docker
       containerfile_path: dockerfiles/docker/Dockerfile
+      registry_auth:
+        - registry: $UTIL_REGISTRY
+          user: $UTIL_REGISTRY_USER
+          password: $UTIL_REGISTRY_PASSWORD
       image_repos:
         - $UTIL_REGISTRY
