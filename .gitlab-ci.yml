@@ -137,3 +137,10 @@ include:
         - $CI_REGISTRY_IMAGE
       image_repos_release:
         - ghcr.io/tine-groupware/tine-dev
+  - component: $CI_SERVER_FQDN/gitlabci-components/image-build-multiplatform/build@1
+    inputs:
+      name: docker
+      context_path: dockerfiles/docker
+      containerfile_path: dockerfiles/docker/Dockerfile
+      image_repos:
+        - $UTIL_REGISTRY
