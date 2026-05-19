@@ -414,3 +414,35 @@ Our mail setup (or more precisely postfix) forwards all non-local mails to a mai
 
 
 Note: Do not click on quit in mailcatcher ui, it stops the container!
+
+# Build Util Docker images
+Util docker images for docker dev and tine ci are build form this repo.
+
+There image specification should life in `./dockerfiles/<image name>`
+
+The images are build by the ci. To trigger a build create a tag and push it. Resulting images will be pushed to ghrc.io (github container registry) and our gitlab container registry.
+The gitlab container registry dose not support multi architekture image. Images from there should only be used by the ci.
+
+### git tag schema for images
+This is our git tag schema for docker images. It needs to be followed other wise the ci will not work.
+`<image name>-image-<app version>[-0mw<release counter>][-<extra eg. rc>]`
+
+image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). eg.:
+* docker
+* ldap
+* node
+* node-element
+* dovecot
+* mailstackcontrol
+* postfix
+
+App version is the version of the base image / software. It is specified in `./dockerfiles/<image name>/.meta/app_version`. The `tag app_version` and `app_version file` muss match otherwise the ci will fail!
+Updateing the app version: Update app version file and create a new tag.
+
+Mailstack is an excaption exception. It dose not has app_version files. Its app version is a semantic version of the mailstack container image. It should be increased by semantic version standart.
+Mailstack container tags do not have an `-mw`.
+
+mw version: Image we modife should have an mv version postfix `-0mw<release counter>`.
+The Release counte will be reset for each app version. It should start with
+* 0 if our modification was not by the update
+* 1 if out modificatiion was changed in any way
