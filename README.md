@@ -160,7 +160,7 @@ in container:
 
     sudo iptables -I INPUT 1 -i <docker-bridge-interface> -j ACCEPT
     
-<docker-bridge-interface> is something like "br-3ff4120010e5" which has ip:172.118.0.1 (visible with ifconfig)
+`<docker-bridge-interface>` is something like "br-3ff4120010e5" which has ip:172.118.0.1 (visible with ifconfig)
 
 
 ### Docker Network Problems (for example: "ERROR: Pool overlaps ...")
@@ -416,12 +416,13 @@ Our mail setup (or more precisely postfix) forwards all non-local mails to a mai
 Note: Do not click on quit in mailcatcher ui, it stops the container!
 
 # Build Util Docker images
-Util docker images for docker dev and tine ci are build form this repo.
+Util docker images for docker dev and tine ci are build from this repo.
 
 There image specification should life in `./dockerfiles/<image name>`
 
 The images are build by the ci. To trigger a build create a tag and push it. Resulting images will be pushed to ghrc.io (github container registry) and our gitlab container registry.
-The gitlab container registry dose not support multi architekture image. Images from there should only be used by the ci.
+
+The gitlab container registry dose not support multi architecture image. Images from there should only be used by the ci.
 
 ### git tag schema for images
 This is our git tag schema for docker images. It needs to be followed other wise the ci will not work.
@@ -435,14 +436,46 @@ image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). 
 * dovecot
 * mailstackcontrol
 * postfix
+* opencode
+* socket-proxy
 
 App version is the version of the base image / software. It is specified in `./dockerfiles/<image name>/.meta/app_version`. The `tag app_version` and `app_version file` muss match otherwise the ci will fail!
-Updateing the app version: Update app version file and create a new tag.
+Updating the app version: Update app version file and create a new tag.
 
-Mailstack is an excaption exception. It dose not has app_version files. Its app version is a semantic version of the mailstack container image. It should be increased by semantic version standart.
+Mailstack is an exception exception. It dose not has app_version files. Its app version is a semantic version of the mailstack container image. It should be increased by semantic version standart.
 Mailstack container tags do not have an `-mw`.
 
-mw version: Image we modife should have an mv version postfix `-0mw<release counter>`.
-The Release counte will be reset for each app version. It should start with
+mw version: Images we modify should have an mw version postfix `-0mw<release counter>`.
+The Release counter will be reset for each app version. It should start with
 * 0 if our modification was not by the update
-* 1 if out modificatiion was changed in any way
+* 1 if our modification was changed in any way
+
+## New image repository (first time image push)
+
+When a new image is added, we need to create a new repository on ghcr.io by manually building and pushing the image:
+
+Example with opencode image :
+~~~
+docker login ghcr.io -u <username> -p <token> # token needs packages:write scope
+cd dockerfiles/opencode
+docker build -t opencode:1.17.7-mw1 . --build-arg APP_VERSION=$(cat .meta/app_version)
+docker tag opencode:1.17.7-mw1 ghcr.io/tine-groupware/tine-dev/opencode:1.17.7-mw1       
+docker push ghcr.io/tine-groupware/tine-dev/opencode:1.17.7-mw1
+~~~
+
+The packages need to be added to the github repository and made public (inherit repo access):
+https://github.com/orgs/tine-groupware/packages 
+
+# OpenCode integration
+
+see https://opencode.ai/docs/
+
+- add METAWAYS_AI_BASE_URL + METAWAYS_AI_API_KEY to .env, .bashrc or configs/opencode/config/opencode.json
+  - OR adjust opencode.json in configs/opencode/config/ to your LLM provider
+- start docker compose (with “opencode”)
+- go to https://opencode.local.tine-dev.de/
+  - OR run in shell:
+~~~
+  docker exec -it opencode bash
+  opencode
+~~~
