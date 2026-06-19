@@ -27,7 +27,7 @@ services:
       - internal_network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.local.tine-dev.de`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN_SUFFIX:-local.tine-dev.de}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls=true"
       - "traefik.http.routers.traefik.service=api@internal"
@@ -90,8 +90,8 @@ services:
       TINE20_ACTIONQUEUE: "false"
       TINE20_LICENSE_PATH: /usr/share/tests/tine20/Tinebase/License/license_contract_MW-TEST-3.0.0.pem
       TINE20_SETUP_HTPASSWD: "dev:$$apr1$$Ivpb7VfS$$kLnOg/uI0eNpTUhbeZF7n/" # dev:dev
-      TINE20_FQDN: tine.local.tine-dev.de
-      TINE20_URL: https://tine.local.tine-dev.de
+      TINE20_FQDN: tine.${DOMAIN_SUFFIX:-local.tine-dev.de}
+      TINE20_URL: https://tine.${DOMAIN_SUFFIX:-local.tine-dev.de}
       DEBUG_COLORS: "true"
       TERM: xterm-256color
       COLORTERM: truecolor
@@ -112,7 +112,7 @@ services:
       - internal_network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`tine.local.tine-dev.de`)"
+      - "traefik.http.routers.web.rule=Host(`tine.${DOMAIN_SUFFIX:-local.tine-dev.de}`)"
       - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.tls=true"
       - "traefik.http.services.web.loadbalancer.server.port=80"
