@@ -161,3 +161,4 @@ include:
         - $CI_REGISTRY_IMAGE
       image_repos_release:
         - ghcr.io/tine-groupware/tine-dev
+        - $UTIL_REGISTRY
