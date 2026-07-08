@@ -1,0 +1,52 @@
+services:
+  opencode:
+    image: ghcr.io/tine-groupware/tine-dev/opencode:1.17.7-mw1
+    container_name: opencode
+    command: opencode serve --hostname 0.0.0.0 --port 4096
+    user: "1000:1000"
+    environment:
+      METAWAYS_AI_BASE_URL: ${METAWAYS_AI_BASE_URL}
+      METAWAYS_AI_API_KEY: ${METAWAYS_AI_API_KEY}
+    networks:
+      - internal_network
+      - external_network
+      - proxy
+    volumes:
+      - ./:/tine-dev:ro
+      - ./tine20:/tine-dev/tine20:ro
+      - ./tine20:/tine20:rw
+      - ./configs/opencode/config/opencode.json:/home/node/.config/opencode/opencode.json:ro
+      #- ./configs/opencode/share:/home/opencode/.local/share/opencode:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.opencode.rule=Host(`opencode.local.tine-dev.de`)"
+      - "traefik.http.routers.opencode.entrypoints=websecure"
+      - "traefik.http.routers.opencode.tls=true"
+      - "traefik.http.services.opencode.loadbalancer.server.port=4096"
+
+  socket-proxy:
+    image: ghcr.io/tine-groupware/tine-dev/socket-proxy:1.12.2-mw1
+    container_name: socket-proxy
+    depends_on:
+      - web
+    user: "0:998"
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ID=$(docker ps -aqf "name=tine-web") && \
+        exec /app/socket-proxy \
+          '-loglevel=info' \
+          '-listenip=0.0.0.0' \
+          '-allowfrom=opencode' \
+          '-allowHEAD=/_ping' \
+          '-allowGET=/(_ping$|v1\.[0-9]{1,2}/(version|containers/json|containers/[^/]+/json|exec/[a-f0-9]+/json))' \
+          "-allowPOST=/v1\\.[0-9]{1,2}/(containers/$$ID[a-f0-9]*/exec|exec/[a-f0-9]+/(start|resize))"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    internal: true
