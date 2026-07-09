@@ -39,7 +39,7 @@ test:
     - ./console docker:up -d
     - ./console tine:awaitdb
     - ./console tine:install
-    - ./console tine:test -e nogitlabci -e nodockerci Addressbook_AllTests Tinebase_Alltests Calendar_AllTests
+    - ./console tine:test -e nogitlabci -e nodockerci Tinebase_AllTests Felamimail_AllTests
     - ./console tine:uninstall
 
 # TODO run this only on master
