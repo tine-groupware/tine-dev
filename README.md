@@ -479,3 +479,10 @@ see https://opencode.ai/docs/
   docker exec -it opencode bash
   opencode
 ~~~
+- [browser] add project "tine20" via "+" button and adding the dir "/tine20"
+
+## Show available models of provider
+
+~~~
+curl -s $METAWAYS_AI_BASE_URL/models -H "Authorization: Bearer $METAWAYS_AI_API_KEY" | jq
+~~~
