@@ -19,6 +19,13 @@
             "output": 8192
           }
         },
+        "qwen3.8-27b": {
+          "name": "Qwen 3.8 27B",
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
+        },
         "qwopus3.6-27b": {
           "name": "Qwopus 3.6 27B",
           "limit": {
