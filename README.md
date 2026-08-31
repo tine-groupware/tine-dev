@@ -162,6 +162,9 @@ in container:
     
 `<docker-bridge-interface>` is something like "br-3ff4120010e5" which has ip:172.118.0.1 (visible with ifconfig)
 
+OR use ufw (IP might differ):
+
+    sudo ufw allow from 172.16.0.0/12 to any port 9001
 
 ### Docker Network Problems (for example: "ERROR: Pool overlaps ...")
 
@@ -486,3 +489,9 @@ see https://opencode.ai/docs/
 ~~~
 curl -s $METAWAYS_AI_BASE_URL/models -H "Authorization: Bearer $METAWAYS_AI_API_KEY" | jq
 ~~~
+
+## UFW rule
+
+You might need to add a UFW rule to allow outgoing connections to the AI-API server:
+
+    sudo ufw route allow from any to $METAWAYS_AI_API_IPADDRESS
