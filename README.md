@@ -15,17 +15,17 @@ Note Mac User: install composer and npm via homebrew
 
 1. clone this git and open it `git clone https://github.com/tine-groupware/tine-dev.git tine-dev` and `cd tine-dev`
 2. install symfony/console dependencies `composer install`
-3. start tine20-docker setup `./console docker:up`, if you have not done this, install 4 to 6 answer y to clone repos
-4. initialize icon-set submodule: `cd tine20 && git submodule init && git submodule update && cd ..`
-5. install tine `./console tine:install`
-6. visit https://tine.local.tine-dev.de, login as tine20admin pw: tine20admin
+3. start tine20-docker setup `./console docker:up`
+4. install tine `./console tine:install`
+5. visit https://tine.local.tine-dev.de, login as tine20admin pw: tine20admin
 
 Note:
 In case tine stops working after a branch switch or computer restart run "./console tine:reinstall" WITHOUT stopping tine before that.
 
 ## Optional
 
-- add `eval $(~/path/to//docker/console _completion --generate-hook)` to your shell's profile (e.g. ~/.bashrc or ~/.zshrc) to enable autocomplete
+- for console commands autocomplete on Linux (bash) add `eval $(~/path/to//docker/console _completion --generate-hook)` to your shell's profile (e.g. ~/.bashrc)
+- for autocomplete on macOS (zsh) add `autoload -Uz compinit && compinit` and below `eval $(~/path/to//docker/console _completion --generate-hook)` to your shell's profile (e.g. ~/.zshrc)
 - link your tine20 source `ln -s /path/to/tine/repo tine20` or just wait for console to clone it for you
 - link docservice source `ln -s /path/to/docservice/repo docservice` or just wait for console to clone it for you
 - link broadcasthub source `ln -s /path/to/tine20-broadcsthub/repo broadcasthub` or just wait for console to clone it for you

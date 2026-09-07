@@ -8,7 +8,7 @@ class TineCommand extends DockerCommand
 {
     public function mailstackInit($io)
     {
-        $io->info("Initializing mailstack ...");
+        $io->infoWithTime("Initializing mailstack ...");
 
         $out = system($this->getComposeString() . ' run --rm mailstack init');
 
@@ -21,7 +21,7 @@ class TineCommand extends DockerCommand
 
     public function mailstackReset($io)
     {
-        $io->info("Resetting mailstack ...");
+        $io->infoWithTime("Resetting mailstack ...");
 
         $out = system($this->getComposeString() . ' run --rm mailstack reset');
 
@@ -57,7 +57,7 @@ class TineCommand extends DockerCommand
             }
     
             passthru($this->getComposeString() . ' exec -T cache sh -c "redis-cli flushall"', $result_code);
-            $io->info("Installing tine ...");
+            $io->infoWithTime("Installing tine ...");
             passthru($this->getComposeString() . ' exec -T web tine20_install', $result_code);
         } else {
             passthru($this->getComposeString() . ' exec --user tine20 -T web sh -c "cd tine20 && php setup.php --install "'
@@ -70,7 +70,7 @@ class TineCommand extends DockerCommand
         }
 
         if (file_exists('tine20/scripts/postInstallDocker.sh')) {
-            $io->info("Running postInstallDocker.sh ... ");
+            $io->infoWithTime("Running postInstallDocker.sh ... ");
             passthru($this->getComposeString()
                 . ' exec -T web sh -c "/usr/share/scripts/postInstallDocker.sh"', $result_code);
         }

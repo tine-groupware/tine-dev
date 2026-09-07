@@ -30,23 +30,27 @@ class ComposerCommand extends DockerCommand
         parent::execute($input, $output);
         $io = new ConsoleStyle($input, $output);
 
-        $localCacheDir = trim(`composer config cache-dir`);
+        $localCacheDir = trim(shell_exec('composer config cache-dir'));
 
-        `mkdir -p $this->baseDir/data/composer`;
+        shell_exec("mkdir -p $this->baseDir/data/composer");
 
         $env = $this->getComposeEnv();
 
         $tineDir = $this->getTineDir($io);
 
-        // NOTE: we can't use getComposeCommand here as mutagen has a ro filesystem and even if we skip mutagen here
-        //       it runs in the existing web container with ro filesystem (well we could kill the web-container but
-        //       this tradeoff seems to big
-        passthru('docker run --rm --user ' . trim(`id -u`) . ':' . trim(`id -g`) .
+        // NOTE: we use docker run instead of getComposeCommand to avoid mutagen's read-only filesystem.
+        //       The GIT_CONFIG env vars set `safe.directory = *` to bypass Git's "dubious ownership" check
+        //       on macOS, where Docker volume mounts trigger ownership mismatches between host and container user.
+        $cmd = 'docker run --rm --user ' . trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g')) .
+            ' -e GIT_CONFIG_COUNT=1' .
+            ' -e GIT_CONFIG_KEY_0=safe.directory' .
+            ' -e GIT_CONFIG_VALUE_0=\\*' .
             ' -v ' . $tineDir . ':/usr/share/tine20' .
             ' -v ' . $tineDir . '/../tests:/usr/share/tests' .
             ' -v ' . $this->baseDir . '/data/composer:/.composer' .
             ' -v ' . $localCacheDir . ':/composercache' .
-            ' '. $env['WEB_IMAGE'] . ' sh -c "cd /usr/share/tine20; composer config --global cache-dir /composercache; composer ' . $input->getArgument('cmd') . '"', $result_code);
+            ' ' . $env['WEB_IMAGE'] . ' sh -c "cd /usr/share/tine20; composer config --global cache-dir /composercache; composer ' . $input->getArgument('cmd') . '"';
+        passthru($cmd, $result_code);
 
         return $result_code;
     }

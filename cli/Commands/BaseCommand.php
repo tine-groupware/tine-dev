@@ -61,18 +61,19 @@ class BaseCommand extends Command
     public function getTineDir($io)
     {
         if (! is_file("{$this->tineDir}/tine20.php")) {
+            $io->infoWithTime('Checking if tine20 exists ...');
             $input = $io->choice('tine20 dir is not linked. Should it be cloned?', ['yes', 'no', 'ignore'], 'yes');
 
             switch ($input) {
                 case 'yes':
-                    $output = system('git clone ' . $this->repo . ' tine20 2>&1');
-                    if(strpos($output, 'Cloning') === 0){
+                    system('git clone ' . $this->repo . ' tine20 2>&1', $retval);
+                    if ($retval === 0) {
                         $io->success('tine cloned successfully');
-                    }else {
+                    } else {
                         $io->error('failed to clone tine');
                         exit;
                     }
-                    $io->success('tine cloned, now checkout your branch and install php and npm dependencies');
+                    $io->infoWithTime('tine cloned, now checking out your branch and installing php and npm dependencies');
                     break;
 
                 case 'no':

@@ -45,7 +45,7 @@ class ChangeBranchCommand extends DockerCommand {
                 $io->error("use --branch BRANCH to select a branch");
                 return 1;
             }
-            $io->info("git checkout {$this->branch}");
+            $io->infoWithTime("git checkout {$this->branch}");
 
             passthru("cd {$this->getTineDir($io)} && git checkout {$this->branch}", $result_code);
             if (0 !== $result_code) {
@@ -66,7 +66,7 @@ class ChangeBranchCommand extends DockerCommand {
         $composeString = $this->getComposeString();
         passthru($composeString . " stop web");
 
-        $io->info('Running composer install ...');
+        $io->infoWithTime('Running composer install ...');
         $composerCmd = new ComposerCommand();
         $a = new ArrayInput([]);
         $a->bind($composerCmd->getDefinition());
