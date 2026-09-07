@@ -3,7 +3,6 @@
     "webpack",
     "mailstack",
     "xdebug",
-    "spam",
-    "clamav"
+    "spam"
   ]
 }
