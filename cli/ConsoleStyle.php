@@ -15,4 +15,9 @@ class ConsoleStyle extends SymfonyStyle {
     {
         $this->block($message, 'debug');
     }
+
+    public function infoWithTime($message)
+    {
+        $this->block(sprintf('(%s) %s', date('H:i:s T'), $message), 'INFO', 'fg=green', ' ', true);
+    }
 }

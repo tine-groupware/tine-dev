@@ -57,18 +57,18 @@ class DockerUpCommand extends DockerCommand
 
         $this->set_up_tls_certs($io);
 
-        // TODO improve this / use console commands
-        $io->info('Init vendor: ' . $tinedir . '/tine20/vendor');
+        $io->infoWithTime('Init vendor: ' . $tinedir . '/tine20/vendor');
         passthru('./console src:composer install');
 
         if (in_array('compose/webpack.yml', $this->composeFiles)
             && ! is_dir($tinedir . '/Tinebase/js/node_modules' )
         ) {
-            $io->info('Init node_modules: ' . $tinedir . '/tine20/Tinebase/js/node_modules');
+            $io->infoWithTime('Init node_modules: ' . $tinedir . '/tine20/Tinebase/js/node_modules');
             passthru('./console src:npminstall');
         }
-        if (! is_dir($tinedir . '/images/icon-set' )) {
-            $io->info('Init icon-set: ' . $tinedir . '/tine20/images/icon-set');
+
+        if (!is_dir($tinedir . '/images/icon-set') || count(glob($tinedir . '/images/icon-set' . '/*')) === 0) {
+            $io->infoWithTime('Init icon-set: ' . $tinedir . '/tine20/images/icon-set');
             passthru('cd ' . $tinedir . ' && git submodule init && git submodule update && cd -');
         }
 
@@ -76,7 +76,7 @@ class DockerUpCommand extends DockerCommand
             $this->updateConfig(['composeFiles' => $inputContainer]);
         }
 
-        $io->info('Starting containers ...');
+        $io->infoWithTime('Starting containers ...');
 
         passthru($this->getComposeString() . ' up --remove-orphans' .
             ($input->getOption('detached') === true ? ' -d' : ''), $result_code);

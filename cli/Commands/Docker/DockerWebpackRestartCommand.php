@@ -29,7 +29,7 @@ class DockerWebpackRestartCommand extends DockerCommand
         passthru($this->getComposeString() . " stop webpack", $result_code);
         passthru($this->getComposeString() . " rm -f", $result_code);
 
-        $io->info('Restarting containers ...');
+        $io->infoWithTime('Restarting containers ...');
 
         passthru($this->getComposeString() . " up -d", $result_code);
         // NOTE: `tail -1` as mutagen outputs volume status with ps 

@@ -30,7 +30,7 @@ class NpmInstallCommand extends DockerCommand
         }
 
         if (in_array('compose/webpack.yml', $this->composeFiles)) {
-            $io->info('Running npm install ...');
+            $io->infoWithTime('Running npm install ...');
             if (!isset($this->config['tine20']['npminstall']['uselink']) || !$this->config['tine20']['npminstall']['uselink']) {
                 $io->info('Running npm install with strategy synced');
                 if (0 !== ($result_code = $this->npmInstallSynced($io, $branch))) {
@@ -42,7 +42,7 @@ class NpmInstallCommand extends DockerCommand
                     return $result_code;
                 }
             }
-            $io->info('npm install finished');
+            $io->infoWithTime('npm install finished');
         }
 
         return 0;
@@ -106,7 +106,7 @@ class NpmInstallCommand extends DockerCommand
             do {
                 $path = $nodeModulesPath . '_' . $year . '.11';
                 if (is_dir($path)) {
-                    $io->info('initializing ' . $branchFolder . ' with ' . $path);
+                    $io->infoWithTime('initializing ' . $branchFolder . ' with ' . $path);
                     `cp -r $path $branchFolder`;
                     break;
                 }
