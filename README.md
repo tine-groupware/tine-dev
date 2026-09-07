@@ -9,15 +9,50 @@ tine-dev (docker dev setup)
 
 Prerequisites: git, docker, php, composer, npm and your user is in the docker group. If not see "Install and Setup Docker"
 
-Note Mac User: install composer and npm via homebrew
-`brew install composer`
-`brew install node`
+Note for Mac users: install composer and npm via homebrew:
+```
+brew install composer
+brew install node
+```
 
-1. clone this git and open it `git clone https://github.com/tine-groupware/tine-dev.git tine-dev` and `cd tine-dev`
-2. install symfony/console dependencies `composer install`
-3. start tine20-docker setup `./console docker:up`
-4. install tine `./console tine:install`
-5. visit https://tine.local.tine-dev.de, login as tine20admin pw: tine20admin
+1. clone this repository: 
+   ```
+   git clone https://github.com/tine-groupware/tine-dev.git tine-dev
+   cd tine-dev
+   ```
+2. install symfony/console dependencies: 
+   ```
+   composer install
+   ```
+3. get tine20 repository: 
+   - OPTION 1: via console script
+     - next step (`docker:up`) will ask you:
+        > tine20 dir is not linked. Should it be cloned? [yes]:  
+         [0] yes  
+         [1] no  
+         [2] ignore
+       
+   - OPTION 2: by yourself
+     - clone from GitHub/GitLab:
+       ```
+       cd ..
+       git clone https://github.com/tine-groupware/tine.git tine20
+       cd -
+       ```
+     - link tine20 repository to tine-dev:
+       ```
+       ln -s ../tine20 tine20
+       ```
+4. run Docker setup:
+   ```
+   ./console docker:up
+   ```
+5. open a new Terminal window (closing the window will stop the Docker containers)
+6. install tine:
+   ```
+   ./console tine:install`
+   ```
+7. visit https://tine.local.tine-dev.de, login as `tine20admin` pw: `tine20admin`
 
 Note:
 In case tine stops working after a branch switch or computer restart run "./console tine:reinstall" WITHOUT stopping tine before that.
