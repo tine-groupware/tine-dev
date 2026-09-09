@@ -6,7 +6,7 @@
   "provider": {
     "metaways": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Metaways Local LLM",
+      "name": "Metaways",
       "options": {
         "baseURL": "{env:METAWAYS_AI_BASE_URL}",
         "apiKey": "{env:METAWAYS_AI_API_KEY}"
@@ -23,28 +23,28 @@
           "name": "Qwen 3.6 Lite (3B Active)",
           "limit": {
             "context": 204800,
-            "output": 8192
+            "output": 81920
           }
         },
         "qwopus3.6-27b": {
           "name": "Qwopus 3.6 Full (27B Dense)",
           "limit": {
             "context": 204800,
-            "output": 8192
+            "output": 81920
           }
         },
         "qwen3.8-27b": {
           "name": "Qwen 3.8 Full (27B Dense) Experimental",
           "limit": {
             "context": 204800,
-            "output": 8192
+            "output": 81920
           }
         },
         "llama-3.2-3B": {
           "name": "LLaMA 3.2-3B",
           "limit": {
-            "context": 32768,
-            "output": 8192
+            "context": 65536,
+            "output": 16384
           }
         }
       }
