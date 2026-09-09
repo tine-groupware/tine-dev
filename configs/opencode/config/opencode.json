@@ -1,8 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "qwen3.6-35b-a3b",
-  "small_model": "llama-3.2-3B",
-  "disabled_providers": ["opencode"],
+  "model": "metaways/qwen3.6-35b-a3b",
+  "small_model": "metaways/llama-3.2-3B",
+  "disabled_providers": ["openai", "gemini", "opencode"],
   "provider": {
     "metaways": {
       "npm": "@ai-sdk/openai-compatible",
@@ -12,35 +12,45 @@
         "apiKey": "{env:METAWAYS_AI_API_KEY}"
       },
       "models": {
-        "qwen3.6-35b-a3b": {
-          "name": "Qwen 3.6 35B A3B",
+        "qwen3.5-0.8b": {
+          "name": "Qwen 3.5 Ultra Lite (0.8B)",
           "limit": {
-            "context": 65536,
+            "context": 32768,
             "output": 8192
           }
         },
-        "qwen3.8-27b": {
-          "name": "Qwen 3.8 27B",
+        "qwen3.6-35b-a3b": {
+          "name": "Qwen 3.6 Lite (3B Active)",
           "limit": {
-            "context": 65536,
+            "context": 204800,
             "output": 8192
           }
         },
         "qwopus3.6-27b": {
-          "name": "Qwopus 3.6 27B",
+          "name": "Qwopus 3.6 Full (27B Dense)",
           "limit": {
-            "context": 65536,
+            "context": 204800,
+            "output": 8192
+          }
+        },
+        "qwen3.8-27b": {
+          "name": "Qwen 3.8 Full (27B Dense) Experimental",
+          "limit": {
+            "context": 204800,
             "output": 8192
           }
         },
         "llama-3.2-3B": {
-          "name": "llama-3.2-3B",
+          "name": "LLaMA 3.2-3B",
           "limit": {
-            "context": 65536,
+            "context": 32768,
             "output": 8192
           }
-	    }
+        }
       }
     }
-  }
+  },
+  "plugin": [
+    "opencode-disable-zen"
+  ]
 }
