@@ -2,8 +2,9 @@
 services:
   documentserver:
     image: onlyoffice/documentserver:latest
-#    volumes:
-#      - ./configs/onlyoffice/local.json:/etc/onlyoffice/documentserver/local.json:ro
+    # drop-in-replacement euro-office (https://de.wikipedia.org/wiki/Euro-Office)
+    # image: ghcr.io/euro-office/documentserver:latest
+
     environment:
       JWT_ENABLED: "true"
       JWT_SECRET: "4d379ead99817349de233e9edfff3522a91495b4"
@@ -21,6 +22,10 @@ services:
       - traefik.http.routers.onlyoffice.middlewares=onlyoffice
       - traefik.http.services.onlyoffice.loadbalancer.server.port=80
       - traefik.http.services.onlyoffice.loadbalancer.passhostheader=true
+
+  # add custom config
+  #    volumes:
+  #      - ./configs/onlyoffice/local.json:/etc/onlyoffice/documentserver/local.json:ro
 
   web:
     volumes:
