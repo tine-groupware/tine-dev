@@ -1,4 +1,8 @@
-/.idea
+# Only include PHPStorm code style settings
+.idea/*
+!.idea/codeStyles/
+!.idea/codeStyles/**
+
 /.env
 /tine20
 /other-tine20
