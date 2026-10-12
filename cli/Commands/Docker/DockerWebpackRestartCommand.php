@@ -33,13 +33,13 @@ class DockerWebpackRestartCommand extends DockerCommand
 
         passthru($this->getComposeString() . " up -d", $result_code);
         // NOTE: `tail -1` as mutagen outputs volume status with ps 
-        $webContainerId = trim(`{$this->getComposeString()} ps -q web | tail -1`);
+        $webContainerId = trim(shell_exec("{$this->getComposeString()} ps -q web | tail -1"));
 
         $tries = 0;
         // give web time to fail
         sleep(1);
         //                                 check if container id is running
-        while (++$tries < 20 && empty(trim(`docker ps -q --no-trunc | grep $webContainerId`))) {
+        while (++$tries < 20 && empty(trim(shell_exec("docker ps -q --no-trunc | grep $webContainerId")))) {
             $io->info('waiting for web service to be available...');
             // give webpack time to finish compiling
             sleep(2);

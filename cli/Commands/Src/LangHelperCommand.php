@@ -34,7 +34,7 @@ class LangHelperCommand extends DockerCommand
         // NOTE: we can't use getComposeCommand here as mutagen has a ro filesystem and even if we skip mutagen here
         //       it runs in the existing web container with ro filesystem (well we could kill the web-container but
         //       this tradeoff seems to big
-        passthru('docker run --rm --user ' . trim(`id -u`) . ':' . trim(`id -g`) .
+        passthru('docker run --rm --user ' . trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g')) .
             ' -v ' . $this->getTineDir($io) . ':/usr/share/tine20' .
             ' '. $env['WEB_IMAGE'] . ' sh -c "cd /usr/share/tine20; ./langHelper.php ' . $input->getArgument('cmd') . '"', $result_code);
 

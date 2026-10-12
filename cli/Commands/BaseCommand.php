@@ -23,12 +23,12 @@ class BaseCommand extends Command
     /**
      * @var string src dir of tine application/server code
      */
-    private  $tineDir;
+    private $tineDir;
 
     /**
      * @var string src dir of tine application/server unittests
      */
-    protected  $unitTestsDir;
+    protected $unitTestsDir;
 
     /**
      * @var string current branch @see --branch option
@@ -55,12 +55,12 @@ class BaseCommand extends Command
         $io = new ConsoleStyle($input, $output);
         $this->branch = $input->hasOption('branch') && $input->getOption('branch') ?
             $input->getOption('branch') :
-            trim(`cd {$this->getTineDir($io)} && git rev-parse --abbrev-ref HEAD`);
+            trim(shell_exec("cd {$this->getTineDir($io)} && git rev-parse --abbrev-ref HEAD"));
     }
 
     public function getTineDir($io)
     {
-        if (! is_file("{$this->tineDir}/tine20.php")) {
+        if (!is_file("{$this->tineDir}/tine20.php")) {
             $io->infoWithTime('Checking if tine20 exists ...');
             $input = $io->choice('tine20 dir is not linked. Should it be cloned?', ['yes', 'no', 'ignore'], 'yes');
 

@@ -1,0 +1,16 @@
+services:
+  web:
+    image: ${BUILT_IMAGE:-tinegroupware/built:local}
+    environment:
+      TINE20_BUILDTYPE: RELEASE
+      TINE20_ACTIONQUEUE: "true"
+      TINE20_LOGGER_PRIORITY: "5"
+      PHP_DISPLAY_ERRORS: "Off"
+      # TINE20_INSTALL: "true"    # TODO: Directly install Tine? (with prior "mailstack init", otherwise database grants are missing!)
+    volumes:
+      # Note: these volumes add to docker-compose.yml (not to be combined with src-volumes.yml !)
+      - tinefiles:/var/lib/tine20/files
+      - ./tine20/tests/tine20/Tinebase/License/license_contract_MW-TEST-3.0.0.pem:/usr/share/tests/tine20/Tinebase/License/license_contract_MW-TEST-3.0.0.pem:ro
+
+volumes:
+  tinefiles:

@@ -68,15 +68,102 @@ In case tine stops working after a branch switch or computer restart run "./cons
 - install broadcasthub dependencies, if console has cloned it you don't need to do anything: `cd broadcasthub && npm install`
 
 ## Console Commands
-run `./console` in tine-dev directory to see available Commands
+Run `./console` in tine-dev directory to see available Commands
 
 ## pullup.json
 
-to override default settings copy .pullup.json to pullup.json
+To override default settings copy `.pullup.json` to `pullup.json`
 
-+ composeFiles: dockerset up "modules". Take a look at ./compose (Do not include the ones with -build.yml)
-+ build: if true images will be build locally
++ composeFiles: docker sets up "modules". Take a look at `./compose` dir
 + more: any wishes? > issue tracker 
+
+## Simulated production environment (src:build)
+
+The dev setup serves the app from your linked source (DEVELOPMENT mode) and serves
+uncompiled JS from a webpack dev-server container.  
+To simulate the production
+environment (release image: compiled JS bundles, RELEASE mode, action queue worker):
+
+1. Stop and remove all containers: `./console docker:down`
+2. `./console src:build` — builds `tinegroupware/built:local` from the CI Dockerfile
+   (target `built`). A custom `--tag` is persisted to `pullup.json` automatically.
+3. Edit `pullup.json`: replace `"webpack"` with `"build"` and remove `"xdebug"` (the production image has no xdebug).  
+   Note: "build" must be the first entry in "composeFiles"!
+4. `./console docker:up` — the web container now runs the built image (app baked in,
+   no source mount).
+5. `./console tine:install` — installs tine (same command as the dev setup).
+    + Note: Docker re-uses an existing database.  
+      For a clean install run (while the containers are still up and running):
+
+          ./console tine:uninstall
+          docker compose exec cache redis-cli flushall
+          ./console tine:install
+          ./console docker:up
+
+### Fail-safe commands
+
+WARNING: deletes all local docker images, volumes and networks!  
+WARNING: overwrites your local `pullup.json` file!
+
+    ./console docker:down
+    docker image prune -a -f
+    docker volume prune -f
+    docker network prune -f
+    cp .pullup.json pullup.json
+    sed -i '' 's/"webpack"/"build"/g' pullup.json
+    sed -i '' '/xdebug/d' pullup.json
+    ./console src:build
+    ./console docker:up --detached
+    sleep 15
+    ./console tine:install
+    ./console docker:log
+
+Back to dev: restore `"webpack"` in `pullup.json`, run `./console docker:up` (and maybe a clean install as well).
+
+# Development
+
+Read `.opencode/skills/tine-dev-env/SKILL.md` to get an overview and context of the tine-dev setup.
+
+## Tine source (tine20 symlink)
+
+`tine20` is a symlink to a git checkout of the Tine project (https://github.com/tine-groupware/tine).
+In dev mode it is bind-mounted into the web container at `/usr/share/tine20` (DEVELOPMENT mode),
+so PHP changes take effect immediately — run `./console tine:clearcache` if cached code hides your changes.
+
+Switching branches: `./console src:changeBranch --git --branch <branch>` does the git checkout +
+submodule update, then composer install, npm install, webpack restart and cache clear in one go
+(`--nonpm` skips npm). The dev web image is selected per branch (`main` → `tinegroupware/dev:main-8.5`,
+see `$imageMap` in `cli/Commands/Docker/DockerCommand.php`), so run `./console docker:up` afterwards.
+
+## Source tooling (runs in a container against your checkout)
+
+- `./console src:composer "<cmd>"` — composer in the Tine source context, e.g. `src:composer "require metaways/timezoneconverter"`
+- `./console src:npm "<cmd>"` — npm in `Tinebase/js`, e.g. `src:npm "install --save-dev <pkg>"`
+- `./console src:npminstall` — (re)install npm dependencies
+- `./console src:langHelper "<cmd>"` — translation helper, e.g. `src:langHelper "-- '-u --app Calendar'"`
+- `./console src:build` — build the simulated production image (see "Simulated production environment")
+
+## JavaScript
+
+In dev mode the JS is served uncompiled from the webpack-dev-server container (`compose/webpack.yml`).
+After larger JS changes restart it: `./console docker:webpackrestart`.
+
+## Tine runtime helpers
+
+- `./console tine:cli "<options>"` — run a Tine CLI method in the web container, e.g.
+  `tine:cli "--method Tinebase.clearCache --username tine20admin --password tine20admin"` (don't pass `--config`)
+- `./console tine:setup "<options>"` — run `setup.php` with arguments (e.g. `--setLicense`, see SKILL.md)
+- `./console tine:demodata` — create demo data
+- `./console tine:clearcache` — clear all caches
+- `./console tine:test` / `./console tine:setuptest` — run the Tine unit tests / setup tests
+  (dev mode only: the tests live in the `tests` mount, which prod-sim does not have)
+- `./console docker:cli web` — shell into the web container
+- `./console docker:log` — follow the container logs
+
+## Adding a compose module
+
+Create `compose/<name>.yml` (see the existing files), add `"<name>"` to `composeFiles` in `pullup.json`,
+then `./console docker:up`.
 
 # Links
 
@@ -508,16 +595,29 @@ https://github.com/orgs/tine-groupware/packages
 
 see https://opencode.ai/docs/
 
-- add METAWAYS_AI_BASE_URL + METAWAYS_AI_API_KEY to .env, .bashrc or configs/opencode/config/opencode.json
-  - OR adjust opencode.json in configs/opencode/config/ to your LLM provider
-- start docker compose (with “opencode”)
-- go to https://opencode.local.tine-dev.de/
-  - OR run in shell:
-~~~
-  docker exec -it opencode bash
-  opencode
-~~~
-- [browser] add project "tine20" via "+" button and adding the dir "/tine20"
+opencode runs as a container (`compose/opencode.yml`) in server mode (`opencode serve`, port 4096),
+exposed via traefik. A `socket-proxy` container mediates restricted docker API access for the
+opencode container: it may only inspect the web container (`tine20-web-1`) and start/resize exec
+sessions in it — how opencode runs commands inside the Tine container.
+
+1. Add your LLM provider credentials: `METAWAYS_AI_BASE_URL` + `METAWAYS_AI_API_KEY` in `.env`
+   (or export them in your shell before `./console docker:up`).
+   Alternatively adjust `configs/opencode/config/opencode.json` for your own LLM provider
+   (do not commit API keys to the repo).
+2. Add `"opencode"` to `composeFiles` in `pullup.json` and run `./console docker:up`.
+3. Open https://opencode.local.tine-dev.de/
+   - OR run in shell:
+   ~~~
+   docker exec -it opencode bash
+   opencode
+   ~~~
+4. [browser] add project "tine20" via "+" button and adding the dir "/tine20"
+   (your Tine checkout, writable; the tine-dev repo is mounted read-only at `/tine-dev`).
+5. The repo bundles an opencode skill with environment context:
+   `.opencode/skills/tine-dev-env/SKILL.md` (in the container: `/tine-dev/.opencode/...`).
+
+You can also run opencode directly on your host in this repo — `AGENTS.md` and the skill above
+provide the environment context.
 
 ## Show available models of provider
 

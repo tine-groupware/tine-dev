@@ -36,13 +36,13 @@ class NpmCommand extends DockerCommand
 
         $env = $this->getComposeEnv();
 
-        $localCacheDir = trim(`npm config get cache`);
+        $localCacheDir = trim(shell_exec('npm config get cache'));
 
         // NOTE: we can't use getComposeCommand here as mutagen has a ro filesystem and even if we skip mutagen here
         //       it runs in the existing node container with ro filesystem (well we could kill the node-container but
         //       this tradeoff seems to big
         passthru("docker run --rm \
-            --user " . trim(`id -u`) . ':' . trim(`id -g`) . " \
+            --user " . trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g')) . " \
             -p 9229:9229 \
             -v $localCacheDir:/.npm \
             -v {$this->getTineDir($io)}:/usr/share/tine20 \

@@ -3,6 +3,7 @@
 namespace App\Commands\Docker;
 
 use App\Commands\BaseCommand;
+use App\ConsoleStyle;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
@@ -13,6 +14,7 @@ class DockerCommand extends BaseCommand
     protected $composeNames;
     protected $composeFiles;
     protected $ignoreTineConfig;
+    protected $skipBranchOption = false;
     protected $tablePrefix = null;
     protected $homeDir = null;
     protected array $composeCommand = ['docker', 'compose'];
@@ -71,18 +73,29 @@ class DockerCommand extends BaseCommand
             $this->tablePrefix = $this->config['tine20']['tableprefix'];
         }
 
-        $this->addOption(
-            'branch',
-            'b',
-            InputArgument::OPTIONAL,
-            'tine branch you want to run (e.g. --branch 2023.11)'
-        );
+        if (!$this->skipBranchOption) {
+            $this->addOption(
+                'branch',
+                'b',
+                InputArgument::OPTIONAL,
+                'tine branch you want to run (e.g. --branch 2026.11, default: current branch)'
+            );
+        }
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output) {
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        $io = new ConsoleStyle($input, $output);
+
+        $dockerPath = shell_exec('which docker 2>/dev/null');
+        if ($dockerPath === null || trim($dockerPath) === '') {
+            $io->error('docker not found in PATH');
+            exit(1);
+        }
+
         parent::execute($input, $output);
 
-        $this->initCompose();
+        $this->initCompose($io);
     }
 
     public static function getImages($branch)
@@ -95,7 +108,7 @@ class DockerCommand extends BaseCommand
         }
     }
 
-    public function getBroadcasthubDir($io)
+    public function getBroadcasthubDir(ConsoleStyle $io)
     {
         if (($this->active('broadcasthub') || $this->active('broadcasthub-dev')) && ! is_file('broadcasthub/package.json')) {
             $input = $io->choice('broadcasthub dir is not linked. Should it be cloned and installed?', ['yes', 'no', 'ignore'], 'yes');
@@ -118,7 +131,7 @@ class DockerCommand extends BaseCommand
         }
     }
 
-    public function getElementIntegrationDir($io)
+    public function getElementIntegrationDir(ConsoleStyle $io)
     {
         if ($this->active('matrix-element-dev') && ! is_file('element-web/package.json')) {
             $input = $io->choice('element-web dir is not linked. Should it be cloned and installed?', ['yes', 'no', 'ignore'], 'yes');
@@ -138,11 +151,13 @@ class DockerCommand extends BaseCommand
         }
     }
 
-    public function active($composeName) {
+    public function active($composeName)
+    {
         return in_array($composeName, $this->composeNames);
     }
 
-    public function initCompose() {
+    public function initCompose(ConsoleStyle $io)
+    {
         $conf = $this->getComposeConf();
         $this->composeCommand = in_array('mutagen', $conf['composeFiles']) ? ['mutagen-compose'] : $this->composeCommand;
         $this->composeFiles = ['docker-compose.yml'];
@@ -159,15 +174,47 @@ class DockerCommand extends BaseCommand
                     $this->composeNames[] = $compose;
                     $this->composeFiles[] = $filename;
                 } else {
-                    echo "$compose unknown";
+                    $io->error("pullup.json declares '$compose', but '$filename' file is missing");
+                    exit();
                 }
+            }
+        }
+
+        if (in_array('build', $this->composeNames) && in_array('src-volumes', $this->composeNames)) {
+            $io->error('pullup.json should not contain "build" and "src-volumes" at the same time');
+            exit();
+        }
+
+        if (in_array('build', $this->composeNames) && $this->composeNames[0] !== 'build') {
+            $io->error('"build" should be the first compose file in pullup.json');
+            exit();
+        }
+
+        if (in_array('src-volumes', $this->composeNames) && $this->composeNames[0] !== 'src-volumes') {
+            $io->error('"src-volumes" should be the first compose file in pullup.json');
+            exit();
+        }
+
+        if (!in_array('build', $this->composeNames) && !in_array('src-volumes', $this->composeNames)) {
+            // Silently add src-volumes.yml and put it in front
+            $compose = 'src-volumes';
+            $filename = 'compose/' . $compose . '.yml';
+            if (file_exists($filename)) {
+                // add at index 0
+                array_unshift($this->composeNames, $compose);
+                // index 0 is docker-compose.yml, so add at index 1
+                array_splice($this->composeFiles, 1, 0, [$filename]);
+            } else {
+                $io->error("'$filename' file is missing");
+                exit();
             }
         }
 
         $this->getComposeEnv();
     }
 
-    public function anotherConfig($io) {
+    public function anotherConfig(ConsoleStyle $io)
+    {
         if (is_file($this->getTineDir($io) . '/config.inc.php')) {
             if ($this->ignoreTineConfig) {
                 return;
@@ -185,13 +232,14 @@ class DockerCommand extends BaseCommand
                     exit(1);
 
                 case 'ignore':
-                    $this->updateConfig(['ignoreConfig' => true]);
+                    $this->updateConfig($io, ['ignoreConfig' => true]);
                     break;
             }
         }
     }
 
-    public function getComposeString() {
+    public function getComposeString()
+    {
         $env = '';
         foreach ($this->getComposeEnv() as $k => $v) {
             $env .= "{$k}={$v} ";
@@ -200,7 +248,8 @@ class DockerCommand extends BaseCommand
         return $env . join(' ', $this->composeCommand) . ' -f ' . join(' -f ', $this->composeFiles);
     }
 
-    public function getComposeArray(): array {
+    public function getComposeArray(): array
+    {
         $cmd = $this->composeCommand;
         foreach ($this->composeFiles as $file) {
             $cmd[] = '-f';
@@ -209,26 +258,32 @@ class DockerCommand extends BaseCommand
         return $cmd;
     }
 
-    public function getComposeEnv(): array {
+    public function getComposeEnv(): array
+    {
         static $env = [];
         if (empty($env)) {
             foreach (self::getImages($this->branch) as $service => $image) {
                 $var = strtoupper($service) . '_IMAGE';
-                $arch = stristr($image, 'dockerregistry.metaways.net') && stristr(`uname -a`, 'arm64') ? '-arm64' : '';
+                $arch = stristr($image, 'dockerregistry.metaways.net') && stristr(shell_exec('uname -a'), 'arm64') ? '-arm64' : '';
 
                 $env[$var] = "{$image}{$arch}";
             }
-            $homeDir = rtrim(trim(`realpath ~/`), '/');
+            $homeDir = rtrim(trim(shell_exec('realpath ~/')), '/');
             if (empty($homeDir) || !preg_match('#^/..+#', $homeDir)) {
                 exit('home dir discovery failed');
             }
-            `touch $homeDir/.dockertine20web_bash_history`;
-            `touch $homeDir/.dockertine20web_ash_history`;
+            shell_exec("touch $homeDir/.dockertine20web_bash_history");
+            shell_exec("touch $homeDir/.dockertine20web_ash_history");
             $this->homeDir = $homeDir;
             $env['HOMEDIR'] = $homeDir;
 
-            $env['IMAGE_SUFFIX'] = stristr(`uname -a`, 'arm64') ? '-arm64' : '';
+            $env['IMAGE_SUFFIX'] = stristr(shell_exec('uname -a'), 'arm64') ? '-arm64' : '';
             $env['TINE20_DATABASE_TABLEPREFIX'] = $this->_getTablePrefix();
+
+            $conf = $this->getComposeConf();
+            if (isset($conf['builtImage'])) {
+                $env['BUILT_IMAGE'] = $conf['builtImage'];
+            }
         }
         return $env;
     }
@@ -238,24 +293,31 @@ class DockerCommand extends BaseCommand
         return $this->tablePrefix ?? substr(str_replace(['.', '/'], '', $this->branch),0,7) . '_';
     }
 
-    public function updateConfig($updates)
+    public function updateConfig(ConsoleStyle $io, $updates)
     {
         $conf = array_merge($this->getComposeConf(), $updates);
         $f = fopen($this->baseDir . '/pullup.json', 'w+');
         fwrite($f, json_encode($conf, JSON_PRETTY_PRINT));
         fclose($f);
 
-        $this->initCompose();
+        $this->initCompose($io);
     }
 
     public function getComposeConf(): array
     {
+        $json = [];
         if (is_file($this->baseDir . '/pullup.json')) {
-            $conf = json_decode(file_get_contents($this->baseDir . '/pullup.json'), true);
-        } else {
-            $conf = json_decode(file_get_contents($this->baseDir . '/.pullup.json'), true);
+            $json = json_decode(file_get_contents($this->baseDir . '/pullup.json'), true);
+            if (is_null($json)) {
+                exit('[ERROR] "pullup.json" contains errors' . PHP_EOL . PHP_EOL);
+            }
+        } elseif (is_file($this->baseDir . '/.pullup.json')) {
+            $json = json_decode(file_get_contents($this->baseDir . '/.pullup.json'), true);
+            if (is_null($json)) {
+                exit('[ERROR] ".pullup.json" contains errors' . PHP_EOL . PHP_EOL);
+            }
         }
 
-        return $conf;
+        return $json;
     }
 }

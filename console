@@ -1,8 +1,8 @@
 #!/usr/bin/env php
 
-<?php 
+<?php
 
-require_once __DIR__ . '/vendor/autoload.php'; 
+require_once __DIR__ . '/vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
 
@@ -29,11 +29,25 @@ use App\Commands\Tine\TineSetupCliCommand;
 use App\Commands\Tine\TineAwaitDbCommand;
 use App\Commands\Tine\TineClearCacheCommand;
 
+use App\Commands\Src\BuildCommand;
 use App\Commands\Src\ChangeBranchCommand;
 use App\Commands\Src\ComposerCommand;
 use App\Commands\Src\NpmCommand;
 use App\Commands\Src\NpmInstallCommand;
 use App\Commands\Src\LangHelperCommand;
+
+if (PHP_VERSION_ID >= 80400) {
+    // // Suppress PHP Deprecated warnings for Symfony. Instead, show one info message (except during completion hook generation).
+    if (!($argc > 1 && $argv[1] === '_completion')) {
+        fwrite(STDERR, "INFO: Suppressing PHP Deprecated warnings for tine-dev Symfony files (PHP " . PHP_VERSION . ")" . PHP_EOL . PHP_EOL);
+    }
+    set_error_handler(function (int $severity, string $message, string $file): bool {
+        if ($severity === E_DEPRECATED && (str_contains($file, '/vendor/symfony/') || str_contains($file, 'vendor/stecman'))) {
+            return true;
+        }
+        return false;
+    });
+}
 
 $app = new ConsoleApplication();
 
@@ -62,6 +76,7 @@ $app->add(new TineAwaitDbCommand());
 $app->add(new TineClearCacheCommand());
 
 //Src Commands
+$app->add(new BuildCommand());
 $app->add(new ChangeBranchCommand());
 $app->add(new ComposerCommand());
 $app->add(new NpmCommand());
