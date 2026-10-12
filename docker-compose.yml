@@ -97,9 +97,7 @@ services:
       COLORTERM: truecolor
       PHP_DISPLAY_ERRORS: "On"
     volumes:
-      - ./tine20/tine20:/usr/share/tine20/:ro
-      - ./tine20/tests:/usr/share/tests/:ro
-      - ./tine20/scripts:/usr/share/scripts/:ro
+      # Note: source mounts are declared in src-volumes.yml
       - ./configs/conf.d/custom.inc.php:/etc/tine20/conf.d/custom.inc.php:ro
       - ./configs/default/cert.pem:/etc/nginx/certs/cert.pem:ro
       - ./configs/default/key.pem:/etc/nginx/certs/key.pem:ro

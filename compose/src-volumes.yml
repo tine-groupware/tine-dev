@@ -1,0 +1,7 @@
+services:
+  web:
+    # Note: these volumes add to docker-compose.yml (not to be combined with build.yml !)
+    volumes:
+      - ./tine20/tine20:/usr/share/tine20/:ro
+      - ./tine20/tests:/usr/share/tests/:ro
+      - ./tine20/scripts:/usr/share/scripts/:ro
