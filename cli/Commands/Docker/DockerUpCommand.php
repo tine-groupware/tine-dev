@@ -8,6 +8,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use App\ConsoleStyle;
 
+const MICRO_VM_CERT_NAME = '/var/run/secrets/opencode-instance/service-tls';
+
 class DockerUpCommand extends DockerCommand
 {
     
@@ -111,6 +113,19 @@ tls:
     protected function ensure_tls_cert(ConsoleStyle $io) {
         $certFolder = 'configs/traefik/';
         $letsencryptPrefix = 'letsencrypt.';
+
+        if (is_file(MICRO_VM_CERT_NAME . '.crt') && is_file(MICRO_VM_CERT_NAME . '.key')) {
+            # files need to be copied. symlinks cant be mounted. 
+            if (!copy(MICRO_VM_CERT_NAME.'.crt', "{$certFolder}microvm.fullchain.pem")) {
+                $io->error('failed to copy microvm crt');
+            }
+            if (!copy(MICRO_VM_CERT_NAME.'.key', "{$certFolder}microvm.privkey.pem")) {
+                $io->error('failed to copy microvm key');
+            }
+
+            $io->info('found microvm tls certificate');
+            return "microvm.";
+        }
 
         // in case the letsencrypt.privkey.pem.aes file has been updated we need to delete the decrypted privkey
         if (($letsencryptMTime = @filemtime("{$certFolder}{$letsencryptPrefix}privkey.pem.aes")) &&
