@@ -3,7 +3,7 @@ services:
     volumes:
       - ./configs/mailstack/dovecot-oauth2-local.conf.ext:/etc/dovecot/dovecot-oauth2.conf.ext 
       - ./configs/mailstack/keys:/etc/dovecot/keys
-      - ./configs/sso/sso_cert.crt:/etc/dovecot/keys/email.tine.local.tine-dev.de/RS256/tine-sso
+      - ./configs/sso/sso_cert.crt:/etc/dovecot/keys/email.tine.${DOMAIN_SUFFIX:-local.tine-dev.de}/RS256/tine-sso
   
   web:
     environment:

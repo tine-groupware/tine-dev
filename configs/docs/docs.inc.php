@@ -1,7 +1,7 @@
 <?php
 return [
     'UserManual' => [
-        'helpBaseUrl' => 'https://docs.local.tine-dev.de/',
+        'helpBaseUrl' => 'https://docs.'.getenv("DOMAIN_SUFFIX").'/',
         'autodetectVersionPath' => false,
     ]
 ];

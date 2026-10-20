@@ -10,4 +10,6 @@ RUN mkdir /var/vmail && chown vmail:vmail /var/vmail
 
 COPY etc/dovecot/ /etc/dovecot/
 
-CMD ["/usr/sbin/dovecot", "-F"]
+COPY entrypoint.sh /entrypoint.sh
+
+CMD ["/entrypoint.sh"]

@@ -71,23 +71,23 @@ services:
       - web
     environment:
       OIDC_BIND: 0.0.0.0:4901
-      OIDC_ROOT_URL: https://oidctestclient.local.tine-dev.de
+      OIDC_ROOT_URL: https://oidctestclient.${DOMAIN_SUFFIX:-local.tine-dev.de}
       OIDC_CLIENT_ID: oidc-test-sp
       OIDC_CLIENT_SECRET: test-secret
-      OIDC_PROVIDER: https://tine.local.tine-dev.de
+      OIDC_PROVIDER: https://tine.${DOMAIN_SUFFIX:-local.tine-dev.de}
       OIDC_DO_REFRESH: false
       OIDC_DO_INTROSPECTION: false
       OIDC_SCOPES: openid,offline_access,profile,email,matrix_id
     healthcheck:
       test: [CMD, "true"]
     links:
-      - traefik:tine.local.tine-dev.de
+      - traefik:tine.${DOMAIN_SUFFIX:-local.tine-dev.de}
     networks:
       - external_network
       - internal_network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.oidctestclient.rule=Host(`oidctestclient.local.tine-dev.de`)
+      - traefik.http.routers.oidctestclient.rule=Host(`oidctestclient.${DOMAIN_SUFFIX:-local.tine-dev.de}`)
       - traefik.http.routers.oidctestclient.entrypoints=websecure
       - traefik.http.routers.oidctestclient.tls=true
       - traefik.http.services.oidctestclient.loadbalancer.server.port=4901

@@ -1,7 +1,7 @@
 services:
   web:
     links:
-      - traefik:matrix.local.tine-dev.de
+      - traefik:matrix.${DOMAIN_SUFFIX:-local.tine-dev.de}
     volumes:
       - ./configs/matrix/matrix.inc.php:/etc/tine20/conf.d/matrix.inc.php:ro
       - ./configs/matrix/element.inc.php:/etc/tine20/conf.d/element.inc.php:ro
@@ -24,10 +24,10 @@ services:
     networks:
       - internal_network
     links:
-      - traefik:tine.local.tine-dev.de
+      - traefik:tine.${DOMAIN_SUFFIX:-local.tine-dev.de}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.matrix.rule=Host(`matrix.local.tine-dev.de`)
+      - traefik.http.routers.matrix.rule=Host(`matrix.${DOMAIN_SUFFIX:-local.tine-dev.de}`)
       - traefik.http.routers.matrix.entrypoints=websecure
       - traefik.http.routers.matrix.tls=true
       - traefik.http.services.matrix.loadbalancer.server.port=8008
@@ -40,7 +40,7 @@ services:
       - internal_network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.element.rule=Host(`element.local.tine-dev.de`)
+      - traefik.http.routers.element.rule=Host(`element.${DOMAIN_SUFFIX:-local.tine-dev.de}`)
       - traefik.http.routers.element.entrypoints=websecure
       - traefik.http.routers.element.tls=true
       - traefik.http.services.element.loadbalancer.server.port=80
@@ -55,7 +55,7 @@ services:
       - external_network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.elementintegration.rule=Host(`element-integration.local.tine-dev.de`)
+      - traefik.http.routers.elementintegration.rule=Host(`element-integration.${DOMAIN_SUFFIX:-local.tine-dev.de}`)
       - traefik.http.routers.elementintegration.entrypoints=websecure
       - traefik.http.routers.elementintegration.tls=true
       - traefik.http.services.elementintegration.loadbalancer.server.port=80
@@ -71,7 +71,7 @@ services:
       - internal_network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.matrixwellknwon.rule=Host(`matrix.local.tine-dev.de`) && PathPrefix(`/.well-known/matrix`)
+      - traefik.http.routers.matrixwellknwon.rule=Host(`matrix.${DOMAIN_SUFFIX:-local.tine-dev.de}`) && PathPrefix(`/.well-known/matrix`)
       - traefik.http.routers.matrixwellknwon.entrypoints=websecure
       - traefik.http.routers.matrixwellknwon.tls=true
       - traefik.http.services.matrixwellknwon.loadbalancer.server.port=80
@@ -89,7 +89,7 @@ services:
       - internal_network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.matrixcorporal.rule=Host(`matrix.local.tine-dev.de`) && PathPrefix(`/_matrix/corporal/`)
+      - traefik.http.routers.matrixcorporal.rule=Host(`matrix.${DOMAIN_SUFFIX:-local.tine-dev.de}`) && PathPrefix(`/_matrix/corporal/`)
       - traefik.http.routers.matrixcorporal.entrypoints=websecure
       - traefik.http.routers.matrixcorporal.tls=true
       - traefik.http.services.matrixcorporal.loadbalancer.server.port=41081

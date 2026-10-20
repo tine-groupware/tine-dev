@@ -19,7 +19,7 @@ services:
       #- ./configs/opencode/share:/home/opencode/.local/share/opencode:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.opencode.rule=Host(`opencode.local.tine-dev.de`)"
+      - "traefik.http.routers.opencode.rule=Host(`opencode.${DOMAIN_SUFFIX:-local.tine-dev.de}`)"
       - "traefik.http.routers.opencode.entrypoints=websecure"
       - "traefik.http.routers.opencode.tls=true"
       - "traefik.http.services.opencode.loadbalancer.server.port=4096"

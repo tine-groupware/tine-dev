@@ -2,10 +2,10 @@
 
 return [
     'MatrixSynapseIntegrator' => [
-        'matrixDomain' => 'matrix.local.tine-dev.de',
-        'homeServerUrl' => 'https://matrix.local.tine-dev.de',
+        'matrixDomain' => 'matrix.'.getenv("DOMAIN_SUFFIX"),
+        'homeServerUrl' => 'https://matrix'.getenv("DOMAIN_SUFFIX"),
         'matrixSynapseSharedSecretAuth' => false,
         'corporalSharedAuthToken' => 'SynapseSharedSecretAuthenticatorTineSharedSecret',
-        'corporalUserId' => '@corporal:matrix.local.tine-dev.de',
+        'corporalUserId' => '@corporal:matrix.'.getenv("DOMAIN_SUFFIX"),
     ],
 ];

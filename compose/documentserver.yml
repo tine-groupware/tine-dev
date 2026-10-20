@@ -12,11 +12,11 @@ services:
       - external_network
       - internal_network
     links:
-      - traefik:tine.local.tine-dev.de
+      - traefik:tine.${DOMAIN_SUFFIX:-local.tine-dev.de}
     labels:
       - traefik.enable=true
       - traefik.http.middlewares.onlyoffice.headers.customrequestheaders.X-Forwarded-Proto=https
-      - traefik.http.routers.onlyoffice.rule=Host(`onlyoffice.local.tine-dev.de`)
+      - traefik.http.routers.onlyoffice.rule=Host(`onlyoffice.${DOMAIN_SUFFIX:-local.tine-dev.de}`)
       - traefik.http.routers.onlyoffice.entrypoints=websecure
       - traefik.http.routers.onlyoffice.tls=true
       - traefik.http.routers.onlyoffice.middlewares=onlyoffice

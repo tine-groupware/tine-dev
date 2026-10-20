@@ -2,7 +2,7 @@
 
 return [
     'OnlyOfficeIntegrator' => [
-        'onlyOfficePublicUrl' => 'https://onlyoffice.local.tine-dev.de/',
+        'onlyOfficePublicUrl' => 'https://onlyoffice.'.getenv("DOMAIN_SUFFIX").'/',
         'onlyOfficeServerUrl' => 'http://documentserver/',
         'tine20ServerUrl' => 'http://web/',
         'jwtEnabled' => true,

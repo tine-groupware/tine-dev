@@ -10,7 +10,7 @@ services:
       - external_network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.mkdocs.rule=Host(`docs.local.tine-dev.de`)
+      - traefik.http.routers.mkdocs.rule=Host(`docs.${DOMAIN_SUFFIX:-local.tine-dev.de}`)
       - traefik.http.routers.mkdocs.entrypoints=websecure
       - traefik.http.routers.mkdocs.tls=true
       - traefik.http.services.mkdocs.loadbalancer.server.port=8000

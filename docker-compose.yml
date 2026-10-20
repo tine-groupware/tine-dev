@@ -96,6 +96,7 @@ services:
       TERM: xterm-256color
       COLORTERM: truecolor
       PHP_DISPLAY_ERRORS: "On"
+      DOMAIN_SUFFIX: ${DOMAIN_SUFFIX:-local.tine-dev.de}
     volumes:
       # Note: source mounts are declared in src-volumes.yml
       - ./configs/conf.d/custom.inc.php:/etc/tine20/conf.d/custom.inc.php:ro

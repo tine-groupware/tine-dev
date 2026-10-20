@@ -19,19 +19,20 @@ services:
     stop_grace_period: 1s
 
   dovecot:
-    image: ghcr.io/tine-groupware/tine-dev/dovecot:1.0.8
+    image: ghcr.io/tine-groupware/tine-dev/dovecot:1.0.9
     build: ./dockerfiles/mailstack/dovecot
     environment:
       MYSQL_HOST: db
       MYSQL_DB: &dovecotdb dovecot
       MYSQL_USER: *mysqluser
       MYSQL_PASSWORD: *mysqlpw
+      DOMAIN_SUFFIX: ${DOMAIN_SUFFIX:-local.tine-dev.de}
     depends_on:
       - db
     volumes:
       - ./configs/mailstack/sieve-trace-log.conf:/etc/dovecot/conf.d/90-sieve-trace-log.conf
       - ./configs/mailstack/keys:/etc/dovecot/keys
-      - ./configs/sso/sso_cert.crt:/etc/dovecot/keys/email.tine.local.tine-dev.de/RS256/tine-sso
+      - ./configs/sso/sso_cert.crt:/etc/dovecot/keys/email.tine.${DOMAIN_SUFFIX:-local.tine-dev.de}/RS256/tine-sso
     networks:
       - internal_network
       - external_network
@@ -42,8 +43,7 @@ services:
     #  - "995:995"
     stop_grace_period: 1s
     links:
-      - traefik:tine.local.tine-dev.de
-
+      - traefik:tine.${DOMAIN_SUFFIX:-local.tine-dev.de}
 
   mailstack:
     image: ghcr.io/tine-groupware/tine-dev/mailstackcontrol:1.0.5
@@ -71,7 +71,7 @@ services:
       - external_network
     labels:
       - traefik.enable=true
-      - traefik.http.routers.mailcatcher.rule=Host(`mailcatcher.local.tine-dev.de`)
+      - traefik.http.routers.mailcatcher.rule=Host(`mailcatcher.${DOMAIN_SUFFIX:-local.tine-dev.de}`)
       - traefik.http.routers.mailcatcher.entrypoints=websecure
       - traefik.http.routers.mailcatcher.tls=true
       - traefik.http.services.mailcatcher.loadbalancer.server.port=1080

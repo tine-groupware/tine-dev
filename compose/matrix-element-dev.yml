@@ -23,7 +23,7 @@ services:
         pnpm start
     labels:
       - traefik.enable=true
-      - traefik.http.routers.elementintegration.rule=HostRegexp(`^(.*-)?element-integration.local.tine-dev.de$`)
+      - traefik.http.routers.elementintegration.rule=HostRegexp(`^(.*-)?element-integration.${DOMAIN_SUFFIX:-local.tine-dev.de}$`)
       - traefik.http.routers.elementintegration.entrypoints=websecure
       - traefik.http.routers.elementintegration.tls=true
       - traefik.http.services.elementintegration.loadbalancer.server.port=8080

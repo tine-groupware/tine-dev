@@ -1,4 +1,0 @@
-introspection_mode = auth
-introspection_url = https://tine.local.tine-dev.de/sso/openidconnect/userinfo
-debug = yes
-username_attribute = sasl_loginname
