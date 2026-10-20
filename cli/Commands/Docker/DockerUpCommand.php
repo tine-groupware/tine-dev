@@ -8,7 +8,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use App\ConsoleStyle;
 
-const MICRO_VM_CERT_NAME = '/var/run/secrets/opencode-instance/service-tls';
+const MICRO_VM_CERT_NAME = '/var/run/secrets/opencode-instance/service/tls';
 
 class DockerUpCommand extends DockerCommand
 {
