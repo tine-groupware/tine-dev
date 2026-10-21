@@ -2,7 +2,7 @@ FROM alpine:3.10
 
 WORKDIR /root
 
-RUN apk add dovecot dovecot-mysql dovecot-pop3d dovecot-lmtpd dovecot-pigeonhole-plugin
+RUN apk add dovecot dovecot-mysql dovecot-pop3d dovecot-lmtpd dovecot-pigeonhole-plugin gettext
 
 RUN adduser -H -D vmail
 
