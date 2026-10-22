@@ -19,7 +19,7 @@ services:
     stop_grace_period: 1s
 
   dovecot:
-    image: ghcr.io/tine-groupware/tine-dev/dovecot:1.0.9
+    image: ghcr.io/tine-groupware/tine-dev/dovecot:1.0.10
     build: ./dockerfiles/mailstack/dovecot
     environment:
       MYSQL_HOST: db
