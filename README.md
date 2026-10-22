@@ -100,25 +100,44 @@ environment (release image: compiled JS bundles, RELEASE mode, action queue work
           ./console tine:install
           ./console docker:up
 
-### Fail-safe commands
+Back to dev: restore `"webpack"` in `pullup.json`, run `./console docker:up` (and maybe a clean install as well).
+
+## Fresh local dev environment
+
+Use this script to clean up your dev environment and start 100% fresh.  
+tine is installed without any output to keep the logs clean.  
+All options can also be combined.
 
 WARNING: deletes all local docker images, volumes and networks!  
 WARNING: overwrites your local `pullup.json` file!
 
-    ./console docker:down
-    docker image prune -a -f
-    docker volume prune -f
-    docker network prune -f
-    cp .pullup.json pullup.json
-    sed -i '' 's/"webpack"/"build"/g' pullup.json
-    sed -i '' '/xdebug/d' pullup.json
-    ./console src:build
-    ./console docker:up --detached
-    sleep 15
-    ./console tine:install
-    ./console docker:log
+    # default, all steps, silent tine:install
+    ./scripts/fresh-dev.sh
 
-Back to dev: restore `"webpack"` in `pullup.json`, run `./console docker:up` (and maybe a clean install as well).
+    # state wipe only, keeps images and volumes and caches, faster
+    KEEP_IMAGES=1 ./scripts/fresh-dev.sh
+
+    # leaves pullup.json untouched
+    KEEP_PULLUP=1 ./scripts/fresh-dev.sh
+
+    # outputs tine:install logs for debugging
+    TINE_INSTALL_LOGS=1 ./scripts/fresh-dev.sh
+
+What it does (without any options):
+
+    ./console docker:down
+    docker volume rm tine20_tinefiles
+    docker image prune -a -f
+    docker network prune -f
+    rm -rf tine20/tine20/vendor
+    rm -rf tine20/tine20/Tinebase/js/node_modules
+    rm -rf cache/node_modules_*
+    rm -rf data/composer
+    cp .pullup.json pullup.json
+    ./console docker:up --detached
+    ./console tine:awaitdb
+    ./console tine:install >/dev/null 2>&1
+    ./console docker:logs -f
 
 # Development
 
