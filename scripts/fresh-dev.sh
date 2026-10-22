@@ -36,10 +36,6 @@ if [ "${KEEP_IMAGES:-0}" != "1" ]; then
          tine20/tine20/Tinebase/js/node_modules \
          cache/node_modules_* \
          data/composer
-
-  # TODO: Remove as soon as fixed "dovecot:1.0.10" image is provided.
-  step "[4b/8] Rebuilding fixed dovecot image (shadows broken registry 1.0.9)"
-  docker build -t ghcr.io/tine-groupware/tine-dev/dovecot:1.0.9 dockerfiles/mailstack/dovecot
 else
   step "[3-4/8] Skipped Docker cleanup (KEEP_IMAGES=1)"
 fi
