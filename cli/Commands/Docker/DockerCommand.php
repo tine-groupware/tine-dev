@@ -290,7 +290,7 @@ class DockerCommand extends BaseCommand
 
     protected function _getTablePrefix(): string
     {
-        return $this->tablePrefix ?? substr(str_replace(['.', '/'], '', $this->branch),0,7) . '_';
+        return $this->tablePrefix ?? substr(str_replace(['.', '/', '-'], '', $this->branch),0,7) . '_';
     }
 
     public function updateConfig(ConsoleStyle $io, $updates)
