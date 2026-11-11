@@ -68,7 +68,11 @@ class DockerUpCommand extends DockerCommand
                 && !is_dir($tinedir . '/Tinebase/js/node_modules')
             ) {
                 $io->infoWithTime('Init node_modules: ' . $tinedir . '/Tinebase/js/node_modules');
-                passthru('./console src:npminstall');
+                passthru('./console src:npminstall', $npminstallResultCode);
+                if (0 !== $npminstallResultCode) {
+                    $io->error("src:npminstall failed with code $npminstallResultCode, not starting containers");
+                    return $npminstallResultCode;
+                }
             }
 
             $this->ensureIconSet($io);
