@@ -10,7 +10,7 @@ Before doing environment work (starting/debugging the stack, building the simula
 image, editing `compose/*.yml` or `pullup.json`, or diagnosing install / license / "trial" banner
 problems), read the project skill:
 
-**[.opencode/skills/tine-dev-env/SKILL.md](.opencode/skills/tine-dev-env/SKILL.md)**
+**[.agents/skills/tine-dev-env/SKILL.md](.agents/skills/tine-dev-env/SKILL.md)**
 
 It documents the dev vs prod-sim environments, the `./console` command internals, the CI Dockerfile
 targets, the Tine license mechanism, and common pitfalls.

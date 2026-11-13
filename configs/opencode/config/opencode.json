@@ -52,5 +52,17 @@
   },
   "plugin": [
     "opencode-disable-zen"
-  ]
+  ],
+  "mcp": {
+    "servers": {
+      "gitlab": {
+        "type": "remote",
+        "url": "http://gitlab-mcp:3002/mcp",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {env:MCP_AUTH_TOKEN}"
+        }
+      }
+    }
+  }
 }

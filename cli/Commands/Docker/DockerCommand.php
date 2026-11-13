@@ -253,6 +253,12 @@ class DockerCommand extends BaseCommand
             exit();
         }
 
+        $aiClients = array_filter($this->composeNames, fn($name) => str_starts_with($name, 'aicoding-'));
+        if ($aiClients && !in_array('aicoding', $this->composeNames)) {
+            $io->error('pullup.json: "' . implode('", "', $aiClients) . '" requires "aicoding" in composeFiles');
+            exit();
+        }
+
         if (!in_array('build', $this->composeNames) && !in_array('src-volumes', $this->composeNames)) {
             // Silently add src-volumes.yml and put it in front
             $compose = 'src-volumes';

@@ -1,0 +1,31 @@
+# Claude Code client - requires "aicoding" in pullup.json composeFiles
+
+services:
+  claude-code:
+    image: claude-code:latest
+    container_name: claude-code
+    # register the MCP servers of configs/claude/mcp.json at user scope (~/.claude.json, not
+    # persisted), Claude Code doesn't read ~/.claude/mcp.json. ${MCP_AUTH_TOKEN} is stored as is
+    # and resolved by Claude Code at runtime.
+    entrypoint: [ "/bin/sh", "-c" ]
+    command:
+      - |
+        CONF=/etc/tine-dev/claude-mcp.json
+        for name in $$(node -p "Object.keys(require('$$CONF').mcpServers).join(' ')"); do
+          claude mcp remove -s user "$$name" >/dev/null 2>&1
+          claude mcp add-json -s user "$$name" "$$(node -p "JSON.stringify(require('$$CONF').mcpServers['$$name'])")"
+        done
+        exec sleep infinity
+    environment:
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      MCP_AUTH_TOKEN: "${MCP_AUTH_TOKEN}"
+    volumes:
+      - ./:/workspace/tine-dev
+      - ../tine20:/workspace/tine20
+      - ./claude-data:/home/node/.claude
+      - ./configs/claude/settings.json:/home/node/.claude/settings.json
+      - ./configs/claude/mcp.json:/etc/tine-dev/claude-mcp.json:ro
+    networks:
+      - internal_network
+      - external_network
+      - ai-proxy-net

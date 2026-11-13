@@ -141,7 +141,7 @@ What it does (without any options):
 
 # Development
 
-Read `.opencode/skills/tine-dev-env/SKILL.md` to get an overview and context of the tine-dev setup.
+Read `.agents/skills/tine-dev-env/SKILL.md` to get an overview and context of the tine-dev setup.
 
 ## Tine source (tine20 symlink)
 
@@ -632,20 +632,51 @@ docker push ghcr.io/tine-groupware/tine-dev/opencode:1.17.7-mw1
 The packages need to be added to the github repository and made public (inherit repo access):
 https://github.com/orgs/tine-groupware/packages 
 
-# OpenCode integration
+# AI coding clients
+
+AI coding clients run as containers. `compose/aicoding.yml` holds the shared parts, and every
+client has its own module, so only the client you actually use is started:
+
+| module                  | contents                                              |
+|-------------------------|-------------------------------------------------------|
+| `aicoding`              | `socket-proxy`, `gitlab-mcp`, network `ai-proxy-net`  |
+| `aicoding-claude-code`  | Claude Code container (`claude-code`)                 |
+| `aicoding-opencode`     | opencode server (`opencode`)                          |
+
+~~~
+"composeFiles": [ ..., "aicoding", "aicoding-claude-code" ]
+~~~
+
+`./console` refuses to start if an `aicoding-*` client module is listed without `aicoding`.
+
+The `socket-proxy` gives clients restricted docker API access: they may only inspect containers
+and start/resize exec sessions in the tine web container — that's how clients run commands
+(`./console tine:*`, tests, ...) inside Tine. It accepts requests from every container in the
+`ai-proxy-net` subnet (default `172.31.250.0/24`, override with `AI_PROXY_SUBNET` in `.env` if it
+collides with one of your networks) — only client containers must join this network.
+If the web container can't be identified, `socket-proxy` refuses to start instead of running with
+a too broad allowlist.
+
+**Adding a new client:** create `compose/aicoding-<client>.yml` with the client service and add
+`ai-proxy-net` to its `networks` (plus `internal_network`/`external_network` as needed).
+Nothing in `aicoding.yml` needs to change.
+
+**Migrating from the old `opencode` module:** replace `"opencode"` in `pullup.json` with
+`"aicoding", "aicoding-opencode"` (and/or `"aicoding-claude-code"`), then run
+`docker compose up -d --remove-orphans` once (or `docker rm -f` the containers you dropped)
+and `./console docker:up`.
+
+## opencode
 
 see https://opencode.ai/docs/
 
-opencode runs as a container (`compose/opencode.yml`) in server mode (`opencode serve`, port 4096),
-exposed via traefik. A `socket-proxy` container mediates restricted docker API access for the
-opencode container: it may only inspect the web container (`tine20-web-1`) and start/resize exec
-sessions in it — how opencode runs commands inside the Tine container.
+opencode runs in server mode (`opencode serve`, port 4096), exposed via traefik.
 
 1. Add your LLM provider credentials: `METAWAYS_AI_BASE_URL` + `METAWAYS_AI_API_KEY` in `.env`
    (or export them in your shell before `./console docker:up`).
    Alternatively adjust `configs/opencode/config/opencode.json` for your own LLM provider
    (do not commit API keys to the repo).
-2. Add `"opencode"` to `composeFiles` in `pullup.json` and run `./console docker:up`.
+2. Add `"aicoding", "aicoding-opencode"` to `composeFiles` in `pullup.json` and run `./console docker:up`.
 3. Open https://opencode.local.tine-dev.de/
    - OR run in shell:
    ~~~
@@ -654,20 +685,28 @@ sessions in it — how opencode runs commands inside the Tine container.
    ~~~
 4. [browser] add project "tine20" via "+" button and adding the dir "/tine20"
    (your Tine checkout, writable; the tine-dev repo is mounted read-only at `/tine-dev`).
-5. The repo bundles an opencode skill with environment context:
-   `.opencode/skills/tine-dev-env/SKILL.md` (in the container: `/tine-dev/.opencode/...`).
+5. The repo bundles a skill with environment context:
+   `.agents/skills/tine-dev-env/SKILL.md` (in the container: `/tine-dev/.agents/...`).
 
 You can also run opencode directly on your host in this repo — `AGENTS.md` and the skill above
 provide the environment context.
 
-## Show available models of provider
+### Show available models of provider
 
 ~~~
 curl -s $METAWAYS_AI_BASE_URL/models -H "Authorization: Bearer $METAWAYS_AI_API_KEY" | jq
 ~~~
 
-## UFW rule
+### UFW rule
 
 You might need to add a UFW rule to allow outgoing connections to the AI-API server:
 
     sudo ufw route allow from any to $METAWAYS_AI_API_IPADDRESS
+
+## claude-code
+    docker exec -it claude-code claude --chrome
+
+Paths in the container:
+
+- `/workspace/tine20` — your Tine checkout (writable, work and commit here)
+- `/workspace/tine-dev` — this repo; `tine-dev/tine20` is the symlink to `/workspace/tine20`
