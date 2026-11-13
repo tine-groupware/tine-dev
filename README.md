@@ -200,6 +200,7 @@ docker exec e2etests npm test src/test/CrewScheduling/crewScheduling.test.js
 The tests use `TEST_URL` etc. from `tine20/tests/e2etests/.env`. Inside the docker network
 `tine.local.tine-dev.de` resolves to traefik (network alias set in `compose/e2etest.yml`), so the
 default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/screenshots/Error/`.
+AI coding clients may exec into `e2etests` (see socket-proxy below).
 
 ## Adding a compose module
 
@@ -651,7 +652,7 @@ client has its own module, so only the client you actually use is started:
 
 The `socket-proxy` gives clients restricted docker API access: they may only inspect containers
 and start/resize exec sessions in the tine web container — that's how clients run commands
-(`./console tine:*`, tests, ...) inside Tine. It accepts requests from every container in the
+(`./console tine:*`, tests, ...) inside Tine — and in the e2e test runner `e2etests` (see "E2E tests"). It accepts requests from every container in the
 `ai-proxy-net` subnet (default `172.31.250.0/24`, override with `AI_PROXY_SUBNET` in `.env` if it
 collides with one of your networks) — only client containers must join this network.
 If the web container can't be identified, `socket-proxy` refuses to start instead of running with

@@ -1,7 +1,8 @@
 # Shared infrastructure for AI coding clients. Combine with one or more client modules in
 # pullup.json, e.g. "composeFiles": [..., "aicoding", "aicoding-claude-code"]
 #
-# A client gets restricted docker access (exec into the tine web container only) by joining
+# A client gets restricted docker access (exec into the tine web container and the e2e test
+# runner from compose/e2etest.yml only) by joining
 # ai-proxy-net - socket-proxy allows any container in that subnet, so new clients don't need
 # changes here.
 
@@ -49,7 +50,7 @@ services:
           '-allowfrom=${AI_PROXY_SUBNET:-172.31.250.0/24}' \
           '-allowHEAD=/_ping' \
           '-allowGET=/(_ping$|v1\.[0-9]{1,2}/(version|containers/json|containers/[^/]+/json|exec/[a-f0-9]+/json))' \
-          "-allowPOST=/v1\\.[0-9]{1,2}/(containers/(tine20-web-[0-9]+|$$ID[a-f0-9]*)/exec|exec/[a-f0-9]+/(start|resize))"
+          "-allowPOST=/v1\\.[0-9]{1,2}/(containers/(tine20-web-[0-9]+|$$ID[a-f0-9]*|e2etests)/exec|exec/[a-f0-9]+/(start|resize))"
     networks:
       - ai-proxy-net
 
