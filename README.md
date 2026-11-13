@@ -179,6 +179,28 @@ After larger JS changes restart it: `./console docker:webpackrestart`.
 - `./console docker:cli web` — shell into the web container
 - `./console docker:log` — follow the container logs
 
+## E2E tests
+
+The `e2etest` compose module adds the container `e2etests` (node + chromium, image built from
+`dockerfiles/e2etests`) for the jest/puppeteer tests in `tine20/tests/e2etests`. It uses
+Debian's chromium, as puppeteer's own Chrome download has no linux/arm64 build.
+
+Add `"e2etest"` to `composeFiles` in `pullup.json`, then:
+
+~~~
+# build the image (again after changes in dockerfiles/e2etests). Not done by docker:up: compose
+# can't build when started by ./console ("failed to get console: provided file is not a console")
+eval "$(./console docker:composestring | tail -1) build e2etests"
+./console docker:up
+./console tine:demodata                     # some tests need demo data
+docker exec e2etests npm install            # once / after package.json changes
+docker exec e2etests npm test src/test/CrewScheduling/crewScheduling.test.js
+~~~
+
+The tests use `TEST_URL` etc. from `tine20/tests/e2etests/.env`. Inside the docker network
+`tine.local.tine-dev.de` resolves to traefik (network alias set in `compose/e2etest.yml`), so the
+default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/screenshots/Error/`.
+
 ## Adding a compose module
 
 Create `compose/<name>.yml` (see the existing files), add `"<name>"` to `composeFiles` in `pullup.json`,

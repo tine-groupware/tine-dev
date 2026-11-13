@@ -1,13 +1,27 @@
+# e2e test runner (jest + puppeteer), see README "E2E tests"
+#
+#   docker exec e2etests npm install   # once / after package.json changes
+#   docker exec e2etests npm test src/test/CrewScheduling/crewScheduling.test.js
+
 services:
-  e2e:
-    image: tine20/devsetup-puppeteer:1.0.2
-    environment:
-        TEST_DOCKER: "true"
-        TEST_URL: http://web:10443
-        TEST_BROWSER_LANGUAGE: en
-    working_dir: /tine20/tests/e2etests
-    user: node
+  e2etests:
+    build: ./dockerfiles/e2etests
+    # local image only, build it before the first docker:up (see README "E2E tests")
+    image: tine-dev/e2etests:latest
+    container_name: e2etests
+    init: true
+    shm_size: 1gb
     volumes:
       - "./tine20/:/tine20"
     networks:
       - internal_network
+      # npm install
+      - external_network
+
+  # tests use TEST_URL from tests/e2etests/.env (https://tine.local.tine-dev.de); inside the
+  # docker network that name has to point to traefik, which routes to web and webpack
+  traefik:
+    networks:
+      internal_network:
+        aliases:
+          - "tine.${DOMAIN_SUFFIX:-local.tine-dev.de}"
