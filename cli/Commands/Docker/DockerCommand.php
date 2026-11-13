@@ -98,14 +98,72 @@ class DockerCommand extends BaseCommand
         $this->initCompose($io);
     }
 
-    public static function getImages($branch)
+    /**
+     * @param string $branch
+     * @param string|null $gitDir tine git checkout, used to find the base branch of branches not in $imageMap
+     * @return array
+     */
+    public static function getImages($branch, ?string $gitDir = null)
     {
-        $major = basename($branch );
-        if (array_key_exists($major, self::$imageMap)) {
-            return self::$imageMap[$major];
-        } else {
-            return end(self::$imageMap);
+        foreach ([$branch, basename($branch)] as $major) {
+            if (array_key_exists($major, self::$imageMap)) {
+                return self::$imageMap[$major];
+            }
         }
+
+        // feature branches (e.g. pu/cw/foo) get the images of the branch they are based on
+        $base = $gitDir ? self::findBaseBranch($gitDir, $branch) : null;
+        if ($base !== null) {
+            fwrite(STDERR, "branch $branch is not in the image map, using images of its base branch $base\n");
+            return self::$imageMap[$base];
+        }
+
+        return end(self::$imageMap);
+    }
+
+    /**
+     * Finds the $imageMap key of the branch $branch is based on: the local or remote branch that
+     * contains the most commits of $branch (fewest commits ahead), then the one with the fewest
+     * commits not in $branch (fewest commits behind) - e.g. 2026.11 for a branch forked from 2026.11,
+     * although main contains these commits as well (merged forward).
+     *
+     * @param string $gitDir
+     * @param string $branch
+     * @return string|null
+     */
+    public static function findBaseBranch(string $gitDir, string $branch): ?string
+    {
+        static $cache = [];
+        if (array_key_exists("$gitDir:$branch", $cache)) {
+            return $cache["$gitDir:$branch"];
+        }
+
+        $git = 'git -C ' . escapeshellarg($gitDir) . ' ';
+        // --branch BRANCH might not be checked out (yet)
+        $rev = trim((string)shell_exec($git . 'rev-parse --verify --quiet '
+            . escapeshellarg($branch . '^{commit}') . ' 2>/dev/null')) ?: 'HEAD';
+
+        $base = null;
+        $bestScore = null;
+        foreach (array_keys(self::$imageMap) as $key) {
+            $shas = shell_exec($git . "for-each-ref --format='%(objectname)' "
+                . escapeshellarg("refs/heads/$key") . ' ' . escapeshellarg("refs/remotes/*/$key") . ' 2>/dev/null');
+            foreach (array_unique(array_filter(explode("\n", (string)$shas))) as $sha) {
+                // "<behind>\t<ahead>"
+                $counts = preg_split('/\s+/', trim((string)shell_exec($git . 'rev-list --count --left-right '
+                    . escapeshellarg("$sha...$rev") . ' 2>/dev/null')));
+                if (count($counts) !== 2) {
+                    continue;
+                }
+                $score = [(int)$counts[1], (int)$counts[0]];
+                if ($bestScore === null || $score < $bestScore) {
+                    $bestScore = $score;
+                    $base = $key;
+                }
+            }
+        }
+
+        return $cache["$gitDir:$branch"] = $base;
     }
 
     public function getBroadcasthubDir(ConsoleStyle $io)
@@ -262,7 +320,7 @@ class DockerCommand extends BaseCommand
     {
         static $env = [];
         if (empty($env)) {
-            foreach (self::getImages($this->branch) as $service => $image) {
+            foreach (self::getImages($this->branch, $this->srcDir) as $service => $image) {
                 $var = strtoupper($service) . '_IMAGE';
                 $arch = stristr($image, 'dockerregistry.metaways.net') && stristr(shell_exec('uname -a'), 'arm64') ? '-arm64' : '';
 
