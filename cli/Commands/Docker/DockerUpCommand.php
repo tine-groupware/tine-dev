@@ -81,6 +81,8 @@ class DockerUpCommand extends DockerCommand
             $this->updateConfig($io, ['composeFiles' => $inputContainer]);
         }
 
+        $this->assertSafeMounts($io);
+
         $io->infoWithTime('Starting containers ...');
 
         $cmd = $this->getComposeString() . ' up --remove-orphans' . ($input->getOption('detached') === true ? ' -d' : '');

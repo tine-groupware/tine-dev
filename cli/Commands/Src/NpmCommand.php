@@ -45,8 +45,8 @@ class NpmCommand extends DockerCommand
             --user " . trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g')) . " \
             -p 9229:9229 \
             -v $localCacheDir:/.npm \
-            -v {$this->getTineDir($io)}:/usr/share/tine20 \
-            -v {$this->getTineDir($io)}/../tests:/usr/share/tests \
+            {$this->srcMount($io, 'tine20', '/usr/share/tine20')} \
+            {$this->srcMount($io, 'tests', '/usr/share/tests')} \
             {$env['WEBPACK_IMAGE']} \
             sh -c 'cd /usr/share/tine20/Tinebase/js && npm {$input->getArgument('cmd')}'", $result_code); // --loglevel verbose
         return $result_code;

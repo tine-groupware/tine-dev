@@ -56,9 +56,22 @@ services:
       POSTFIX_DATABASE: *postfixdb
     volumes:
       - ./configs/mailstack/scripts:/scripts
-      - ./tine20/etc/sql/dovecot_tables.sql:/root/dovecot_init.sql
-      - ./tine20/etc/sql/postfix_tables.sql:/root/postfix_init.sql
-      - ./tine20/etc/sql/postfixmultiinstance_tables.sql:/root/postfixmultiinstance_init.sql
+      # tine checkout sub paths via the tine20-src volume, see compose/src-volumes.yml
+      - type: volume
+        source: tine20-src
+        target: /root/dovecot_init.sql
+        read_only: true
+        volume: { nocopy: true, subpath: etc/sql/dovecot_tables.sql }
+      - type: volume
+        source: tine20-src
+        target: /root/postfix_init.sql
+        read_only: true
+        volume: { nocopy: true, subpath: etc/sql/postfix_tables.sql }
+      - type: volume
+        source: tine20-src
+        target: /root/postfixmultiinstance_init.sql
+        read_only: true
+        volume: { nocopy: true, subpath: etc/sql/postfixmultiinstance_tables.sql }
     networks:
       - internal_network
 

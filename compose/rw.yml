@@ -1,6 +1,15 @@
 services:
   web:
     volumes:
-      - ./tine20/tine20:/usr/share/tine20/:rw
-      - ./tine20/tests:/usr/share/tests/:rw
-      - ./tine20/scripts:/usr/share/scripts/:rw
+      - type: volume
+        source: tine20-src
+        target: /usr/share/tine20/
+        volume: { nocopy: true, subpath: tine20 }
+      - type: volume
+        source: tine20-src
+        target: /usr/share/tests/
+        volume: { nocopy: true, subpath: tests }
+      - type: volume
+        source: tine20-src
+        target: /usr/share/scripts/
+        volume: { nocopy: true, subpath: scripts }

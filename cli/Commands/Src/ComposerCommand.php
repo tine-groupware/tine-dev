@@ -45,8 +45,8 @@ class ComposerCommand extends DockerCommand
             ' -e GIT_CONFIG_COUNT=1' .
             ' -e GIT_CONFIG_KEY_0=safe.directory' .
             ' -e GIT_CONFIG_VALUE_0=\\*' .
-            ' -v ' . $tineDir . ':/usr/share/tine20' .
-            ' -v ' . $tineDir . '/../tests:/usr/share/tests' .
+            ' ' . $this->srcMount($io, 'tine20', '/usr/share/tine20') .
+            ' ' . $this->srcMount($io, 'tests', '/usr/share/tests') .
             ' -v ' . $this->baseDir . '/data/composer:/.composer' .
             ' -v ' . $localCacheDir . ':/composercache' .
             ' ' . $env['WEB_IMAGE'] . ' sh -c "cd /usr/share/tine20; composer config --global cache-dir /composercache; composer ' . $input->getArgument('cmd') . '"';

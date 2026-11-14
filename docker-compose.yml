@@ -128,3 +128,7 @@ networks:
 
 volumes:
   tinefiles:
+  # the tine checkout, created by ./console (docker:checkmounts, docker:up), see compose/src-volumes.yml
+  tine20-src:
+    name: tine-dev-tine20-src
+    external: true

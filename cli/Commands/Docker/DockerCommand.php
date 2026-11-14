@@ -18,6 +18,9 @@ class DockerCommand extends BaseCommand
     protected $tablePrefix = null;
     protected $homeDir = null;
     protected array $composeCommand = ['docker', 'compose'];
+
+    /** local volume bound to the tine checkout, see ensureSrcVolume() */
+    public const SRC_VOLUME = 'tine-dev-tine20-src';
     protected string $bchub_repo = 'https://github.com/tine-groupware/broadcasthub.git';
     protected string $elementWebRepo = 'https://github.com/ecclesias-de/element-web/';
 
@@ -350,6 +353,171 @@ class DockerCommand extends BaseCommand
             }
         }
         return $env;
+    }
+
+    /**
+     * tine checkout (root of SRC_VOLUME), symlinks resolved
+     */
+    public function getSrcRoot(): string
+    {
+        $root = realpath($this->srcDir);
+        if ($root === false || !is_dir($root)) {
+            exit("[ERROR] tine checkout {$this->srcDir} not found" . PHP_EOL);
+        }
+        return $root;
+    }
+
+    /**
+     * Creates SRC_VOLUME (a local volume bound to the tine checkout) or recreates it if it points to another checkout.
+     *
+     * Containers must not bind mount sub paths of the checkout: the checkout is writable for code running in the
+     * containers (and AI coding clients), and the docker daemon follows symlinks in bind sources when it starts a
+     * container - a symlink e.g. tine20/Tinebase/js/build -> ~/ would mount the host home dir. Mounts of the
+     * volume with `volume.subpath` are resolved by the daemon beneath the volume root without following symlinks
+     * and without a race (moby safepath), see compose/src-volumes.yml.
+     */
+    public function ensureSrcVolume(ConsoleStyle $io): void
+    {
+        $root = $this->getSrcRoot();
+        $name = escapeshellarg(self::SRC_VOLUME);
+        $device = trim((string)shell_exec("docker volume inspect --format '{{index .Options \"device\"}}' $name 2>/dev/null"));
+        if ($device === $root) {
+            return;
+        }
+        if ($device !== '') {
+            $io->info("volume " . self::SRC_VOLUME . " points to $device, recreating it for $root");
+            passthru("docker volume rm $name >/dev/null", $result_code);
+            if ($result_code !== 0) {
+                $io->error('can\'t remove volume ' . self::SRC_VOLUME . ', stop the containers using it (docker:down) and retry');
+                exit(1);
+            }
+        }
+        passthru("docker volume create --driver local --opt type=none --opt o=bind --opt device="
+            . escapeshellarg($root) . " $name >/dev/null", $result_code);
+        if ($result_code !== 0) {
+            $io->error('can\'t create volume ' . self::SRC_VOLUME);
+            exit(1);
+        }
+    }
+
+    /**
+     * docker run --mount option for $subPath of the tine checkout (see ensureSrcVolume)
+     */
+    public function srcMount(ConsoleStyle $io, string $subPath, string $target, bool $readOnly = false): string
+    {
+        $this->ensureSrcVolume($io);
+        $this->ensureSrcDir($io, $subPath);
+        return '--mount ' . escapeshellarg('type=volume,src=' . self::SRC_VOLUME . ",dst=$target,volume-nocopy"
+            . ($subPath === '' ? '' : ",volume-subpath=$subPath") . ($readOnly ? ',readonly' : ''));
+    }
+
+    /**
+     * creates missing directories of $subPath beneath the tine checkout, refuses to cross symlinks
+     */
+    protected function ensureSrcDir(ConsoleStyle $io, string $subPath): void
+    {
+        $path = $this->getSrcRoot();
+        foreach (array_filter(explode('/', $subPath), 'strlen') as $part) {
+            if ($part === '..') {
+                $io->error("invalid sub path $subPath");
+                exit(1);
+            }
+            $path .= "/$part";
+            if (is_link($path)) {
+                $io->error("$path is a symlink, refusing to mount it");
+                exit(1);
+            }
+            if (!file_exists($path) && !mkdir($path)) {
+                $io->error("can't create $path");
+                exit(1);
+            }
+        }
+    }
+
+    /**
+     * To be called before containers are created/started: ensures SRC_VOLUME and checks the compose config.
+     *
+     * - bind mounts of the tine checkout are only allowed for the checkout root (see ensureSrcVolume)
+     * - missing directories of SRC_VOLUME sub paths are created (bind mounts did that on their own)
+     * - docker socket, privileged mode, capabilities, devices and host namespaces only for trusted services
+     *   (pullup.json "trustedServices", default: traefik, socket-proxy, devctl)
+     */
+    public function assertSafeMounts(ConsoleStyle $io): void
+    {
+        $this->ensureSrcVolume($io);
+
+        $json = shell_exec($this->getComposeString() . ' config --format json');
+        $config = json_decode((string)$json, true);
+        if (!is_array($config) || !isset($config['services'])) {
+            $io->error('can\'t read compose config');
+            exit(1);
+        }
+
+        $conf = $this->getComposeConf();
+        $trusted = $conf['trustedServices'] ?? ['traefik', 'socket-proxy', 'devctl'];
+        $root = $this->getSrcRoot();
+        $volumes = $config['volumes'] ?? [];
+        $errors = [];
+
+        foreach ($config['services'] as $service => $def) {
+            $isTrusted = in_array($service, $trusted, true);
+
+            foreach ($def['volumes'] ?? [] as $mount) {
+                $type = $mount['type'] ?? '';
+                $source = $mount['source'] ?? '';
+                if ($type === 'bind') {
+                    $resolved = self::resolvePath($source);
+                    if (str_starts_with($resolved, "$root/")) {
+                        $errors[] = "$service: bind mount of $source ($resolved) - mount sub paths of the tine checkout"
+                            . " via the tine20-src volume (see compose/src-volumes.yml)";
+                    }
+                    if (!$isTrusted && preg_match('#(^|/)docker\.sock$#', $resolved)) {
+                        $errors[] = "$service: docker socket mount, add the service to pullup.json trustedServices";
+                    }
+                } elseif ($type === 'volume' && ($volumes[$source]['name'] ?? '') === self::SRC_VOLUME) {
+                    $subPath = $mount['volume']['subpath'] ?? '';
+                    if (!($mount['read_only'] ?? false)) {
+                        $this->ensureSrcDir($io, $subPath);
+                    }
+                }
+            }
+
+            if ($isTrusted) {
+                continue;
+            }
+            foreach (['privileged', 'cap_add', 'devices', 'security_opt'] as $key) {
+                if (!empty($def[$key])) {
+                    $errors[] = "$service: $key, add the service to pullup.json trustedServices";
+                }
+            }
+            foreach (['pid', 'ipc', 'userns_mode', 'network_mode', 'uts', 'cgroup'] as $key) {
+                if (($def[$key] ?? '') === 'host') {
+                    $errors[] = "$service: $key: host, add the service to pullup.json trustedServices";
+                }
+            }
+        }
+
+        if ($errors) {
+            $io->error(array_merge(['unsafe compose config:'], $errors));
+            exit(1);
+        }
+    }
+
+    /**
+     * realpath() for paths that might not exist (yet): resolves the longest existing prefix
+     */
+    public static function resolvePath(string $path): string
+    {
+        $rest = '';
+        while (($real = realpath($path)) === false) {
+            $parent = dirname($path);
+            if ($parent === $path) {
+                return $path . $rest;
+            }
+            $rest = '/' . basename($path) . $rest;
+            $path = $parent;
+        }
+        return rtrim($real, '/') . $rest;
     }
 
     protected function _getTablePrefix(): string

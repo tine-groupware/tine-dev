@@ -116,8 +116,17 @@ services:
 
   web:
     volumes:
-      - ./tine20/etc/tine20/conf.d/sso.inc.php.dist:/etc/tine20/conf.d/sso.inc.php:ro
-      - ./tine20/etc/tine20/samlPostAuthHook.php.dist:/etc/tine20/samlPostAuthHook.php:ro
+      # tine checkout sub paths via the tine20-src volume, see compose/src-volumes.yml
+      - type: volume
+        source: tine20-src
+        target: /etc/tine20/conf.d/sso.inc.php
+        read_only: true
+        volume: { nocopy: true, subpath: etc/tine20/conf.d/sso.inc.php.dist }
+      - type: volume
+        source: tine20-src
+        target: /etc/tine20/samlPostAuthHook.php
+        read_only: true
+        volume: { nocopy: true, subpath: etc/tine20/samlPostAuthHook.php.dist }
       - ./configs/sso/sso_cert.crt:/etc/tine20/conf.d/sso_cert.crt:ro
       - ./configs/sso/sso_cert.jwk:/etc/tine20/conf.d/sso_cert.jwk:ro
       - ./configs/sso/sso_cert.pem:/etc/tine20/conf.d/sso_cert.pem:ro

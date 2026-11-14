@@ -35,7 +35,7 @@ class LangHelperCommand extends DockerCommand
         //       it runs in the existing web container with ro filesystem (well we could kill the web-container but
         //       this tradeoff seems to big
         passthru('docker run --rm --user ' . trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g')) .
-            ' -v ' . $this->getTineDir($io) . ':/usr/share/tine20' .
+            ' ' . $this->srcMount($io, 'tine20', '/usr/share/tine20') .
             ' '. $env['WEB_IMAGE'] . ' sh -c "cd /usr/share/tine20; ./langHelper.php ' . $input->getArgument('cmd') . '"', $result_code);
 
         return $result_code;

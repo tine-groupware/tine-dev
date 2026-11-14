@@ -25,6 +25,8 @@ class DockerWebpackRestartCommand extends DockerCommand
 
         $io = new ConsoleStyle($input, $output);
 
+        $this->assertSafeMounts($io);
+
         // NOTE: we need to support node version (container) change
         passthru($this->getComposeString() . " stop webpack", $result_code);
         passthru($this->getComposeString() . " rm -f", $result_code);
