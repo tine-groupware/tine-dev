@@ -47,12 +47,12 @@ class ChangeBranchCommand extends DockerCommand {
             }
             $io->infoWithTime("git checkout {$this->branch}");
 
-            passthru("cd {$this->getTineDir($io)} && git checkout {$this->branch}", $result_code);
+            passthru(self::git($this->getTineDir($io)) . 'checkout ' . escapeshellarg($this->branch), $result_code);
             if (0 !== $result_code) {
                 $io->error("git checkout {$this->branch} failed");
                 return 1;
             }
-            passthru("cd {$this->getTineDir($io)} && git submodule update", $result_code);
+            passthru(self::git($this->getTineDir($io)) . 'submodule update', $result_code);
             if (0 !== $result_code) {
                 $io->error("git submodule install");
                 return 1;

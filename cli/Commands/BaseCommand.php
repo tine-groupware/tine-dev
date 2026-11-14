@@ -55,7 +55,18 @@ class BaseCommand extends Command
         $io = new ConsoleStyle($input, $output);
         $this->branch = $input->hasOption('branch') && $input->getOption('branch') ?
             $input->getOption('branch') :
-            trim(shell_exec("cd {$this->getTineDir($io)} && git rev-parse --abbrev-ref HEAD"));
+            trim(shell_exec(self::git($this->getTineDir($io)) . 'rev-parse --abbrev-ref HEAD'));
+    }
+
+    /**
+     * git command for the repo in $dir that doesn't run code configured in the repo (the checkout is writable
+     * for code running in the containers): no fsmonitor, no hooks. Filters, aliases etc. can only be defined in
+     * .git/config, see README "AI coding clients" for protecting it.
+     */
+    public static function git(string $dir): string
+    {
+        return 'git -c core.fsmonitor=false -c core.hooksPath=/dev/null -c protocol.ext.allow=never -C '
+            . escapeshellarg($dir) . ' ';
     }
 
     public function getTineDir($io)

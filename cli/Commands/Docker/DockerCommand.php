@@ -141,7 +141,7 @@ class DockerCommand extends BaseCommand
             return $cache["$gitDir:$branch"];
         }
 
-        $git = 'git -C ' . escapeshellarg($gitDir) . ' ';
+        $git = self::git($gitDir);
         // --branch BRANCH might not be checked out (yet)
         $rev = trim((string)shell_exec($git . 'rev-parse --verify --quiet '
             . escapeshellarg($branch . '^{commit}') . ' 2>/dev/null')) ?: 'HEAD';
