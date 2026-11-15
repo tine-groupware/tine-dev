@@ -23,8 +23,15 @@ services:
       # otherwise every recreation of the container asks again
       CLAUDE_CONFIG_DIR: /home/node/.claude
     volumes:
-      # only the tine checkout - tine-dev (./console, compose files, devctl) is not visible to the client, it
-      # controls the stack via the devctl MCP server. Add ./:/workspace/tine-dev:ro to work on tine-dev itself.
+      # Only the tine checkout - tine-dev (./console, compose files, devctl) is not visible to the client, it
+      # controls the stack via the devctl MCP server.
+      #
+      # To let the client work on tine-dev itself, uncomment the mount below TEMPORARILY and recreate the client
+      # (docker compose up -d claude-code). Writable, it removes the separation: ./console, the compose files and
+      # devctl run with docker access on the host, the client could change them and with that run code on the
+      # host (incl. making the mount permanent). Append :ro if the client only needs to read it. Comment it out
+      # again and recreate the client when done, never commit it uncommented.
+      #- "${TINE_DEV_DIR}:/workspace/tine-dev"
       - "${TINE20_DIR}:/workspace/tine20"
       # Git config, hooks etc. read-only: they run code with git on the host (your shell, IDE, ./console).
       # Every path on the way to them is a mount point as well, mount points can't be renamed or replaced.
