@@ -445,6 +445,9 @@ class DockerCommand extends BaseCommand
     public function assertSafeMounts(ConsoleStyle $io): void
     {
         $this->ensureSrcVolume($io);
+        if (array_filter($this->composeNames, fn($name) => str_starts_with($name, 'aicoding-'))) {
+            $this->ensureGitProtection($io);
+        }
 
         $json = shell_exec($this->getComposeString() . ' config --format json');
         $config = json_decode((string)$json, true);
@@ -500,6 +503,40 @@ class DockerCommand extends BaseCommand
         if ($errors) {
             $io->error(array_merge(['unsafe compose config:'], $errors));
             exit(1);
+        }
+    }
+
+    /**
+     * Prepares the tine git dir for the read-only mounts of AI coding clients (see compose/aicoding-claude-code.yml).
+     *
+     * The clients need a writable .git (commits), but everything in it that makes git run code on the host has to
+     * be read-only for them: config (fsmonitor, filters, aliases, ...), hooks, modules (submodule git dirs),
+     * worktrees and commondir - git reads config and hooks from $GIT_DIR/commondir if that file exists, so it
+     * must exist (pointing to the git dir itself) to be mounted read-only.
+     */
+    public function ensureGitProtection(ConsoleStyle $io): void
+    {
+        $gitDir = $this->getSrcRoot() . '/.git';
+        if (is_link($gitDir) || !is_dir($gitDir)) {
+            $io->error("$gitDir is not a directory");
+            exit(1);
+        }
+
+        foreach (['hooks', 'modules', 'worktrees'] as $dir) {
+            $path = "$gitDir/$dir";
+            if (is_link($path) || (!is_dir($path) && !mkdir($path))) {
+                $io->error("$path is not a directory");
+                exit(1);
+            }
+        }
+
+        $commonDir = "$gitDir/commondir";
+        if (is_link($commonDir) || (file_exists($commonDir) && trim((string)file_get_contents($commonDir)) !== '.')) {
+            $io->error("unexpected $commonDir (git reads config and hooks from the dir it names), check and remove it");
+            exit(1);
+        }
+        if (!file_exists($commonDir)) {
+            file_put_contents($commonDir, ".\n");
         }
     }
 

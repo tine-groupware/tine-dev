@@ -53,9 +53,14 @@ class BaseCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new ConsoleStyle($input, $output);
-        $this->branch = $input->hasOption('branch') && $input->getOption('branch') ?
-            $input->getOption('branch') :
-            trim(shell_exec(self::git($this->getTineDir($io)) . 'rev-parse --abbrev-ref HEAD'));
+        if ($input->hasOption('branch') && $input->getOption('branch')) {
+            $this->branch = $input->getOption('branch');
+        } else {
+            // asks to clone tine if missing
+            $this->getTineDir($io);
+            // at the repo root - git in a sub dir would use a (planted) nested repo
+            $this->branch = trim(shell_exec(self::git($this->srcDir) . 'rev-parse --abbrev-ref HEAD'));
+        }
     }
 
     /**

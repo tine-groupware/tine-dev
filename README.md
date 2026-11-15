@@ -146,8 +146,16 @@ Read `.agents/skills/tine-dev-env/SKILL.md` to get an overview and context of th
 ## Tine source (tine20 symlink)
 
 `tine20` is a symlink to a git checkout of the Tine project (https://github.com/tine-groupware/tine).
-In dev mode it is bind-mounted into the web container at `/usr/share/tine20` (DEVELOPMENT mode),
+In dev mode it is mounted into the web container at `/usr/share/tine20` (DEVELOPMENT mode),
 so PHP changes take effect immediately — run `./console tine:clearcache` if cached code hides your changes.
+
+Sub paths of the checkout (`tine20/tine20`, `tests`, webpack build dirs, ...) are mounted from the volume
+`tine-dev-tine20-src`, which `./console` binds to the checkout root — not as bind mounts: docker follows
+symlinks in bind sources, so a symlink planted in the (container writable) checkout could mount any host
+dir. `volume.subpath` mounts don't follow symlinks. `./console docker:checkmounts` (also run by
+`docker:up` and `docker:webpackrestart`) creates the volume and rejects bind mounts of checkout sub paths,
+docker socket mounts, privileged mode etc. for services not in `pullup.json` `"trustedServices"`
+(default `["traefik", "socket-proxy", "devctl"]`). Run it once before `docker compose up` by hand.
 
 Switching branches: `./console src:changeBranch --git --branch <branch>` does the git checkout +
 submodule update, then composer install, npm install, webpack restart and cache clear in one go
@@ -657,6 +665,17 @@ and start/resize exec sessions in the tine web container — that's how clients 
 collides with one of your networks) — only client containers must join this network.
 If the web container can't be identified, `socket-proxy` refuses to start instead of running with
 a too broad allowlist.
+
+**Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
+that make git run code — `config` (fsmonitor, filters, aliases, ...), `hooks`, `modules`, `worktrees`
+and `commondir` (git reads config and hooks from the dir it names) — are mounted read-only, and every
+path leading to them is a mount point, so it can't be renamed and replaced. `./console` creates
+`.git/commondir` containing `.` (the git dir itself) for that. Clients can't run git commands that
+write the config (`push -u`, `branch --set-upstream-to`, `remote add`, `submodule init`); run them on
+the host. `./console` runs git with fsmonitor and hooks disabled. Remaining risk: nested repos —
+git (and shell prompts showing git status) in a sub dir uses the nearest `.git`, e.g. a planted
+`tine20/Foo/.git` or the composer source installs in `tine20/vendor/*/.git`; check `git rev-parse
+--show-toplevel` before running git in sub dirs, and don't register vendor repos in your IDE.
 
 **Adding a new client:** create `compose/aicoding-<client>.yml` with the client service and add
 `ai-proxy-net` to its `networks` (plus `internal_network`/`external_network` as needed).

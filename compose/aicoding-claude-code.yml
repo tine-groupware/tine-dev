@@ -22,6 +22,20 @@ services:
     volumes:
       - ./:/workspace/tine-dev
       - ../tine20:/workspace/tine20
+      # Git config, hooks etc. read-only: they run code with git on the host (your shell, IDE, ./console).
+      # Every path on the way to them is a mount point as well, mount points can't be renamed or replaced.
+      # ./console (docker:checkmounts) creates .git/commondir pointing to .git itself, see
+      # DockerCommand::ensureGitProtection(). Sub paths via the tine20-src volume, see compose/src-volumes.yml.
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git, volume: { nocopy: true, subpath: .git } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/config, read_only: true, volume: { nocopy: true, subpath: .git/config } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/commondir, read_only: true, volume: { nocopy: true, subpath: .git/commondir } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/hooks, read_only: true, volume: { nocopy: true, subpath: .git/hooks } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/modules, read_only: true, volume: { nocopy: true, subpath: .git/modules } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/worktrees, read_only: true, volume: { nocopy: true, subpath: .git/worktrees } }
+      # submodule icon-set: its .git file names the git dir to use
+      - { type: volume, source: tine20-src, target: /workspace/tine20/tine20, volume: { nocopy: true, subpath: tine20 } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/tine20/images, volume: { nocopy: true, subpath: tine20/images } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/tine20/images/icon-set, read_only: true, volume: { nocopy: true, subpath: tine20/images/icon-set } }
       - ./claude-data:/home/node/.claude
       - ./configs/claude/settings.json:/home/node/.claude/settings.json
       - ./configs/claude/mcp.json:/etc/tine-dev/claude-mcp.json:ro
