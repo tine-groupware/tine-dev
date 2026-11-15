@@ -19,6 +19,9 @@ services:
     environment:
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
       MCP_AUTH_TOKEN: "${MCP_AUTH_TOKEN}"
+      # ~/.claude.json (onboarding, theme, trusted folders, ...) in the persisted config dir (claude-data),
+      # otherwise every recreation of the container asks again
+      CLAUDE_CONFIG_DIR: /home/node/.claude
     volumes:
       # only the tine checkout - tine-dev (./console, compose files, devctl) is not visible to the client, it
       # controls the stack via the devctl MCP server. Add ./:/workspace/tine-dev:ro to work on tine-dev itself.
