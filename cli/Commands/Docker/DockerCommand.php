@@ -331,7 +331,7 @@ class DockerCommand extends BaseCommand
         if (empty($env)) {
             foreach (self::getImages($this->branch, $this->srcDir) as $service => $image) {
                 $var = strtoupper($service) . '_IMAGE';
-                $arch = stristr($image, 'dockerregistry.metaways.net') && stristr(shell_exec('uname -a'), 'arm64') ? '-arm64' : '';
+                $arch = stristr($image, 'dockerregistry.metaways.net') && self::isArm64() ? '-arm64' : '';
 
                 $env[$var] = "{$image}{$arch}";
             }
@@ -344,7 +344,7 @@ class DockerCommand extends BaseCommand
             $this->homeDir = $homeDir;
             $env['HOMEDIR'] = $homeDir;
 
-            $env['IMAGE_SUFFIX'] = stristr(shell_exec('uname -a'), 'arm64') ? '-arm64' : '';
+            $env['IMAGE_SUFFIX'] = self::isArm64() ? '-arm64' : '';
             $env['TINE20_DATABASE_TABLEPREFIX'] = $this->_getTablePrefix();
 
             $conf = $this->getComposeConf();

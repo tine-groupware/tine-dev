@@ -136,13 +136,13 @@ class NpmInstallCommand extends DockerCommand
     {
         $env = $this->getComposeEnv();
 
-        $localCacheDir = trim(shell_exec('npm config get cache'));
+        $localCacheDir = $this->cacheDir('npm-cache');
 
         // NOTE: we can't use getComposeCommand here as mutagen has a ro filesystem and even if we skip mutagen here
         //       it runs in the existing node container with ro filesystem (well we could kill the node-container but
         //       this tradeoff seems to big
         passthru("docker run --rm \
-            --user " . trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g')) . " \
+            --user " . self::hostUser() . " \
             -v $localCacheDir:/.npm \
             -v $dir:/usr/share/tine20/Tinebase/js \
             {$env['WEBPACK_IMAGE']} \

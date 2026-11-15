@@ -30,7 +30,7 @@ class ComposerCommand extends DockerCommand
         parent::execute($input, $output);
         $io = new ConsoleStyle($input, $output);
 
-        $localCacheDir = trim(shell_exec('composer config cache-dir'));
+        $localCacheDir = $this->cacheDir('composer-cache');
 
         shell_exec("mkdir -p $this->baseDir/data/composer");
 
@@ -41,7 +41,7 @@ class ComposerCommand extends DockerCommand
         // NOTE: we use docker run instead of getComposeCommand to avoid mutagen's read-only filesystem.
         //       The GIT_CONFIG env vars set `safe.directory = *` to bypass Git's "dubious ownership" check
         //       on macOS, where Docker volume mounts trigger ownership mismatches between host and container user.
-        $cmd = 'docker run --rm --user ' . trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g')) .
+        $cmd = 'docker run --rm --user ' . self::hostUser() .
             ' -e GIT_CONFIG_COUNT=1' .
             ' -e GIT_CONFIG_KEY_0=safe.directory' .
             ' -e GIT_CONFIG_VALUE_0=\\*' .

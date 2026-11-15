@@ -74,6 +74,39 @@ class BaseCommand extends Command
             . escapeshellarg($dir) . ' ';
     }
 
+    /**
+     * uid:gid for containers writing to the checkout. TINE_DEV_USER overrides it for ./console running in a
+     * container (devctl), where id -u is not the uid of the checkout owner.
+     */
+    public static function hostUser(): string
+    {
+        return getenv('TINE_DEV_USER') ?: trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g'));
+    }
+
+    /**
+     * TINE_DEV_ARM64=1/0 overrides it for ./console running in a container (uname: aarch64 instead of arm64)
+     */
+    public static function isArm64(): bool
+    {
+        $override = getenv('TINE_DEV_ARM64');
+        if ($override !== false && $override !== '') {
+            return $override === '1';
+        }
+        return (bool)stristr((string)shell_exec('uname -a'), 'arm64');
+    }
+
+    /**
+     * cache dir in tine-dev/data, the host caches (~/.npm etc.) must not be writable for code of the checkout
+     */
+    public function cacheDir(string $name): string
+    {
+        $dir = $this->baseDir . "/data/$name";
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        return $dir;
+    }
+
     public function getTineDir($io)
     {
         if (!is_file("{$this->tineDir}/tine20.php")) {
