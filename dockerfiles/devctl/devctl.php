@@ -13,7 +13,7 @@
 declare(strict_types=1);
 
 const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-const MAX_OUTPUT = 60000;
+const MAX_OUTPUT = 20000;
 const KEEPALIVE = 15;
 const CONTAINERS = ['web', 'e2etests'];
 const TINE_COMMANDS = ['install', 'uninstall', 'reinstall', 'update', 'demodata', 'clearcache', 'awaitdb', 'test',
@@ -51,7 +51,7 @@ function tools(): array
             'name' => 'exec',
             'description' => 'Run a shell command (sh -c) in the tine web container (tine source at /usr/share/tine20,'
                 . ' e.g. phpunit, tine20.php cli) or in the e2e test runner (tests at /tine20/tests/e2etests, e.g.'
-                . ' npm test src/test/...). Returns exit code and output (stdout+stderr, last 60k chars).',
+                . ' npm test src/test/...). Returns exit code and output (stdout+stderr, last 20k chars).',
             'inputSchema' => [
                 'type' => 'object',
                 'properties' => [

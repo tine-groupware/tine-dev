@@ -5,7 +5,8 @@ FROM docker:cli AS docker
 FROM php:8.1-cli-alpine
 RUN apk add --no-cache git openssl rsync coreutils findutils
 COPY --from=docker /usr/local/bin/docker /usr/local/bin/docker
-COPY --from=docker /usr/local/libexec/docker/cli-plugins/docker-compose /usr/local/libexec/docker/cli-plugins/docker-compose
+COPY --from=docker /usr/local/libexec/docker/cli-plugins/docker-compose /usr/local/libexec/docker/cli-plugins/docker-buildx \
+    /usr/local/libexec/docker/cli-plugins/
 COPY devctl.php /opt/devctl/devctl.php
 
 # requests are handled in parallel (e.g. ps while change_branch runs)

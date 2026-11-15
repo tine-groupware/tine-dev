@@ -316,17 +316,19 @@ class DockerCommand extends BaseCommand
     }
 
     /**
-     * service list for `compose up`: empty (all services), but without the container ./console runs in (devctl
-     * sets DEVCTL_SELF) - compose would stop/recreate it in the middle of the operation if its config changed
+     * service list for `compose up`: empty (all services), but without DEVCTL_SKIP_SERVICES (set by devctl):
+     * - the container ./console runs in, compose would stop/recreate it in the middle of the operation
+     * - the AI clients, their env (e.g. ANTHROPIC_API_KEY) may only be set in the shell of the user, compose in
+     *   devctl would recreate them without it
      */
     public function upServices(): string
     {
-        $self = getenv('DEVCTL_SELF');
-        if (!$self) {
+        $skip = preg_split('/\s+/', trim((string)getenv('DEVCTL_SKIP_SERVICES')), -1, PREG_SPLIT_NO_EMPTY);
+        if (!$skip) {
             return '';
         }
         $services = array_filter(explode("\n", trim((string)shell_exec($this->getComposeString() . ' config --services'))));
-        return ' ' . implode(' ', array_map('escapeshellarg', array_diff($services, [$self])));
+        return ' ' . implode(' ', array_map('escapeshellarg', array_diff($services, $skip)));
     }
 
     public function getComposeArray(): array

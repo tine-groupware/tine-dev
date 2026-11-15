@@ -674,7 +674,7 @@ reachable in the internal network `devctl-net`):
 
 devctl mounts tine-dev and the checkout at their host paths and runs `./console` as on the host
 (`TINE_DEV_DIR`, `TINE_DEV_USER`, `TINE_DEV_ARM64`, `HOMEDIR` are passed by `./console`); it never
-recreates its own container (`DEVCTL_SELF`). It doesn't run git operations that check out or fetch — the
+recreates itself and the AI clients (`DEVCTL_SKIP_SERVICES`, their env may only be set in your shell). It doesn't run git operations that check out or fetch — the
 client does the checkout in its container. Build the image before the first `docker:up` and after
 changes in `dockerfiles/devctl`:
 

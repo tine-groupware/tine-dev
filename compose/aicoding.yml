@@ -35,8 +35,9 @@ services:
     restart: unless-stopped
     environment:
       DEVCTL_TOKEN: "${MCP_AUTH_TOKEN}"
-      # ./console doesn't recreate the container it runs in (DockerCommand::upServices)
-      DEVCTL_SELF: devctl
+      # ./console doesn't recreate these (DockerCommand::upServices): devctl itself, and the AI clients
+      # (their env, e.g. ANTHROPIC_API_KEY, may only be set in your shell)
+      DEVCTL_SKIP_SERVICES: "devctl claude-code opencode gitlab-mcp"
       # tine-dev and the checkout are mounted at their host paths: compose resolves relative bind
       # sources like on the host, the daemon gets host paths
       TINE_DEV_DIR: "${TINE_DEV_DIR}"
