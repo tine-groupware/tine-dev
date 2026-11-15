@@ -71,14 +71,26 @@ class ChangeBranchCommand extends DockerCommand {
         $a = new ArrayInput([]);
         $a->bind($composerCmd->getDefinition());
         $a->setArgument('cmd', 'install');
-        ($composerCmd)->execute($a, $output);
-
-        if (! $input->getOption('nonpm')) {
-            (new NpmInstallCommand())->execute($input, $output);
+        // failing steps don't stop the others (the containers have to be started again), but the exit code
+        $failed = [];
+        if (0 !== ($composerCmd)->execute($a, $output)) {
+            $failed[] = 'composer install';
         }
-        (new DockerWebpackRestartCommand())->execute($input, $output);
-        (new TineClearCacheCommand())->execute($input, $output);
 
+        if (! $input->getOption('nonpm') && 0 !== (new NpmInstallCommand())->execute($input, $output)) {
+            $failed[] = 'npm install';
+        }
+        if (0 !== (new DockerWebpackRestartCommand())->execute($input, $output)) {
+            $failed[] = 'webpack restart';
+        }
+        if (0 !== (new TineClearCacheCommand())->execute($input, $output)) {
+            $failed[] = 'clear cache';
+        }
+
+        if ($failed) {
+            $io->error('changeBranch failed: ' . implode(', ', $failed));
+            return 1;
+        }
         return 0;
     }
 }

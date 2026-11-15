@@ -144,7 +144,7 @@ class NpmInstallCommand extends DockerCommand
         passthru("docker run --rm \
             --user " . self::hostUser() . " \
             -v $localCacheDir:/.npm \
-            -v $dir:/usr/share/tine20/Tinebase/js \
+            $jsMount \
             {$env['WEBPACK_IMAGE']} \
             sh -c 'cd /usr/share/tine20/Tinebase/js && npm prune --no-optional --ignore-scripts'", $result_code); // --loglevel verbose
         return $result_code;
