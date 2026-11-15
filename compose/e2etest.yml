@@ -1,6 +1,6 @@
 # e2e test runner (jest + puppeteer), see README "E2E tests"
 #
-#   docker exec e2etests npm install   # once / after package.json changes
+#   docker exec e2etests npm install   # once / after package.json changes (AI clients: devctl exec)
 #   docker exec e2etests npm test src/test/CrewScheduling/crewScheduling.test.js
 
 services:

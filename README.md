@@ -155,7 +155,7 @@ symlinks in bind sources, so a symlink planted in the (container writable) check
 dir. `volume.subpath` mounts don't follow symlinks. `./console docker:checkmounts` (also run by
 `docker:up` and `docker:webpackrestart`) creates the volume and rejects bind mounts of checkout sub paths,
 docker socket mounts, privileged mode etc. for services not in `pullup.json` `"trustedServices"`
-(default `["traefik", "socket-proxy", "devctl"]`). Run it once before `docker compose up` by hand.
+(default `["traefik", "devctl"]`). Run it once before `docker compose up` by hand.
 
 Switching branches: `./console src:changeBranch --git --branch <branch>` does the git checkout +
 submodule update, then composer install, npm install, webpack restart and cache clear in one go
@@ -208,7 +208,7 @@ docker exec e2etests npm test src/test/CrewScheduling/crewScheduling.test.js
 The tests use `TEST_URL` etc. from `tine20/tests/e2etests/.env`. Inside the docker network
 `tine.local.tine-dev.de` resolves to traefik (network alias set in `compose/e2etest.yml`), so the
 default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/screenshots/Error/`.
-AI coding clients may exec into `e2etests` (see socket-proxy below).
+AI coding clients run the tests with the devctl tools `build_e2etests` and `exec` (see "AI coding clients").
 
 ## Adding a compose module
 
@@ -648,7 +648,7 @@ client has its own module, so only the client you actually use is started:
 
 | module                  | contents                                              |
 |-------------------------|-------------------------------------------------------|
-| `aicoding`              | `socket-proxy`, `gitlab-mcp`, network `ai-proxy-net`  |
+| `aicoding`              | `devctl`, `gitlab-mcp`, network `devctl-net`          |
 | `aicoding-claude-code`  | Claude Code container (`claude-code`)                 |
 | `aicoding-opencode`     | opencode server (`opencode`)                          |
 
@@ -658,13 +658,29 @@ client has its own module, so only the client you actually use is started:
 
 `./console` refuses to start if an `aicoding-*` client module is listed without `aicoding`.
 
-The `socket-proxy` gives clients restricted docker API access: they may only inspect containers
-and start/resize exec sessions in the tine web container — that's how clients run commands
-(`./console tine:*`, tests, ...) inside Tine — and in the e2e test runner `e2etests` (see "E2E tests"). It accepts requests from every container in the
-`ai-proxy-net` subnet (default `172.31.250.0/24`, override with `AI_PROXY_SUBNET` in `.env` if it
-collides with one of your networks) — only client containers must join this network.
-If the web container can't be identified, `socket-proxy` refuses to start instead of running with
-a too broad allowlist.
+Clients get **no docker access**. `devctl` (`dockerfiles/devctl`) has the docker socket and offers a fixed
+set of operations as MCP server `http://devctl:3003/mcp` (`Authorization: Bearer ${MCP_AUTH_TOKEN}`, only
+reachable in the internal network `devctl-net`):
+
+| tool              | does                                                                                 |
+|-------------------|--------------------------------------------------------------------------------------|
+| `change_branch`   | `./console src:changeBranch` for the branch checked out (the client does the checkout) |
+| `up`              | `./console docker:up -d`                                                             |
+| `restart_webpack` | `./console docker:webpackrestart`                                                    |
+| `build_e2etests`  | build the `e2etests` image                                                           |
+| `exec`            | `sh -c <command>` in `web` or `e2etests` (tests, tine cli, ...)                      |
+| `tine_console`    | `./console tine:<install\|demodata\|clearcache\|test\|...> [args]`                    |
+| `ps`, `logs`      | container status, log tail of a service                                              |
+
+devctl mounts tine-dev and the checkout at their host paths and runs `./console` as on the host
+(`TINE_DEV_DIR`, `TINE_DEV_USER`, `TINE_DEV_ARM64`, `HOMEDIR` are passed by `./console`); it never
+recreates its own container (`DEVCTL_SELF`). It doesn't run git operations that check out or fetch — the
+client does the checkout in its container. Build the image before the first `docker:up` and after
+changes in `dockerfiles/devctl`:
+
+~~~
+eval "$(./console docker:composestring | tail -1) build devctl"
+~~~
 
 **Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
 that make git run code — `config` (fsmonitor, filters, aliases, ...), `hooks`, `modules`, `worktrees`
@@ -678,7 +694,7 @@ git (and shell prompts showing git status) in a sub dir uses the nearest `.git`,
 --show-toplevel` before running git in sub dirs, and don't register vendor repos in your IDE.
 
 **Adding a new client:** create `compose/aicoding-<client>.yml` with the client service and add
-`ai-proxy-net` to its `networks` (plus `internal_network`/`external_network` as needed).
+`devctl-net` to its `networks` and the devctl MCP server to its config (plus `internal_network`/`external_network` as needed).
 Nothing in `aicoding.yml` needs to change.
 
 **Migrating from the old `opencode` module:** replace `"opencode"` in `pullup.json` with

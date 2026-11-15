@@ -62,6 +62,14 @@
         "headers": {
           "Authorization": "Bearer {env:MCP_AUTH_TOKEN}"
         }
+      },
+      "devctl": {
+        "type": "remote",
+        "url": "http://devctl:3003/mcp",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {env:MCP_AUTH_TOKEN}"
+        }
       }
     }
   }

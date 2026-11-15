@@ -36,9 +36,6 @@ RUN npm install -g @anthropic-ai/claude-code
 RUN mkdir -p /home/node/.claude /workspace && \
     chown -R node:node /home/node /workspace
 
-# Point Docker CLI to the socket-proxy container
-ENV DOCKER_HOST="tcp://socket-proxy:2375"
-
 # Switch to non-root user 'node' (UID 1000)
 USER node
 WORKDIR /workspace

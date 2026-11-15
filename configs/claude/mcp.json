@@ -6,6 +6,13 @@
       "headers": {
         "Authorization": "Bearer ${MCP_AUTH_TOKEN}"
       }
+    },
+    "devctl": {
+      "type": "http",
+      "url": "http://devctl:3003/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_AUTH_TOKEN}"
+      }
     }
   }
 }

@@ -9,10 +9,12 @@ services:
     environment:
       METAWAYS_AI_BASE_URL: ${METAWAYS_AI_BASE_URL}
       METAWAYS_AI_API_KEY: ${METAWAYS_AI_API_KEY}
+      # no docker access (the image points to the removed socket-proxy), use the devctl MCP server
+      DOCKER_HOST: ""
     networks:
       - internal_network
       - external_network
-      - ai-proxy-net
+      - devctl-net
     volumes:
       - ./:/tine-dev:ro
       - ./tine20:/tine20:rw

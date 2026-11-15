@@ -1,10 +1,12 @@
 # Shared infrastructure for AI coding clients. Combine with one or more client modules in
 # pullup.json, e.g. "composeFiles": [..., "aicoding", "aicoding-claude-code"]
 #
-# A client gets restricted docker access (exec into the tine web container and the e2e test
-# runner from compose/e2etest.yml only) by joining
-# ai-proxy-net - socket-proxy allows any container in that subnet, so new clients don't need
-# changes here.
+# Clients get no docker access. devctl offers a fixed set of operations as MCP server (change branch, up,
+# webpack restart, exec into the tine web container and the e2e test runner, logs, ...), see
+# dockerfiles/devctl/devctl.php. A client joins devctl-net and gets the MCP server
+# http://devctl:3003/mcp with "Authorization: Bearer ${MCP_AUTH_TOKEN}".
+#
+# devctl is a local image, build it before the first docker:up (see README "AI coding clients").
 
 services:
   gitlab-mcp:
@@ -26,38 +28,36 @@ services:
       - internal_network
       - external_network
 
-  socket-proxy:
-    image: ghcr.io/tine-groupware/tine-dev/socket-proxy:1.12.2-mw1
-    container_name: socket-proxy
-    depends_on:
-      web:
-        condition: service_started
-        # the allowlist below contains the id of web, so restart when web is recreated
-        restart: true
-    user: "0:998"
+  devctl:
+    build: ./dockerfiles/devctl
+    image: tine-dev/devctl:latest
+    container_name: devctl
     restart: unless-stopped
+    environment:
+      DEVCTL_TOKEN: "${MCP_AUTH_TOKEN}"
+      # ./console doesn't recreate the container it runs in (DockerCommand::upServices)
+      DEVCTL_SELF: devctl
+      # tine-dev and the checkout are mounted at their host paths: compose resolves relative bind
+      # sources like on the host, the daemon gets host paths
+      TINE_DEV_DIR: "${TINE_DEV_DIR}"
+      TINE_DEV_USER: "${TINE_DEV_USER}"
+      TINE_DEV_ARM64: "${TINE_DEV_ARM64}"
+      HOME: "${HOMEDIR}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root}"
+      # runs as root, the checkout belongs to the host user. ./console runs git with fsmonitor/hooks disabled.
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
+    working_dir: "${TINE_DEV_DIR}"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        # empty ID would turn the exec allowlist below into "any container id" -> refuse to start
-        ID=$(docker ps -aq -f "label=com.docker.compose.project=tine20" -f "label=com.docker.compose.service=web") && \
-        if [ -z "$$ID" ] || [ "$$(echo "$$ID" | wc -l)" -ne 1 ]; then echo "socket-proxy: expected exactly one tine20 web container, got: '$$ID'" >&2; exit 1; fi && \
-        exec /app/socket-proxy \
-          '-loglevel=info' \
-          '-listenip=0.0.0.0' \
-          '-allowfrom=${AI_PROXY_SUBNET:-172.31.250.0/24}' \
-          '-allowHEAD=/_ping' \
-          '-allowGET=/(_ping$|v1\.[0-9]{1,2}/(version|containers/json|containers/[^/]+/json|exec/[a-f0-9]+/json))' \
-          "-allowPOST=/v1\\.[0-9]{1,2}/(containers/(tine20-web-[0-9]+|$$ID[a-f0-9]*|e2etests)/exec|exec/[a-f0-9]+/(start|resize))"
+      # pullup.json "trustedServices" (default contains devctl), see ./console docker:checkmounts
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${TINE_DEV_DIR}:${TINE_DEV_DIR}"
+      - "${TINE20_DIR}:${TINE20_DIR}"
     networks:
-      - ai-proxy-net
+      - devctl-net
 
 networks:
-  # only AI coding clients + socket-proxy belong here (see -allowfrom above)
-  ai-proxy-net:
+  # only AI coding clients + devctl belong here
+  devctl-net:
     internal: true
-    ipam:
-      config:
-        - subnet: ${AI_PROXY_SUBNET:-172.31.250.0/24}

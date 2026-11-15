@@ -42,4 +42,4 @@ services:
     networks:
       - internal_network
       - external_network
-      - ai-proxy-net
+      - devctl-net

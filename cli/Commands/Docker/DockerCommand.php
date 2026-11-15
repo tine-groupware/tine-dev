@@ -315,6 +315,20 @@ class DockerCommand extends BaseCommand
         return $env . join(' ', $this->composeCommand) . ' -f ' . join(' -f ', $this->composeFiles);
     }
 
+    /**
+     * service list for `compose up`: empty (all services), but without the container ./console runs in (devctl
+     * sets DEVCTL_SELF) - compose would stop/recreate it in the middle of the operation if its config changed
+     */
+    public function upServices(): string
+    {
+        $self = getenv('DEVCTL_SELF');
+        if (!$self) {
+            return '';
+        }
+        $services = array_filter(explode("\n", trim((string)shell_exec($this->getComposeString() . ' config --services'))));
+        return ' ' . implode(' ', array_map('escapeshellarg', array_diff($services, [$self])));
+    }
+
     public function getComposeArray(): array
     {
         $cmd = $this->composeCommand;
@@ -343,6 +357,12 @@ class DockerCommand extends BaseCommand
             shell_exec("touch $homeDir/.dockertine20web_ash_history");
             $this->homeDir = $homeDir;
             $env['HOMEDIR'] = $homeDir;
+
+            // devctl (compose/aicoding.yml): host paths and identity
+            $env['TINE_DEV_DIR'] = realpath($this->baseDir);
+            $env['TINE20_DIR'] = $this->getSrcRoot();
+            $env['TINE_DEV_USER'] = self::hostUser();
+            $env['TINE_DEV_ARM64'] = self::isArm64() ? '1' : '0';
 
             $env['IMAGE_SUFFIX'] = self::isArm64() ? '-arm64' : '';
             $env['TINE20_DATABASE_TABLEPREFIX'] = $this->_getTablePrefix();
@@ -440,7 +460,7 @@ class DockerCommand extends BaseCommand
      * - bind mounts of the tine checkout are only allowed for the checkout root (see ensureSrcVolume)
      * - missing directories of SRC_VOLUME sub paths are created (bind mounts did that on their own)
      * - docker socket, privileged mode, capabilities, devices and host namespaces only for trusted services
-     *   (pullup.json "trustedServices", default: traefik, socket-proxy, devctl)
+     *   (pullup.json "trustedServices", default: traefik, devctl)
      */
     public function assertSafeMounts(ConsoleStyle $io): void
     {
@@ -457,7 +477,7 @@ class DockerCommand extends BaseCommand
         }
 
         $conf = $this->getComposeConf();
-        $trusted = $conf['trustedServices'] ?? ['traefik', 'socket-proxy', 'devctl'];
+        $trusted = $conf['trustedServices'] ?? ['traefik', 'devctl'];
         $root = $this->getSrcRoot();
         $volumes = $config['volumes'] ?? [];
         $errors = [];
