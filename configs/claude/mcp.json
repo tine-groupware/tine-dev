@@ -10,6 +10,7 @@
     "devctl": {
       "type": "http",
       "url": "http://devctl:3003/mcp",
+      "timeout": 3600000,
       "headers": {
         "Authorization": "Bearer ${MCP_AUTH_TOKEN}"
       }

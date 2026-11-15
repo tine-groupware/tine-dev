@@ -191,12 +191,18 @@ function run(array $cmd, callable $keepalive): string
     }
     stream_set_blocking($pipes[1], false);
     $output = '';
+    $lastPing = time();
     while (true) {
         $read = [$pipes[1]];
         $write = $except = null;
         $ready = stream_select($read, $write, $except, KEEPALIVE);
+        // the client sees nothing of the output until the end, ping it regularly - also while output flows
+        if (time() - $lastPing >= KEEPALIVE) {
+            $lines = preg_split('/[\r\n]+/', trim(preg_replace('/\e\[[0-9;?]*[A-Za-z]/', '', substr($output, -2000))));
+            $keepalive(substr(trim((string)end($lines)), 0, 200));
+            $lastPing = time();
+        }
         if ($ready === 0) {
-            $keepalive();
             continue;
         }
         $chunk = fread($pipes[1], 65536);
@@ -315,8 +321,23 @@ header('Content-Type: text/event-stream');
 header('Cache-Control: no-cache');
 echo ": started\n\n";
 flush();
-$keepalive = function () {
-    echo ": keepalive\n\n";
+// clients abort tool calls without response or progress (Claude Code: 300s): send progress notifications if the
+// client asked for them (progressToken), an SSE comment otherwise
+$progressToken = $params['_meta']['progressToken'] ?? null;
+$keepalive = function (string $message = '') use ($progressToken) {
+    static $progress = 0;
+    if ($progressToken === null) {
+        echo ": keepalive\n\n";
+    } else {
+        $notification = ['jsonrpc' => '2.0', 'method' => 'notifications/progress', 'params' => [
+            'progressToken' => $progressToken,
+            'progress' => ++$progress,
+            'message' => $message !== '' ? $message : 'running',
+        ]];
+        echo "event: message\ndata: "
+            . json_encode($notification, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)
+            . "\n\n";
+    }
     flush();
 };
 
