@@ -20,8 +20,9 @@ services:
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
       MCP_AUTH_TOKEN: "${MCP_AUTH_TOKEN}"
     volumes:
-      - ./:/workspace/tine-dev
-      - ../tine20:/workspace/tine20
+      # only the tine checkout - tine-dev (./console, compose files, devctl) is not visible to the client, it
+      # controls the stack via the devctl MCP server. Add ./:/workspace/tine-dev:ro to work on tine-dev itself.
+      - "${TINE20_DIR}:/workspace/tine20"
       # Git config, hooks etc. read-only: they run code with git on the host (your shell, IDE, ./console).
       # Every path on the way to them is a mount point as well, mount points can't be renamed or replaced.
       # ./console (docker:checkmounts) creates .git/commondir pointing to .git itself, see
@@ -37,7 +38,8 @@ services:
       - { type: volume, source: tine20-src, target: /workspace/tine20/tine20/images, volume: { nocopy: true, subpath: tine20/images } }
       - { type: volume, source: tine20-src, target: /workspace/tine20/tine20/images/icon-set, read_only: true, volume: { nocopy: true, subpath: tine20/images/icon-set } }
       - ./claude-data:/home/node/.claude
-      - ./configs/claude/settings.json:/home/node/.claude/settings.json
+      # read-only: permissions and hooks are yours to set
+      - ./configs/claude/settings.json:/home/node/.claude/settings.json:ro
       - ./configs/claude/mcp.json:/etc/tine-dev/claude-mcp.json:ro
     networks:
       - internal_network
