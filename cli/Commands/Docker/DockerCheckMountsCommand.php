@@ -14,7 +14,7 @@ class DockerCheckMountsCommand extends DockerCommand
 
         $this
             ->setName('docker:checkmounts')
-            ->setDescription('create the tine20-src volume and check the compose config for unsafe mounts/options')
+            ->setDescription('check the compose config for unsafe mounts/options and the tine20-src volume')
             ->setHelp('runs before every docker:up, see DockerCommand::assertSafeMounts()')
         ;
     }

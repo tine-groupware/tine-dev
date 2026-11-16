@@ -128,7 +128,12 @@ networks:
 
 volumes:
   tinefiles:
-  # the tine checkout, created by ./console (docker:checkmounts, docker:up), see compose/src-volumes.yml
+  # the tine checkout (TINE20_DIR, set by ./console), sub paths are mounted with volume.subpath, see
+  # compose/src-volumes.yml. After moving the checkout: ./console docker:down && docker volume rm tine20_tine20-src
+  # tine-dev-tine20-src (the latter is the same for docker run of ./console, see DockerCommand::srcMount())
   tine20-src:
-    name: tine-dev-tine20-src
-    external: true
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${TINE20_DIR:?TINE20_DIR is set by ./console (docker:composestring)}"

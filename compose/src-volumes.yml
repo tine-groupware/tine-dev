@@ -2,8 +2,8 @@ services:
   web:
     # Note: these volumes add to docker-compose.yml (not to be combined with build.yml !)
     #
-    # Sub paths of the tine checkout are mounted from the tine20-src volume (bound to the checkout root by
-    # ./console, see DockerCommand::ensureSrcVolume) instead of bind mounts: the daemon resolves `subpath`
+    # Sub paths of the tine checkout are mounted from the tine20-src volume (docker-compose.yml, bound to the
+    # checkout root TINE20_DIR) instead of bind mounts: the daemon resolves `subpath`
     # beneath the volume without following symlinks, a bind mount of ./tine20/tine20 would follow a symlink
     # planted there by code running in a container. ./console docker:checkmounts rejects such bind mounts.
     volumes:

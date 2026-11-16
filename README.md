@@ -150,12 +150,14 @@ In dev mode it is mounted into the web container at `/usr/share/tine20` (DEVELOP
 so PHP changes take effect immediately — run `./console tine:clearcache` if cached code hides your changes.
 
 Sub paths of the checkout (`tine20/tine20`, `tests`, webpack build dirs, ...) are mounted from the volume
-`tine-dev-tine20-src`, which `./console` binds to the checkout root — not as bind mounts: docker follows
+`tine20-src` (`docker-compose.yml`, bound to the checkout root `TINE20_DIR`) — not as bind mounts: docker follows
 symlinks in bind sources, so a symlink planted in the (container writable) checkout could mount any host
 dir. `volume.subpath` mounts don't follow symlinks. `./console docker:checkmounts` (also run by
-`docker:up` and `docker:webpackrestart`) creates the volume and rejects bind mounts of checkout sub paths,
+`docker:up` and `docker:webpackrestart`) rejects bind mounts of checkout sub paths,
 docker socket mounts, privileged mode etc. for services not in `pullup.json` `"trustedServices"`
-(default `["traefik", "devctl"]`). Run it once before `docker compose up` by hand.
+(default `["traefik", "devctl"]`). After moving the checkout: `./console docker:down && docker volume rm
+tine20_tine20-src tine-dev-tine20-src` (neither compose nor `docker run` of `./console` recreate them, `docker:checkmounts`
+refuses to start).
 
 Switching branches: `./console src:changeBranch --git --branch <branch>` does the git checkout +
 submodule update, then composer install, npm install, webpack restart and cache clear in one go

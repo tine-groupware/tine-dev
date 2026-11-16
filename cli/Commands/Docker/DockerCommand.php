@@ -19,8 +19,10 @@ class DockerCommand extends BaseCommand
     protected $homeDir = null;
     protected array $composeCommand = ['docker', 'compose'];
 
-    /** local volume bound to the tine checkout, see ensureSrcVolume() */
-    public const SRC_VOLUME = 'tine-dev-tine20-src';
+    /** volume tine20-src of docker-compose.yml (project tine20), bound to the tine checkout, see checkSrcVolume() */
+    public const SRC_VOLUME = 'tine20_tine20-src';
+    /** the same for docker run of ./console (src:composer, ...), created by docker run, see srcMount() */
+    public const RUN_SRC_VOLUME = 'tine-dev-tine20-src';
     protected string $bchub_repo = 'https://github.com/tine-groupware/broadcasthub.git';
     protected string $elementWebRepo = 'https://github.com/ecclesias-de/element-web/';
 
@@ -380,46 +382,45 @@ class DockerCommand extends BaseCommand
     }
 
     /**
-     * Creates SRC_VOLUME (a local volume bound to the tine checkout) or recreates it if it points to another checkout.
+     * The volume tine20-src (docker-compose.yml) is bound to the tine checkout (TINE20_DIR), compose creates it.
      *
      * Containers must not bind mount sub paths of the checkout: the checkout is writable for code running in the
      * containers (and AI coding clients), and the docker daemon follows symlinks in bind sources when it starts a
      * container - a symlink e.g. tine20/Tinebase/js/build -> ~/ would mount the host home dir. Mounts of the
      * volume with `volume.subpath` are resolved by the daemon beneath the volume root without following symlinks
      * and without a race (moby safepath), see compose/src-volumes.yml.
+     *
+     * Neither compose nor docker run recreate an existing volume when TINE20_DIR changes (e.g. another
+     * checkout) - refuse to start instead of mounting the old checkout.
      */
-    public function ensureSrcVolume(ConsoleStyle $io): void
+    public function checkSrcVolume(ConsoleStyle $io): void
     {
         $root = $this->getSrcRoot();
-        $name = escapeshellarg(self::SRC_VOLUME);
-        $device = trim((string)shell_exec("docker volume inspect --format '{{index .Options \"device\"}}' $name 2>/dev/null"));
-        if ($device === $root) {
-            return;
-        }
-        if ($device !== '') {
-            $io->info("volume " . self::SRC_VOLUME . " points to $device, recreating it for $root");
-            passthru("docker volume rm $name >/dev/null", $result_code);
-            if ($result_code !== 0) {
-                $io->error('can\'t remove volume ' . self::SRC_VOLUME . ', stop the containers using it (docker:down) and retry');
+        foreach ([self::SRC_VOLUME, self::RUN_SRC_VOLUME] as $volume) {
+            $device = trim((string)shell_exec("docker volume inspect --format '{{index .Options \"device\"}}' "
+                . escapeshellarg($volume) . ' 2>/dev/null'));
+            if ($device !== '' && $device !== $root) {
+                $io->error("volume $volume points to $device instead of $root, remove it: ./console docker:down"
+                    . " && docker volume rm $volume");
                 exit(1);
             }
-        }
-        passthru("docker volume create --driver local --opt type=none --opt o=bind --opt device="
-            . escapeshellarg($root) . " $name >/dev/null", $result_code);
-        if ($result_code !== 0) {
-            $io->error('can\'t create volume ' . self::SRC_VOLUME);
-            exit(1);
         }
     }
 
     /**
-     * docker run --mount option for $subPath of the tine checkout (see ensureSrcVolume)
+     * docker run --mount option for $subPath of the tine checkout via RUN_SRC_VOLUME, bound to the checkout like
+     * tine20-src (subpath resolved the same way). docker run creates it with these options if it doesn't exist.
+     * Not tine20-src itself: compose creates that only on up, src:composer runs before (docker run would create
+     * an empty volume of that name), and subpath isn't possible with anonymous volumes.
      */
     public function srcMount(ConsoleStyle $io, string $subPath, string $target, bool $readOnly = false): string
     {
-        $this->ensureSrcVolume($io);
+        $this->checkSrcVolume($io);
         $this->ensureSrcDir($io, $subPath);
-        return '--mount ' . escapeshellarg('type=volume,src=' . self::SRC_VOLUME . ",dst=$target,volume-nocopy"
+        // the csv parser of --mount needs quotes around values containing commas
+        $device = '"volume-opt=device=' . str_replace('"', '""', $this->getSrcRoot()) . '"';
+        return '--mount ' . escapeshellarg('type=volume,src=' . self::RUN_SRC_VOLUME . ",dst=$target,"
+            . "volume-driver=local,volume-opt=type=none,volume-opt=o=bind,$device,volume-nocopy"
             . ($subPath === '' ? '' : ",volume-subpath=$subPath") . ($readOnly ? ',readonly' : ''));
     }
 
@@ -447,16 +448,16 @@ class DockerCommand extends BaseCommand
     }
 
     /**
-     * To be called before containers are created/started: ensures SRC_VOLUME and checks the compose config.
+     * To be called before containers are created/started: checks SRC_VOLUME and the compose config.
      *
-     * - bind mounts of the tine checkout are only allowed for the checkout root (see ensureSrcVolume)
+     * - bind mounts of the tine checkout are only allowed for the checkout root (see checkSrcVolume)
      * - missing directories of SRC_VOLUME sub paths are created (bind mounts did that on their own)
      * - docker socket, privileged mode, capabilities, devices and host namespaces only for trusted services
      *   (pullup.json "trustedServices", default: traefik, devctl)
      */
     public function assertSafeMounts(ConsoleStyle $io): void
     {
-        $this->ensureSrcVolume($io);
+        $this->checkSrcVolume($io);
         if (array_filter($this->composeNames, fn($name) => str_starts_with($name, 'aicoding-'))) {
             $this->ensureGitProtection($io);
         }
