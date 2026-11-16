@@ -191,16 +191,13 @@ After larger JS changes restart it: `./console docker:webpackrestart`.
 
 ## E2E tests
 
-The `e2etest` compose module adds the container `e2etests` (node + chromium, image built from
-`dockerfiles/e2etests`) for the jest/puppeteer tests in `tine20/tests/e2etests`. It uses
+The `e2etest` compose module adds the container `e2etests` (node + chromium, image
+`ghcr.io/tine-groupware/tine-dev/e2etests` from `dockerfiles/e2etests`) for the jest/puppeteer tests in `tine20/tests/e2etests`. It uses
 Debian's chromium, as puppeteer's own Chrome download has no linux/arm64 build.
 
 Add `"e2etest"` to `composeFiles` in `pullup.json`, then:
 
 ~~~
-# build the image (again after changes in dockerfiles/e2etests). Not done by docker:up: compose
-# can't build when started by ./console ("failed to get console: provided file is not a console")
-eval "$(./console docker:composestring | tail -1) build e2etests"
 ./console docker:up
 ./console tine:demodata                     # some tests need demo data
 docker exec e2etests npm install            # once / after package.json changes
@@ -210,7 +207,7 @@ docker exec e2etests npm test src/test/CrewScheduling/crewScheduling.test.js
 The tests use `TEST_URL` etc. from `tine20/tests/e2etests/.env`. Inside the docker network
 `tine.local.tine-dev.de` resolves to traefik (network alias set in `compose/e2etest.yml`), so the
 default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/screenshots/Error/`.
-AI coding clients run the tests with the devctl tools `build_e2etests` and `exec` (see "AI coding clients").
+AI coding clients run the tests with the devctl tool `exec` (see "AI coding clients").
 
 ## Adding a compose module
 
@@ -615,6 +612,9 @@ image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). 
 * postfix
 * opencode
 * socket-proxy
+* e2etests
+* devctl (own software like mailstack: semantic version, no app_version file, no `-mw`)
+* claude-code (app version = Claude Code version)
 
 App version is the version of the base image / software. It is specified in `./dockerfiles/<image name>/.meta/app_version`. The `tag app_version` and `app_version file` muss match otherwise the ci will fail!
 Updating the app version: Update app version file and create a new tag.
@@ -669,7 +669,6 @@ reachable in the internal network `devctl-net`):
 | `change_branch`   | `./console src:changeBranch` for the branch checked out (the client does the checkout) |
 | `up`              | `./console docker:up -d`                                                             |
 | `restart_webpack` | `./console docker:webpackrestart`                                                    |
-| `build_e2etests`  | build the `e2etests` image                                                           |
 | `exec`            | `sh -c <command>` in `web` or `e2etests` (tests, tine cli, ...)                      |
 | `tine_console`    | `./console tine:<install\|demodata\|clearcache\|test\|...> [args]`                    |
 | `ps`, `logs`      | container status, log tail of a service                                              |
@@ -677,12 +676,7 @@ reachable in the internal network `devctl-net`):
 devctl mounts tine-dev and the checkout at their host paths and runs `./console` as on the host
 (`TINE_DEV_DIR`, `TINE_DEV_USER`, `TINE_DEV_ARM64`, `HOMEDIR` are passed by `./console`); it never
 recreates itself and the AI clients (`DEVCTL_SKIP_SERVICES`, their env may only be set in your shell). It doesn't run git operations that check out or fetch — the
-client does the checkout in its container. Build the image before the first `docker:up` and after
-changes in `dockerfiles/devctl`:
-
-~~~
-eval "$(./console docker:composestring | tail -1) build devctl"
-~~~
+client does the checkout in its container.
 
 **Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
 that make git run code — `config` (fsmonitor, filters, aliases, ...), `hooks`, `modules`, `worktrees`
@@ -746,5 +740,5 @@ You might need to add a UFW rule to allow outgoing connections to the AI-API ser
 
 Paths in the container:
 
-- `/workspace/tine20` — your Tine checkout (writable, work and commit here)
-- `/workspace/tine-dev` — this repo; `tine-dev/tine20` is the symlink to `/workspace/tine20`
+- `/workspace/tine20` — your Tine checkout (writable, work and commit here; git config, hooks etc. read-only)
+- no `/workspace/tine-dev` and no docker: the stack is controlled via the devctl MCP server (see above)

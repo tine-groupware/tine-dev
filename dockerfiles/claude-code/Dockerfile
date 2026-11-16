@@ -1,5 +1,7 @@
-ARG NODE_VERSION=22-bookworm-slim
-FROM node:${NODE_VERSION}
+FROM node:22-bookworm-slim
+
+# Claude Code version, see .meta/app_version
+ARG APP_VERSION
 
 USER root
 
@@ -12,25 +14,13 @@ RUN apt-get update && apt-get install -y \
     ripgrep \
     && rm -rf /var/lib/apt/lists/*
 
-# Add official Docker apt repository and install Docker CLI + PHP CLI
-RUN DOCKER_REPO="download.docker.com/linux/debian" \
-    && install -m 0755 -d /etc/apt/keyrings \
-    && curl -fsSL "https://${DOCKER_REPO}/gpg" | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
-    && chmod a+r /etc/apt/keyrings/docker.gpg \
-    && echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://${DOCKER_REPO} \
-      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-      tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update \
-    && apt-get install -y \
-      docker-ce-cli \
-      docker-buildx-plugin \
-      docker-compose-plugin \
-      php-cli \
+# PHP CLI (php -l etc.). No docker cli: clients have no docker access, they use the devctl MCP server
+RUN apt-get update \
+    && apt-get install -y php-cli \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Claude Code CLI globally
-RUN npm install -g @anthropic-ai/claude-code
+RUN npm install -g @anthropic-ai/claude-code@${APP_VERSION}
 
 # Create necessary directories and set ownership for non-root user 'node' (UID 1000)
 RUN mkdir -p /home/node/.claude /workspace && \

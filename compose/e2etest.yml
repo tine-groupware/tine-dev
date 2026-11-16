@@ -5,9 +5,8 @@
 
 services:
   e2etests:
-    build: ./dockerfiles/e2etests
-    # local image only, build it before the first docker:up (see README "E2E tests")
-    image: tine-dev/e2etests:latest
+    # dockerfiles/e2etests, built by the CI (tag e2etests-image-<node version>-mw<n>)
+    image: ghcr.io/tine-groupware/tine-dev/e2etests:24-mw1
     container_name: e2etests
     init: true
     shm_size: 1gb

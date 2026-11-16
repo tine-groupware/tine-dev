@@ -2,8 +2,8 @@
 #
 # Uses Debian's chromium instead of puppeteer's Chrome for Testing download: the latter has no
 # linux/arm64 build, so it would not run on Apple Silicon.
-ARG NODE_VERSION=24-trixie-slim
-FROM node:${NODE_VERSION}
+ARG APP_VERSION
+FROM node:${APP_VERSION}-trixie-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \

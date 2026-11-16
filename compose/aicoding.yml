@@ -5,8 +5,6 @@
 # webpack restart, exec into the tine web container and the e2e test runner, logs, ...), see
 # dockerfiles/devctl/devctl.php. A client joins devctl-net and gets the MCP server
 # http://devctl:3003/mcp with "Authorization: Bearer ${MCP_AUTH_TOKEN}".
-#
-# devctl is a local image, build it before the first docker:up (see README "AI coding clients").
 
 services:
   gitlab-mcp:
@@ -29,8 +27,8 @@ services:
       - external_network
 
   devctl:
-    build: ./dockerfiles/devctl
-    image: tine-dev/devctl:latest
+    # dockerfiles/devctl, built by the CI (tag devctl-image-<version>)
+    image: ghcr.io/tine-groupware/tine-dev/devctl:1.0.0
     container_name: devctl
     restart: unless-stopped
     environment:

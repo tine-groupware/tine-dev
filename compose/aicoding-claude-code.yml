@@ -2,10 +2,11 @@
 
 services:
   claude-code:
-    image: claude-code:latest
+    # dockerfiles/claude-code, built by the CI (tag claude-code-image-<claude code version>-mw<n>)
+    image: ghcr.io/tine-groupware/tine-dev/claude-code:2.1.323-mw1
     container_name: claude-code
-    # register the MCP servers of configs/claude/mcp.json at user scope (~/.claude.json, not
-    # persisted), Claude Code doesn't read ~/.claude/mcp.json. ${MCP_AUTH_TOKEN} is stored as is
+    # register the MCP servers of configs/claude/mcp.json at user scope ($CLAUDE_CONFIG_DIR/.claude.json),
+    # Claude Code doesn't read ~/.claude/mcp.json. ${MCP_AUTH_TOKEN} is stored as is
     # and resolved by Claude Code at runtime.
     entrypoint: [ "/bin/sh", "-c" ]
     command:

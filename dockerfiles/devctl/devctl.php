@@ -43,11 +43,6 @@ function tools(): array
             'inputSchema' => $none,
         ],
         [
-            'name' => 'build_e2etests',
-            'description' => 'Build the image of the e2e test runner (dockerfiles/e2etests), then call up to use it.',
-            'inputSchema' => $none,
-        ],
-        [
             'name' => 'exec',
             'description' => 'Run a shell command (sh -c) in the tine web container (tine source at /usr/share/tine20,'
                 . ' e.g. phpunit, tine20.php cli) or in the e2e test runner (tests at /tine20/tests/e2etests, e.g.'
@@ -112,9 +107,6 @@ function callTool(string $name, array $args, callable $keepalive): string
             return locked(fn() => run([...$console, 'docker:up', '-d', '-n'], $keepalive));
         case 'restart_webpack':
             return locked(fn() => run([...$console, 'docker:webpackrestart', '-n'], $keepalive));
-        case 'build_e2etests':
-            return locked(fn() => run(['sh', '-c', 'eval "$(./console docker:composestring -n | tail -1) build e2etests"'],
-                $keepalive));
         case 'exec':
             $container = (string)($args['container'] ?? '');
             if (!in_array($container, CONTAINERS, true)) {
@@ -169,7 +161,7 @@ function locked(callable $fn): string
 {
     $lock = fopen('/tmp/devctl.lock', 'c');
     if (!flock($lock, LOCK_EX | LOCK_NB)) {
-        throw new ToolError('another operation (change_branch, up, restart_webpack, build_e2etests) is running');
+        throw new ToolError('another operation (change_branch, up, restart_webpack) is running');
     }
     try {
         return $fn();
