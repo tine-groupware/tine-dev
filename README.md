@@ -193,8 +193,8 @@ After larger JS changes restart it: `./console docker:webpackrestart`.
 
 The `e2etest` compose module adds the container `e2etests` with the image of the e2e jobs of the tine CI
 (`dockerregistry.metaways.net/tine20/tine20/puppeteer`, see `tine20/ci/helperimages/puppeteer`) for the
-jest/puppeteer tests in `tine20/tests/e2etests`. The image is amd64 only (puppeteer's Chrome download has no
-linux/arm64 build), on Apple Silicon it runs emulated and slower. Needs a login to `dockerregistry.metaways.net`.
+jest/puppeteer tests in `tine20/tests/e2etests`. It is built for amd64 and arm64 and uses Debian's
+chromium (puppeteer's own Chrome download has no linux/arm64 build).
 
 Add `"e2etest"` to `composeFiles` in `pullup.json`, then:
 
