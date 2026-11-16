@@ -103,38 +103,40 @@ class DockerCommand extends BaseCommand
 
     /**
      * @param string $branch
-     * @param string|null $gitDir tine git checkout, used to find the base branch of branches not in $imageMap
+     * @param string|null $gitDir tine git checkout, used to find the major branch of branches not in $imageMap
      * @return array
      */
     public static function getImages($branch, ?string $gitDir = null)
     {
-        foreach ([$branch, basename($branch)] as $major) {
-            if (array_key_exists($major, self::$imageMap)) {
-                return self::$imageMap[$major];
-            }
+        if (array_key_exists($branch, self::$imageMap)) {
+            return self::$imageMap[$branch];
         }
 
-        // feature branches (e.g. pu/cw/foo) get the images of the branch they are based on
-        $base = $gitDir ? self::findBaseBranch($gitDir, $branch) : null;
-        if ($base !== null) {
-            fwrite(STDERR, "branch $branch is not in the image map, using images of its base branch $base\n");
-            return self::$imageMap[$base];
+        // feature branches (e.g. pu/cw/foo) get the images of the major branch they will be merged into
+        $major = $gitDir ? self::findMajorBranch($gitDir, $branch) : null;
+        if ($major !== null && array_key_exists($major, self::$imageMap)) {
+            fwrite(STDERR, "branch $branch is not in the image map, using images of its major branch $major\n");
+            return self::$imageMap[$major];
+        }
+
+        // no ci/ci-config.yml (yet)
+        if (array_key_exists(basename($branch), self::$imageMap)) {
+            return self::$imageMap[basename($branch)];
         }
 
         return end(self::$imageMap);
     }
 
     /**
-     * Finds the $imageMap key of the branch $branch is based on: the local or remote branch that
-     * contains the most commits of $branch (fewest commits ahead), then the one with the fewest
-     * commits not in $branch (fewest commits behind) - e.g. 2026.11 for a branch forked from 2026.11,
-     * although main contains these commits as well (merged forward).
+     * The major branch of $branch as the CI uses it: MAJOR_COMMIT_REF_NAME =
+     * CUSTOMER_MAJOR_COMMIT_REF_NAME . BASE_MAJOR_COMMIT_REF_NAME from ci/ci-config.yml of the branch,
+     * e.g. "2026.11" or "metaways/main".
      *
      * @param string $gitDir
      * @param string $branch
      * @return string|null
      */
-    public static function findBaseBranch(string $gitDir, string $branch): ?string
+    public static function findMajorBranch(string $gitDir, string $branch): ?string
     {
         static $cache = [];
         if (array_key_exists("$gitDir:$branch", $cache)) {
@@ -145,28 +147,16 @@ class DockerCommand extends BaseCommand
         // --branch BRANCH might not be checked out (yet)
         $rev = trim((string)shell_exec($git . 'rev-parse --verify --quiet '
             . escapeshellarg($branch . '^{commit}') . ' 2>/dev/null')) ?: 'HEAD';
+        $config = (string)shell_exec($git . 'show ' . escapeshellarg("$rev:ci/ci-config.yml") . ' 2>/dev/null');
 
-        $base = null;
-        $bestScore = null;
-        foreach (array_keys(self::$imageMap) as $key) {
-            $shas = shell_exec($git . "for-each-ref --format='%(objectname)' "
-                . escapeshellarg("refs/heads/$key") . ' ' . escapeshellarg("refs/remotes/*/$key") . ' 2>/dev/null');
-            foreach (array_unique(array_filter(explode("\n", (string)$shas))) as $sha) {
-                // "<behind>\t<ahead>"
-                $counts = preg_split('/\s+/', trim((string)shell_exec($git . 'rev-list --count --left-right '
-                    . escapeshellarg("$sha...$rev") . ' 2>/dev/null')));
-                if (count($counts) !== 2) {
-                    continue;
-                }
-                $score = [(int)$counts[1], (int)$counts[0]];
-                if ($bestScore === null || $score < $bestScore) {
-                    $bestScore = $score;
-                    $base = $key;
-                }
-            }
+        $vars = [];
+        foreach (['CUSTOMER_MAJOR_COMMIT_REF_NAME', 'BASE_MAJOR_COMMIT_REF_NAME'] as $var) {
+            $vars[$var] = preg_match('/^\s*' . $var . ':\s*["\']?([^"\'\s#]*)/m', $config, $m) ? $m[1] : '';
         }
 
-        return $cache["$gitDir:$branch"] = $base;
+        $major = $vars['BASE_MAJOR_COMMIT_REF_NAME'] === '' ? null
+            : $vars['CUSTOMER_MAJOR_COMMIT_REF_NAME'] . $vars['BASE_MAJOR_COMMIT_REF_NAME'];
+        return $cache["$gitDir:$branch"] = $major;
     }
 
     public function getBroadcasthubDir(ConsoleStyle $io)
