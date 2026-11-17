@@ -28,7 +28,7 @@ services:
 
   devctl:
     # dockerfiles/devctl, built by the CI (tag devctl-image-<version>)
-    image: ghcr.io/tine-groupware/tine-dev/devctl:1.1.0
+    image: ghcr.io/tine-groupware/tine-dev/devctl:1.2.0
     container_name: devctl
     restart: unless-stopped
     environment:

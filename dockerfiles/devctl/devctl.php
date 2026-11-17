@@ -100,6 +100,18 @@ function tools(): array
                 ],
             ],
         ],
+        [
+            'name' => 'fetch',
+            'description' => 'Fetch from the remote of the tine repo (DEVCTL_GIT_REMOTE, default origin) into the '
+                . 'remote-tracking branches: one branch (any, e.g. the source branch of a merge request, then '
+                . 'available as origin/<branch>) or the whole remote.',
+            'inputSchema' => [
+                'type' => 'object',
+                'properties' => [
+                    'branch' => ['type' => 'string', 'description' => 'branch to fetch, empty: all'],
+                ],
+            ],
+        ],
     ];
 }
 
@@ -152,29 +164,31 @@ function callTool(string $name, array $args, callable $keepalive): string
                 $keepalive);
         case 'push':
             return locked(fn() => push((bool)($args['force'] ?? false), $keepalive));
+        case 'fetch':
+            return locked(fn() => fetch((string)($args['branch'] ?? ''), $keepalive));
     }
     throw new ToolError("unknown tool $name");
 }
 
 /**
- * Pushes the checked out branch of the tine repo to origin with GITLAB_PUSH_TOKEN, which the client never sees.
+ * git with GITLAB_PUSH_TOKEN on the tine repo, the client never sees the token.
  *
  * The client controls the checkout but not .git/config and hooks (read-only for it, see
  * compose/aicoding-claude-code.yml): the remote url comes from there and is checked against DEVCTL_GIT_URL_PREFIX,
- * so the token can't be sent elsewhere. Hooks and fsmonitor are disabled anyway. Only pu/<DEVCTL_DEVELOPER>/...,
- * protected branches are protected by gitlab as well.
+ * so the token can't be sent elsewhere. Hooks, fsmonitor and credential helpers are disabled, https only.
+ *
+ * @return array{git: string[], out: callable, remote: string, token: string}
  */
-function push(bool $force, callable $keepalive): string
+function gitContext(bool $forPush): array
 {
     $token = (string)getenv('GITLAB_PUSH_TOKEN');
-    $developer = (string)getenv('DEVCTL_DEVELOPER');
     $urlPrefix = (string)(getenv('DEVCTL_GIT_URL_PREFIX') ?: 'https://gitlab.metaways.net/');
     $remote = (string)(getenv('DEVCTL_GIT_REMOTE') ?: 'origin');
     if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $remote)) {
         throw new ToolError("invalid DEVCTL_GIT_REMOTE '$remote'");
     }
-    if ($token === '' || !preg_match('/^[a-z0-9]+$/', $developer)) {
-        throw new ToolError('push is not configured: GITLAB_PUSH_TOKEN and DEVCTL_DEVELOPER (e.g. cw) in .env of tine-dev');
+    if ($token === '') {
+        throw new ToolError('not configured: GITLAB_PUSH_TOKEN in .env of tine-dev');
     }
     $repo = realpath(getenv('TINE_DEV_DIR') . '/tine20');
     if ($repo === false) {
@@ -183,19 +197,14 @@ function push(bool $force, callable $keepalive): string
 
     $git = ['git', '-c', 'safe.directory=*', '-c', 'core.hooksPath=/dev/null', '-c', 'core.fsmonitor=false',
         '-c', 'credential.helper=', '-c', 'protocol.allow=never', '-c', 'protocol.https.allow=always', '-C', $repo];
-    $gitOut = function (array $args) use ($git): string {
+    $out = function (array $args) use ($git): string {
         return trim((string)shell_exec(implode(' ', array_map('escapeshellarg', [...$git, ...$args])) . ' 2>/dev/null'));
     };
 
-    $branch = $gitOut(['symbolic-ref', '--short', 'HEAD']);
-    $prefix = "pu/$developer/";
-    if (!str_starts_with($branch, $prefix) || !preg_match('#^[A-Za-z0-9][A-Za-z0-9._/-]*$#', $branch)
-        || str_contains($branch, '..') || str_ends_with($branch, '.lock') || str_ends_with($branch, '/')) {
-        throw new ToolError("only own branches $prefix... can be pushed, checked out: '$branch'");
-    }
-    $url = $gitOut(['remote', 'get-url', '--push', $remote]);
+    // get-url resolves pushurl and insteadOf like push/fetch do
+    $url = $out($forPush ? ['remote', 'get-url', '--push', $remote] : ['remote', 'get-url', $remote]);
     if (!str_starts_with($url, $urlPrefix) || preg_match('#^https://[^/]*@#', $url)) {
-        throw new ToolError("push url of $remote '$url' doesn't start with $urlPrefix (DEVCTL_GIT_URL_PREFIX)");
+        throw new ToolError("url of $remote '$url' doesn't start with $urlPrefix (DEVCTL_GIT_URL_PREFIX)");
     }
 
     // the token comes from the environment via askpass, never on the command line or in a file
@@ -205,14 +214,57 @@ function push(bool $force, callable $keepalive): string
     putenv("GIT_ASKPASS=$askpass");
     putenv('GIT_TERMINAL_PROMPT=0');
 
+    return ['git' => $git, 'out' => $out, 'remote' => $remote, 'token' => $token];
+}
+
+function isBranchName(string $branch): bool
+{
+    return preg_match('#^[A-Za-z0-9][A-Za-z0-9._/-]*$#', $branch) && !str_contains($branch, '..')
+        && !str_ends_with($branch, '.lock') && !str_ends_with($branch, '/') && !str_contains($branch, '//');
+}
+
+/**
+ * Pushes the checked out branch - only own branches pu/<DEVCTL_DEVELOPER>/..., protected branches are protected by
+ * gitlab as well.
+ */
+function push(bool $force, callable $keepalive): string
+{
+    $developer = (string)getenv('DEVCTL_DEVELOPER');
+    if (!preg_match('/^[a-z0-9]+$/', $developer)) {
+        throw new ToolError('push is not configured: DEVCTL_DEVELOPER (e.g. cw) in .env of tine-dev');
+    }
+    $ctx = gitContext(true);
+
+    $branch = ($ctx['out'])(['symbolic-ref', '--short', 'HEAD']);
+    $prefix = "pu/$developer/";
+    if (!str_starts_with($branch, $prefix) || !isBranchName($branch)) {
+        throw new ToolError("only own branches $prefix... can be pushed, checked out: '$branch'");
+    }
+
     $args = ['push'];
     if ($force) {
         $args[] = "--force-with-lease=refs/heads/$branch";
     }
-    // the remote (not the url): --force-with-lease compares with its remote-tracking branch. get-url --push above
-    // resolves pushurl and insteadOf like push does.
-    array_push($args, $remote, "HEAD:refs/heads/$branch");
-    return str_replace($token, '***', run([...$git, ...$args], $keepalive));
+    // the remote (not the url): --force-with-lease compares with its remote-tracking branch
+    array_push($args, $ctx['remote'], "HEAD:refs/heads/$branch");
+    return str_replace($ctx['token'], '***', run([...$ctx['git'], ...$args], $keepalive));
+}
+
+/**
+ * Fetches a branch (any, e.g. the one of a merge request) or the whole remote into the remote-tracking branches.
+ */
+function fetch(string $branch, callable $keepalive): string
+{
+    if ($branch !== '' && !isBranchName($branch)) {
+        throw new ToolError("invalid branch name '$branch'");
+    }
+    $ctx = gitContext(false);
+    $remote = $ctx['remote'];
+    $args = ['fetch', '--no-recurse-submodules', $remote];
+    if ($branch !== '') {
+        $args[] = "+refs/heads/$branch:refs/remotes/$remote/$branch";
+    }
+    return str_replace($ctx['token'], '***', run([...$ctx['git'], ...$args], $keepalive));
 }
 
 function containerId(string $service): string

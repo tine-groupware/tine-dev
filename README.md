@@ -678,11 +678,12 @@ reachable in the internal network `devctl-net`):
 | `tine_console`    | `./console tine:<install\|demodata\|clearcache\|test\|...> [args]`                    |
 | `ps`, `logs`      | container status, log tail of a service                                              |
 | `push`            | push the checked out branch to `origin`, only `pu/<DEVCTL_DEVELOPER>/...`, optionally force with lease |
+| `fetch`           | fetch a branch (any, e.g. of a merge request to review or build on) or the whole remote |
 
 devctl mounts tine-dev and the checkout at their host paths and runs `./console` as on the host
 (`TINE_DEV_DIR`, `TINE_DEV_USER`, `TINE_DEV_ARM64`, `HOMEDIR` are passed by `./console`); it never
-recreates itself and the AI clients (`DEVCTL_SKIP_SERVICES`, their env may only be set in your shell). It doesn't run git operations that check out or fetch — the
-client does the checkout in its container.
+recreates itself and the AI clients (`DEVCTL_SKIP_SERVICES`, their env may only be set in your shell). It never checks out - the client does
+the checkout in its container; fetch and push run via the tools of the same name.
 
 **Settings and tokens** (`.env` of tine-dev):
 
@@ -694,7 +695,7 @@ MCP_AUTH_TOKEN=...            # e.g. openssl rand -hex 32
 GITLAB_API_URL=https://gitlab.metaways.net/api/v4
 GITLAB_PERSONAL_ACCESS_TOKEN=...
 
-# devctl tool push (optional)
+# devctl tools push and fetch (optional)
 GITLAB_PUSH_TOKEN=...
 DEVCTL_DEVELOPER=cw           # your short name: pushes only pu/cw/...
 # DEVCTL_GIT_REMOTE=origin                             (default)
@@ -707,15 +708,15 @@ DEVCTL_DEVELOPER=cw           # your short name: pushes only pu/cw/...
 Create both gitlab tokens as **personal access tokens** in gitlab (avatar → Preferences → Access tokens),
 preferably *fine-grained* tokens limited to the projects you work on (e.g. `tine20/tine20`), with an expiry date.
 Keep them separate: the AI client uses `GITLAB_PERSONAL_ACCESS_TOKEN` through gitlab-mcp for every request,
-`GITLAB_PUSH_TOKEN` is used for git push only.
+`GITLAB_PUSH_TOKEN` is used by devctl for git fetch and push only.
 
 | token | permissions (fine-grained) | not |
 |-------|----------------------------|-----|
 | `GITLAB_PERSONAL_ACCESS_TOKEN` | read: project, merge requests, pipelines/jobs; Merge Request: Create (notes, threads, new MRs); Merge Request: Update (resolve threads, edit MRs) | repository write, delete, admin |
-| `GITLAB_PUSH_TOKEN` | Repository: Write (git push) | everything else |
+| `GITLAB_PUSH_TOKEN` | Repository: Read and Write (git fetch, git push), Merge Request: Read | everything else |
 
 The permission names of fine-grained tokens may differ between gitlab versions; gitlab names a missing permission
-in its 403 answer. Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scope `write_repository`, gitlab-mcp
+in its 403 answer. Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scopes `read_repository` and `write_repository`, gitlab-mcp
 `api` (which allows much more - prefer fine-grained tokens). After changing a token: `docker compose up -d
 gitlab-mcp` (gitlab-mcp is not recreated by devctl) resp. `./console docker:up -d` (devctl).
 
