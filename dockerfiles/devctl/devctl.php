@@ -89,7 +89,7 @@ function tools(): array
         ],
         [
             'name' => 'push',
-            'description' => 'Push the branch checked out in the tine repo to origin (gitlab) - only own branches '
+            'description' => 'Push the branch checked out in the tine repo to its remote (DEVCTL_GIT_REMOTE, default origin) - only own branches '
                 . 'pu/<developer>/... (developer: DEVCTL_DEVELOPER). Commit first. Returns the git output incl. the '
                 . 'link to create a merge request.',
             'inputSchema' => [
@@ -169,6 +169,10 @@ function push(bool $force, callable $keepalive): string
     $token = (string)getenv('DEVCTL_GIT_TOKEN');
     $developer = (string)getenv('DEVCTL_DEVELOPER');
     $urlPrefix = (string)(getenv('DEVCTL_GIT_URL_PREFIX') ?: 'https://gitlab.metaways.net/');
+    $remote = (string)(getenv('DEVCTL_GIT_REMOTE') ?: 'origin');
+    if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $remote)) {
+        throw new ToolError("invalid DEVCTL_GIT_REMOTE '$remote'");
+    }
     if ($token === '' || !preg_match('/^[a-z0-9]+$/', $developer)) {
         throw new ToolError('push is not configured: DEVCTL_GIT_TOKEN and DEVCTL_DEVELOPER (e.g. cw) in .env of tine-dev');
     }
@@ -189,9 +193,9 @@ function push(bool $force, callable $keepalive): string
         || str_contains($branch, '..') || str_ends_with($branch, '.lock') || str_ends_with($branch, '/')) {
         throw new ToolError("only own branches $prefix... can be pushed, checked out: '$branch'");
     }
-    $url = $gitOut(['remote', 'get-url', '--push', 'origin']);
+    $url = $gitOut(['remote', 'get-url', '--push', $remote]);
     if (!str_starts_with($url, $urlPrefix) || preg_match('#^https://[^/]*@#', $url)) {
-        throw new ToolError("push url of origin '$url' doesn't start with $urlPrefix");
+        throw new ToolError("push url of $remote '$url' doesn't start with $urlPrefix (DEVCTL_GIT_URL_PREFIX)");
     }
 
     // the token comes from the environment via askpass, never on the command line or in a file
@@ -207,9 +211,9 @@ function push(bool $force, callable $keepalive): string
     if ($force) {
         $args[] = "--force-with-lease=refs/heads/$branch";
     }
-    // origin (not the url): --force-with-lease compares with its remote-tracking branch. get-url --push above
+    // the remote (not the url): --force-with-lease compares with its remote-tracking branch. get-url --push above
     // resolves pushurl and insteadOf like push does.
-    array_push($args, 'origin', "HEAD:refs/heads/$branch");
+    array_push($args, $remote, "HEAD:refs/heads/$branch");
     return str_replace($token, '***', run([...$git, ...$args], $keepalive));
 }
 

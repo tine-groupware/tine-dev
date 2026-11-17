@@ -684,18 +684,46 @@ devctl mounts tine-dev and the checkout at their host paths and runs `./console`
 recreates itself and the AI clients (`DEVCTL_SKIP_SERVICES`, their env may only be set in your shell). It doesn't run git operations that check out or fetch — the
 client does the checkout in its container.
 
-**Push:** set in `.env`
+**Settings and tokens** (`.env` of tine-dev):
 
 ~~~
-DEVCTL_GIT_TOKEN=<gitlab token>   # fine-grained, write access to the tine repo only
-DEVCTL_DEVELOPER=cw               # your short name: pushes only pu/cw/...
-# DEVCTL_GIT_URL_PREFIX=https://gitlab.metaways.net/   (default)
+# shared secret between the AI clients and their MCP servers (gitlab-mcp, devctl), any random string
+MCP_AUTH_TOKEN=...            # e.g. openssl rand -hex 32
+
+# gitlab-mcp: read MRs, pipelines and jobs, answer and resolve review threads, open MRs
+GITLAB_API_URL=https://gitlab.metaways.net/api/v4
+GITLAB_PERSONAL_ACCESS_TOKEN=...
+
+# devctl tool push (optional)
+DEVCTL_GIT_TOKEN=...
+DEVCTL_DEVELOPER=cw           # your short name: pushes only pu/cw/...
+# DEVCTL_GIT_REMOTE=origin                             (default)
+# DEVCTL_GIT_URL_PREFIX=https://gitlab.metaways.net/   (default, the push url of the remote must start with it)
+
+# Claude Code: an API key, or log in interactively in the container
+# ANTHROPIC_API_KEY=...
 ~~~
 
-The token stays in devctl, the client never sees it (git gets it via askpass from the environment). devctl
-pushes the checked out branch to `origin` only if the push url of `origin` starts with `DEVCTL_GIT_URL_PREFIX` -
-the client can't change it, `.git/config` is read-only for it - with hooks and fsmonitor disabled. Merge requests
-are created via gitlab-mcp (its token needs `Merge Request: Create`/`Update`). Note: anything pushed to
+Create both gitlab tokens as **personal access tokens** in gitlab (avatar → Preferences → Access tokens),
+preferably *fine-grained* tokens limited to the projects you work on (e.g. `tine20/tine20`), with an expiry date.
+Keep them separate: the AI client uses `GITLAB_PERSONAL_ACCESS_TOKEN` through gitlab-mcp for every request,
+`DEVCTL_GIT_TOKEN` is used for git push only.
+
+| token | permissions (fine-grained) | not |
+|-------|----------------------------|-----|
+| `GITLAB_PERSONAL_ACCESS_TOKEN` | read: project, merge requests, pipelines/jobs; Merge Request: Create (notes, threads, new MRs); Merge Request: Update (resolve threads, edit MRs) | repository write, delete, admin |
+| `DEVCTL_GIT_TOKEN` | Repository: Write (git push) | everything else |
+
+The permission names of fine-grained tokens may differ between gitlab versions; gitlab names a missing permission
+in its 403 answer. Without fine-grained tokens: `DEVCTL_GIT_TOKEN` needs the scope `write_repository`, gitlab-mcp
+`api` (which allows much more - prefer fine-grained tokens). After changing a token: `docker compose up -d
+gitlab-mcp` (gitlab-mcp is not recreated by devctl) resp. `./console docker:up -d` (devctl).
+
+**Push:** the token stays in devctl, the client never sees it (git gets it via askpass from the environment).
+devctl pushes the checked out branch `pu/<DEVCTL_DEVELOPER>/...` to `DEVCTL_GIT_REMOTE`, only via https and only if
+its push url starts with `DEVCTL_GIT_URL_PREFIX` and contains no credentials (the client can't change the url,
+`.git/config` is read-only for it); hooks and fsmonitor are disabled, force push only with lease. Use an https
+remote for that, ssh remotes are not supported. Merge requests are opened via gitlab-mcp. Note: anything pushed to
 `pu/...` can run in merge request pipelines, keep protected CI variables protected.
 
 **Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
