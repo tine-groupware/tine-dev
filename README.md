@@ -210,6 +210,19 @@ The tests use `TEST_URL` etc. from `tine20/tests/e2etests/.env`. Inside the dock
 default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/screenshots/Error/`.
 AI coding clients run the tests with the devctl tool `exec` (see "AI coding clients").
 
+**Watch the tests in your Chrome** (from tine 2026.11, see `tine20/tests/e2etests/README.md` "Debug in a
+Running Browser"): start a separate Chrome with `--remote-debugging-port=9222` on the host. Chrome only accepts
+debugging connections on 127.0.0.1, so forward the port for the containers (stop it when done - it listens on all
+interfaces, everyone who reaches the port controls that Chrome):
+
+~~~
+socat TCP-LISTEN:9223,fork,reuseaddr TCP:127.0.0.1:9222
+docker exec -e TEST_BROWSER_URL=http://host.docker.internal:9223 e2etests npm test src/test/...
+~~~
+
+The same Chrome is used by Claude in Chrome (`claude --chrome` in the claude-code container, extension installed
+in that Chrome instance), see the client skill `browser`.
+
 ## Docs
 
 The `docs` compose module serves the tine docs (`tine20/docs`, MkDocs with live reload) at

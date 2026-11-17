@@ -19,6 +19,9 @@ services:
       - internal_network
       # npm install
       - external_network
+    # Chrome of the host (TEST_BROWSER_URL=http://host.docker.internal:9223, see README "E2E tests")
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # tests use TEST_URL from tests/e2etests/.env (https://tine.local.tine-dev.de); inside the
   # docker network that name has to point to traefik, which routes to web and webpack
