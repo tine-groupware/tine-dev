@@ -22,6 +22,8 @@ services:
       GITLAB_PERMISSION_MODE: "full"
       # pipeline and job tools (CI results)
       USE_PIPELINE: "true"
+      # toolsets active from the start (otherwise e.g. replying in review threads needs discover_tools first)
+      GITLAB_TOOLSETS: "core,merge_requests"
     networks:
       - internal_network
       - external_network
