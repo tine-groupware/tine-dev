@@ -5,9 +5,8 @@
 
 services:
   e2etests:
-    # the image of the e2e jobs of the tine CI (tine20/ci/helperimages/puppeteer, ci/gitlab-ci/test_js_jobs.yml),
-    # built for amd64 and arm64 (IMAGE_SUFFIX -arm64, set by ./console)
-    image: dockerregistry.metaways.net/tine20/tine20/puppeteer:2.1.0${IMAGE_SUFFIX:-}
+    # dockerfiles/puppeteer, the same image the e2e jobs of the tine CI use, multi-platform (amd64, arm64)
+    image: ghcr.io/tine-groupware/tine-dev/puppeteer:22-mw1
     container_name: e2etests
     working_dir: /tine20/tests/e2etests
     # the image has no long running command, keep it running for exec sessions

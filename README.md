@@ -191,9 +191,9 @@ After larger JS changes restart it: `./console docker:webpackrestart`.
 
 ## E2E tests
 
-The `e2etest` compose module adds the container `e2etests` with the image of the e2e jobs of the tine CI
-(`dockerregistry.metaways.net/tine20/tine20/puppeteer`, see `tine20/ci/helperimages/puppeteer`) for the
-jest/puppeteer tests in `tine20/tests/e2etests`. It is built for amd64 and arm64 and uses Debian's
+The `e2etest` compose module adds the container `e2etests` for the jest/puppeteer tests in
+`tine20/tests/e2etests`. Its image `ghcr.io/tine-groupware/tine-dev/puppeteer` (`dockerfiles/puppeteer`) is the
+one the e2e jobs of the tine CI use as well, built by the CI of this repo for amd64 and arm64. It uses Debian's
 chromium (puppeteer's own Chrome download has no linux/arm64 build).
 
 Add `"e2etest"` to `composeFiles` in `pullup.json`, then:
@@ -618,6 +618,7 @@ image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). 
 * postfix
 * opencode
 * socket-proxy
+* puppeteer (app version = node version; the image of the e2e tests, also used by the tine CI)
 * devctl (own software like mailstack: semantic version, no app_version file, no `-mw`)
 * claude-code (app version = Claude Code version)
 
