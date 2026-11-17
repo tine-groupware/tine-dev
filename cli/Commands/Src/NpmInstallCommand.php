@@ -103,8 +103,19 @@ class NpmInstallCommand extends DockerCommand
 
     public function createBranchFolder($io, $branch, $nodeModulesPath) : string
     {
+        $major = self::findMajorBranch($this->srcDir, $branch);
         $branch = str_replace('/', '_', $branch);
         $branchFolder = $nodeModulesPath . '_' . $branch;
+
+        // feature branches (e.g. pu/cw/foo) start with the modules of the major branch they will be merged into,
+        // npm install then only applies the differences instead of installing everything (takes 15+ minutes)
+        $majorFolder = $major !== null ? $nodeModulesPath . '_' . str_replace('/', '_', $major) : null;
+        if (!is_dir($branchFolder) && $majorFolder !== null && $majorFolder !== $branchFolder && is_dir($majorFolder)) {
+            $io->infoWithTime('initializing ' . $branchFolder . ' with ' . $majorFolder);
+            passthru('cp -r ' . escapeshellarg($majorFolder) . ' ' . escapeshellarg($branchFolder));
+            clearstatcache();
+        }
+
         if (!is_dir($branchFolder) && preg_match('/(20\d\d)\.11/', $branch, $matches)) {
             $year = intval($matches[1]);
             do {
