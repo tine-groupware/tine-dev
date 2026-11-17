@@ -637,7 +637,6 @@ image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). 
 * mailstackcontrol
 * postfix
 * opencode
-* socket-proxy
 * puppeteer (app version = node version; the image of the e2e tests, also used by the tine CI)
 * devctl (own software like mailstack: semantic version, no app_version file, no `-mw`)
 * claude-code (app version = Claude Code version)

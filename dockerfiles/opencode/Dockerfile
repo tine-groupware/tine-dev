@@ -14,7 +14,6 @@ RUN install -m 0755 -d /etc/apt/keyrings \
     && apt update \
     && apt install -y docker-ce-cli docker-buildx-plugin docker-compose-plugin php-cli
 
-ENV DOCKER_HOST="tcp://socket-proxy:2375"
 
 # we are running as user 1000 -> node later
 # create necessary directories and set permissions
@@ -25,4 +24,3 @@ RUN mkdir -p /home/node/.local/share/opencode/ && \
 
 USER 1001
 
-ENV DOCKER_HOST="tcp://socket-proxy:2375"
