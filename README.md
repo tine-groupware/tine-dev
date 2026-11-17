@@ -727,6 +727,12 @@ its push url starts with `DEVCTL_GIT_URL_PREFIX` and contains no credentials (th
 remote for that, ssh remotes are not supported. Merge requests are opened via gitlab-mcp. Note: anything pushed to
 `pu/...` can run in merge request pipelines, keep protected CI variables protected.
 
+**Skills for the clients:** `configs/aicoding/skills` holds skills for working in this setup, e.g.
+`mergerequests` (review MRs, work on them, answer review threads with gitlab-mcp and devctl). They are mounted
+read-only into the clients (Claude Code: `~/.claude/skills`), as the clients don't see tine-dev. Skills about the
+tine code itself belong into the tine repo (`.agents/skills`), skills for working on tine-dev into
+`.agents/skills` here.
+
 **Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
 that make git run code — `config` (fsmonitor, filters, aliases, ...), `hooks`, `modules`, `worktrees`
 and `commondir` (git reads config and hooks from the dir it names) — are mounted read-only, and every

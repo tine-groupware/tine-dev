@@ -51,6 +51,9 @@ services:
       - ./claude-data:/home/node/.claude
       # read-only: permissions and hooks are yours to set
       - ./configs/claude/settings.json:/home/node/.claude/settings.json:ro
+      # skills for working in this setup (merge requests via gitlab-mcp and devctl, ...), read-only: personal skills
+      # of Claude Code ($CLAUDE_CONFIG_DIR/skills)
+      - ./configs/aicoding/skills:/home/node/.claude/skills:ro
       - ./configs/claude/mcp.json:/etc/tine-dev/claude-mcp.json:ro
     networks:
       - internal_network
