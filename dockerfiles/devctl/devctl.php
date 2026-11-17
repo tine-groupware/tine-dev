@@ -157,7 +157,7 @@ function callTool(string $name, array $args, callable $keepalive): string
 }
 
 /**
- * Pushes the checked out branch of the tine repo to origin with DEVCTL_GIT_TOKEN, which the client never sees.
+ * Pushes the checked out branch of the tine repo to origin with GITLAB_PUSH_TOKEN, which the client never sees.
  *
  * The client controls the checkout but not .git/config and hooks (read-only for it, see
  * compose/aicoding-claude-code.yml): the remote url comes from there and is checked against DEVCTL_GIT_URL_PREFIX,
@@ -166,7 +166,7 @@ function callTool(string $name, array $args, callable $keepalive): string
  */
 function push(bool $force, callable $keepalive): string
 {
-    $token = (string)getenv('DEVCTL_GIT_TOKEN');
+    $token = (string)getenv('GITLAB_PUSH_TOKEN');
     $developer = (string)getenv('DEVCTL_DEVELOPER');
     $urlPrefix = (string)(getenv('DEVCTL_GIT_URL_PREFIX') ?: 'https://gitlab.metaways.net/');
     $remote = (string)(getenv('DEVCTL_GIT_REMOTE') ?: 'origin');
@@ -174,7 +174,7 @@ function push(bool $force, callable $keepalive): string
         throw new ToolError("invalid DEVCTL_GIT_REMOTE '$remote'");
     }
     if ($token === '' || !preg_match('/^[a-z0-9]+$/', $developer)) {
-        throw new ToolError('push is not configured: DEVCTL_GIT_TOKEN and DEVCTL_DEVELOPER (e.g. cw) in .env of tine-dev');
+        throw new ToolError('push is not configured: GITLAB_PUSH_TOKEN and DEVCTL_DEVELOPER (e.g. cw) in .env of tine-dev');
     }
     $repo = realpath(getenv('TINE_DEV_DIR') . '/tine20');
     if ($repo === false) {
@@ -200,10 +200,8 @@ function push(bool $force, callable $keepalive): string
 
     // the token comes from the environment via askpass, never on the command line or in a file
     $askpass = '/tmp/devctl-askpass.sh';
-    if (!is_file($askpass)) {
-        file_put_contents($askpass, "#!/bin/sh\ncase \"\$1\" in Username*) echo oauth2 ;; *) echo \"\$DEVCTL_GIT_TOKEN\" ;; esac\n");
-        chmod($askpass, 0700);
-    }
+    file_put_contents($askpass, "#!/bin/sh\ncase \"\$1\" in Username*) echo oauth2 ;; *) echo \"\$GITLAB_PUSH_TOKEN\" ;; esac\n");
+    chmod($askpass, 0700);
     putenv("GIT_ASKPASS=$askpass");
     putenv('GIT_TERMINAL_PROMPT=0');
 

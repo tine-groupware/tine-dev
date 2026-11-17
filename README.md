@@ -695,7 +695,7 @@ GITLAB_API_URL=https://gitlab.metaways.net/api/v4
 GITLAB_PERSONAL_ACCESS_TOKEN=...
 
 # devctl tool push (optional)
-DEVCTL_GIT_TOKEN=...
+GITLAB_PUSH_TOKEN=...
 DEVCTL_DEVELOPER=cw           # your short name: pushes only pu/cw/...
 # DEVCTL_GIT_REMOTE=origin                             (default)
 # DEVCTL_GIT_URL_PREFIX=https://gitlab.metaways.net/   (default, the push url of the remote must start with it)
@@ -707,15 +707,15 @@ DEVCTL_DEVELOPER=cw           # your short name: pushes only pu/cw/...
 Create both gitlab tokens as **personal access tokens** in gitlab (avatar → Preferences → Access tokens),
 preferably *fine-grained* tokens limited to the projects you work on (e.g. `tine20/tine20`), with an expiry date.
 Keep them separate: the AI client uses `GITLAB_PERSONAL_ACCESS_TOKEN` through gitlab-mcp for every request,
-`DEVCTL_GIT_TOKEN` is used for git push only.
+`GITLAB_PUSH_TOKEN` is used for git push only.
 
 | token | permissions (fine-grained) | not |
 |-------|----------------------------|-----|
 | `GITLAB_PERSONAL_ACCESS_TOKEN` | read: project, merge requests, pipelines/jobs; Merge Request: Create (notes, threads, new MRs); Merge Request: Update (resolve threads, edit MRs) | repository write, delete, admin |
-| `DEVCTL_GIT_TOKEN` | Repository: Write (git push) | everything else |
+| `GITLAB_PUSH_TOKEN` | Repository: Write (git push) | everything else |
 
 The permission names of fine-grained tokens may differ between gitlab versions; gitlab names a missing permission
-in its 403 answer. Without fine-grained tokens: `DEVCTL_GIT_TOKEN` needs the scope `write_repository`, gitlab-mcp
+in its 403 answer. Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scope `write_repository`, gitlab-mcp
 `api` (which allows much more - prefer fine-grained tokens). After changing a token: `docker compose up -d
 gitlab-mcp` (gitlab-mcp is not recreated by devctl) resp. `./console docker:up -d` (devctl).
 

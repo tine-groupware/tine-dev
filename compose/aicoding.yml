@@ -45,7 +45,7 @@ services:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root}"
       # tool push (optional): token with write access to the tine repo, pushes only pu/<DEVCTL_DEVELOPER>/...
       # to DEVCTL_GIT_REMOTE, if its push url starts with DEVCTL_GIT_URL_PREFIX. The client never sees the token.
-      DEVCTL_GIT_TOKEN: "${DEVCTL_GIT_TOKEN:-}"
+      GITLAB_PUSH_TOKEN: "${GITLAB_PUSH_TOKEN:-}"
       DEVCTL_DEVELOPER: "${DEVCTL_DEVELOPER:-}"
       DEVCTL_GIT_URL_PREFIX: "${DEVCTL_GIT_URL_PREFIX:-https://gitlab.metaways.net/}"
       DEVCTL_GIT_REMOTE: "${DEVCTL_GIT_REMOTE:-origin}"
