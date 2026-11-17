@@ -47,12 +47,12 @@ class ChangeBranchCommand extends DockerCommand {
             }
             $io->infoWithTime("git checkout {$this->branch}");
 
-            passthru("cd {$this->getTineDir($io)} && git checkout {$this->branch}", $result_code);
+            passthru(self::git($this->srcDir) . 'checkout ' . escapeshellarg($this->branch), $result_code);
             if (0 !== $result_code) {
                 $io->error("git checkout {$this->branch} failed");
                 return 1;
             }
-            passthru("cd {$this->getTineDir($io)} && git submodule update", $result_code);
+            passthru(self::git($this->srcDir) . 'submodule update', $result_code);
             if (0 !== $result_code) {
                 $io->error("git submodule install");
                 return 1;
@@ -71,14 +71,26 @@ class ChangeBranchCommand extends DockerCommand {
         $a = new ArrayInput([]);
         $a->bind($composerCmd->getDefinition());
         $a->setArgument('cmd', 'install');
-        ($composerCmd)->execute($a, $output);
-
-        if (! $input->getOption('nonpm')) {
-            (new NpmInstallCommand())->execute($input, $output);
+        // failing steps don't stop the others (the containers have to be started again), but the exit code
+        $failed = [];
+        if (0 !== ($composerCmd)->execute($a, $output)) {
+            $failed[] = 'composer install';
         }
-        (new DockerWebpackRestartCommand())->execute($input, $output);
-        (new TineClearCacheCommand())->execute($input, $output);
 
+        if (! $input->getOption('nonpm') && 0 !== (new NpmInstallCommand())->execute($input, $output)) {
+            $failed[] = 'npm install';
+        }
+        if (0 !== (new DockerWebpackRestartCommand())->execute($input, $output)) {
+            $failed[] = 'webpack restart';
+        }
+        if (0 !== (new TineClearCacheCommand())->execute($input, $output)) {
+            $failed[] = 'clear cache';
+        }
+
+        if ($failed) {
+            $io->error('changeBranch failed: ' . implode(', ', $failed));
+            return 1;
+        }
         return 0;
     }
 }

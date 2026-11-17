@@ -1,0 +1,61 @@
+# Claude Code client - requires "aicoding" in pullup.json composeFiles
+
+services:
+  claude-code:
+    # dockerfiles/claude-code, built by the CI (tag claude-code-image-<claude code version>-mw<n>)
+    image: ghcr.io/tine-groupware/tine-dev/claude-code:2.1.323-mw1
+    container_name: claude-code
+    # register the MCP servers of configs/claude/mcp.json at user scope ($CLAUDE_CONFIG_DIR/.claude.json),
+    # Claude Code doesn't read ~/.claude/mcp.json. ${MCP_AUTH_TOKEN} is stored as is
+    # and resolved by Claude Code at runtime.
+    entrypoint: [ "/bin/sh", "-c" ]
+    command:
+      - |
+        CONF=/etc/tine-dev/claude-mcp.json
+        for name in $$(node -p "Object.keys(require('$$CONF').mcpServers).join(' ')"); do
+          claude mcp remove -s user "$$name" >/dev/null 2>&1
+          claude mcp add-json -s user "$$name" "$$(node -p "JSON.stringify(require('$$CONF').mcpServers['$$name'])")"
+        done
+        exec sleep infinity
+    environment:
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      MCP_AUTH_TOKEN: "${MCP_AUTH_TOKEN}"
+      # ~/.claude.json (onboarding, theme, trusted folders, ...) in the persisted config dir (claude-data),
+      # otherwise every recreation of the container asks again
+      CLAUDE_CONFIG_DIR: /home/node/.claude
+    volumes:
+      # Only the tine checkout - tine-dev (./console, compose files, devctl) is not visible to the client, it
+      # controls the stack via the devctl MCP server.
+      #
+      # To let the client work on tine-dev itself, uncomment the mount below TEMPORARILY and recreate the client
+      # (docker compose up -d claude-code). Writable, it removes the separation: ./console, the compose files and
+      # devctl run with docker access on the host, the client could change them and with that run code on the
+      # host (incl. making the mount permanent). Append :ro if the client only needs to read it. Comment it out
+      # again and recreate the client when done, never commit it uncommented.
+      #- "${TINE_DEV_DIR}:/workspace/tine-dev"
+      - "${TINE20_DIR}:/workspace/tine20"
+      # Git config, hooks etc. read-only: they run code with git on the host (your shell, IDE, ./console).
+      # Every path on the way to them is a mount point as well, mount points can't be renamed or replaced.
+      # ./console (docker:checkmounts) creates .git/commondir pointing to .git itself, see
+      # DockerCommand::ensureGitProtection(). Sub paths via the tine20-src volume, see compose/src-volumes.yml.
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git, volume: { nocopy: true, subpath: .git } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/config, read_only: true, volume: { nocopy: true, subpath: .git/config } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/commondir, read_only: true, volume: { nocopy: true, subpath: .git/commondir } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/hooks, read_only: true, volume: { nocopy: true, subpath: .git/hooks } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/modules, read_only: true, volume: { nocopy: true, subpath: .git/modules } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/.git/worktrees, read_only: true, volume: { nocopy: true, subpath: .git/worktrees } }
+      # submodule icon-set: its .git file names the git dir to use
+      - { type: volume, source: tine20-src, target: /workspace/tine20/tine20, volume: { nocopy: true, subpath: tine20 } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/tine20/images, volume: { nocopy: true, subpath: tine20/images } }
+      - { type: volume, source: tine20-src, target: /workspace/tine20/tine20/images/icon-set, read_only: true, volume: { nocopy: true, subpath: tine20/images/icon-set } }
+      - ./claude-data:/home/node/.claude
+      # read-only: permissions and hooks are yours to set
+      - ./configs/claude/settings.json:/home/node/.claude/settings.json:ro
+      # skills for working in this setup (merge requests via gitlab-mcp and devctl, ...), read-only: personal skills
+      # of Claude Code ($CLAUDE_CONFIG_DIR/skills)
+      - ./configs/aicoding/skills:/home/node/.claude/skills:ro
+      - ./configs/claude/mcp.json:/etc/tine-dev/claude-mcp.json:ro
+    networks:
+      - internal_network
+      - external_network
+      - devctl-net

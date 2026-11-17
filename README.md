@@ -141,13 +141,23 @@ What it does (without any options):
 
 # Development
 
-Read `.opencode/skills/tine-dev-env/SKILL.md` to get an overview and context of the tine-dev setup.
+Read `.agents/skills/tine-dev-env/SKILL.md` to get an overview and context of the tine-dev setup.
 
 ## Tine source (tine20 symlink)
 
 `tine20` is a symlink to a git checkout of the Tine project (https://github.com/tine-groupware/tine).
-In dev mode it is bind-mounted into the web container at `/usr/share/tine20` (DEVELOPMENT mode),
+In dev mode it is mounted into the web container at `/usr/share/tine20` (DEVELOPMENT mode),
 so PHP changes take effect immediately — run `./console tine:clearcache` if cached code hides your changes.
+
+Sub paths of the checkout (`tine20/tine20`, `tests`, webpack build dirs, ...) are mounted from the volume
+`tine20-src` (`docker-compose.yml`, bound to the checkout root `TINE20_DIR`) — not as bind mounts: docker follows
+symlinks in bind sources, so a symlink planted in the (container writable) checkout could mount any host
+dir. `volume.subpath` mounts don't follow symlinks. `./console docker:checkmounts` (also run by
+`docker:up` and `docker:webpackrestart`) rejects bind mounts of checkout sub paths,
+docker socket mounts, privileged mode etc. for services not in `pullup.json` `"trustedServices"`
+(default `["traefik", "devctl"]`). After moving the checkout: `./console docker:down && docker volume rm
+tine20_tine20-src tine-dev-tine20-src` (neither compose nor `docker run` of `./console` recreate them, `docker:checkmounts`
+refuses to start).
 
 Switching branches: `./console src:changeBranch --git --branch <branch>` does the git checkout +
 submodule update, then composer install, npm install, webpack restart and cache clear in one go
@@ -178,6 +188,32 @@ After larger JS changes restart it: `./console docker:webpackrestart`.
   (dev mode only: the tests live in the `tests` mount, which prod-sim does not have)
 - `./console docker:cli web` — shell into the web container
 - `./console docker:log` — follow the container logs
+
+## E2E tests
+
+The `e2etest` compose module adds the container `e2etests` for the jest/puppeteer tests in
+`tine20/tests/e2etests`. Its image `ghcr.io/tine-groupware/tine-dev/puppeteer` (`dockerfiles/puppeteer`) is the
+one the e2e jobs of the tine CI use as well, built by the CI of this repo for amd64 and arm64. It uses Debian's
+chromium (puppeteer's own Chrome download has no linux/arm64 build).
+
+Add `"e2etest"` to `composeFiles` in `pullup.json`, then:
+
+~~~
+./console docker:up
+./console tine:demodata                     # some tests need demo data
+docker exec e2etests npm install            # once / after package.json changes
+docker exec e2etests npm test src/test/CrewScheduling/crewScheduling.test.js
+~~~
+
+The tests use `TEST_URL` etc. from `tine20/tests/e2etests/.env`. Inside the docker network
+`tine.local.tine-dev.de` resolves to traefik (network alias set in `compose/e2etest.yml`), so the
+default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/screenshots/Error/`.
+AI coding clients run the tests with the devctl tool `exec` (see "AI coding clients").
+
+## Docs
+
+The `docs` compose module serves the tine docs (`tine20/docs`, MkDocs with live reload) at
+https://docs.local.tine-dev.de/. See `tine20/docs/developers/mkdocs.md`.
 
 ## Adding a compose module
 
@@ -582,6 +618,9 @@ image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). 
 * postfix
 * opencode
 * socket-proxy
+* puppeteer (app version = node version; the image of the e2e tests, also used by the tine CI)
+* devctl (own software like mailstack: semantic version, no app_version file, no `-mw`)
+* claude-code (app version = Claude Code version)
 
 App version is the version of the base image / software. It is specified in `./dockerfiles/<image name>/.meta/app_version`. The `tag app_version` and `app_version file` muss match otherwise the ci will fail!
 Updating the app version: Update app version file and create a new tag.
@@ -610,20 +649,123 @@ docker push ghcr.io/tine-groupware/tine-dev/opencode:1.17.7-mw1
 The packages need to be added to the github repository and made public (inherit repo access):
 https://github.com/orgs/tine-groupware/packages 
 
-# OpenCode integration
+# AI coding clients
+
+AI coding clients run as containers. `compose/aicoding.yml` holds the shared parts, and every
+client has its own module, so only the client you actually use is started:
+
+| module                  | contents                                              |
+|-------------------------|-------------------------------------------------------|
+| `aicoding`              | `devctl`, `gitlab-mcp`, network `devctl-net`          |
+| `aicoding-claude-code`  | Claude Code container (`claude-code`)                 |
+| `aicoding-opencode`     | opencode server (`opencode`)                          |
+
+~~~
+"composeFiles": [ ..., "aicoding", "aicoding-claude-code" ]
+~~~
+
+`./console` refuses to start if an `aicoding-*` client module is listed without `aicoding`.
+
+Clients get **no docker access**. `devctl` (`dockerfiles/devctl`) has the docker socket and offers a fixed
+set of operations as MCP server `http://devctl:3003/mcp` (`Authorization: Bearer ${MCP_AUTH_TOKEN}`, only
+reachable in the internal network `devctl-net`):
+
+| tool              | does                                                                                 |
+|-------------------|--------------------------------------------------------------------------------------|
+| `change_branch`   | `./console src:changeBranch` for the branch checked out (the client does the checkout) |
+| `up`              | `./console docker:up -d`                                                             |
+| `restart_webpack` | `./console docker:webpackrestart`                                                    |
+| `exec`            | `sh -c <command>` in `web` or `e2etests` (tests, tine cli, ...)                      |
+| `tine_console`    | `./console tine:<install\|demodata\|clearcache\|test\|...> [args]`                    |
+| `ps`, `logs`      | container status, log tail of a service                                              |
+| `push`            | push the checked out branch to `origin`, only `pu/<DEVCTL_DEVELOPER>/...`, optionally force with lease |
+| `fetch`           | fetch a branch (any, e.g. of a merge request to review or build on) or the whole remote |
+
+devctl mounts tine-dev and the checkout at their host paths and runs `./console` as on the host
+(`TINE_DEV_DIR`, `TINE_DEV_USER`, `TINE_DEV_ARM64`, `HOMEDIR` are passed by `./console`); it never
+recreates itself and the AI clients (`DEVCTL_SKIP_SERVICES`, their env may only be set in your shell). It never checks out - the client does
+the checkout in its container; fetch and push run via the tools of the same name.
+
+**Settings and tokens** (`.env` of tine-dev):
+
+~~~
+# shared secret between the AI clients and their MCP servers (gitlab-mcp, devctl), any random string
+MCP_AUTH_TOKEN=...            # e.g. openssl rand -hex 32
+
+# gitlab-mcp: read MRs, pipelines and jobs, answer and resolve review threads, open MRs
+GITLAB_API_URL=https://gitlab.metaways.net/api/v4
+GITLAB_ACCESS_TOKEN=...
+
+# devctl tools push and fetch (optional)
+GITLAB_PUSH_TOKEN=...
+DEVCTL_DEVELOPER=cw           # your short name: pushes only pu/cw/...
+# DEVCTL_GIT_REMOTE=origin                             (default)
+# DEVCTL_GIT_URL_PREFIX=https://gitlab.metaways.net/   (default, the push url of the remote must start with it)
+
+# Claude Code: an API key, or log in interactively in the container
+# ANTHROPIC_API_KEY=...
+~~~
+
+Create both gitlab tokens as **personal access tokens** in gitlab (avatar → Preferences → Access tokens),
+preferably *fine-grained* tokens limited to the projects you work on (e.g. `tine20/tine20`), with an expiry date.
+Keep them separate: the AI client uses `GITLAB_ACCESS_TOKEN` through gitlab-mcp for every request,
+`GITLAB_PUSH_TOKEN` is used by devctl for git fetch and push only.
+
+| token | permissions (fine-grained) | not |
+|-------|----------------------------|-----|
+| `GITLAB_ACCESS_TOKEN` | Repository → Merge Request: Create, Read, Update (read MRs, notes, threads, resolve threads, new MRs); CI/CD → Pipeline: Read (pipelines, their jobs), CI/CD → Job: Read (job logs, failing CI of an MR), CI/CD → Job artifact: Read (e.g. test reports, screenshots) | repository write, delete, admin |
+| `GITLAB_PUSH_TOKEN` | Repository: Read and Write (git fetch, git push), Merge Request: Read | everything else |
+
+Limit the tokens to all projects you work on with the client (e.g. `tine20/tine20` and `tine20/docker`).
+The permission names of fine-grained tokens may differ between gitlab versions; gitlab names a missing permission
+in its 403 answer (e.g. `insufficient_granular_scope` ... `[Job: Read]` when reading a job log without it). Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scopes `read_repository` and `write_repository`, gitlab-mcp
+`api` (which allows much more - prefer fine-grained tokens). After changing a token: `docker compose up -d
+gitlab-mcp` (gitlab-mcp is not recreated by devctl) resp. `./console docker:up -d` (devctl).
+
+**Push:** the token stays in devctl, the client never sees it (git gets it via askpass from the environment).
+devctl pushes the checked out branch `pu/<DEVCTL_DEVELOPER>/...` to `DEVCTL_GIT_REMOTE`, only via https and only if
+its push url starts with `DEVCTL_GIT_URL_PREFIX` and contains no credentials (the client can't change the url,
+`.git/config` is read-only for it); hooks and fsmonitor are disabled, force push only with lease. Use an https
+remote for that, ssh remotes are not supported. Merge requests are opened via gitlab-mcp. Note: anything pushed to
+`pu/...` can run in merge request pipelines, keep protected CI variables protected.
+
+**Skills for the clients:** `configs/aicoding/skills` holds skills for working in this setup, e.g.
+`mergerequests` (review MRs, work on them, answer review threads with gitlab-mcp and devctl). They are mounted
+read-only into the clients (Claude Code: `~/.claude/skills`), as the clients don't see tine-dev. Skills about the
+tine code itself belong into the tine repo (`.agents/skills`), skills for working on tine-dev into
+`.agents/skills` here.
+
+**Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
+that make git run code — `config` (fsmonitor, filters, aliases, ...), `hooks`, `modules`, `worktrees`
+and `commondir` (git reads config and hooks from the dir it names) — are mounted read-only, and every
+path leading to them is a mount point, so it can't be renamed and replaced. `./console` creates
+`.git/commondir` containing `.` (the git dir itself) for that. Clients can't run git commands that
+write the config (`push -u`, `branch --set-upstream-to`, `remote add`, `submodule init`); run them on
+the host. `./console` runs git with fsmonitor and hooks disabled. Remaining risk: nested repos —
+git (and shell prompts showing git status) in a sub dir uses the nearest `.git`, e.g. a planted
+`tine20/Foo/.git` or the composer source installs in `tine20/vendor/*/.git`; check `git rev-parse
+--show-toplevel` before running git in sub dirs, and don't register vendor repos in your IDE.
+
+**Adding a new client:** create `compose/aicoding-<client>.yml` with the client service and add
+`devctl-net` to its `networks` and the devctl MCP server to its config (plus `internal_network`/`external_network` as needed).
+Nothing in `aicoding.yml` needs to change.
+
+**Migrating from the old `opencode` module:** replace `"opencode"` in `pullup.json` with
+`"aicoding", "aicoding-opencode"` (and/or `"aicoding-claude-code"`), then run
+`docker compose up -d --remove-orphans` once (or `docker rm -f` the containers you dropped)
+and `./console docker:up`.
+
+## opencode
 
 see https://opencode.ai/docs/
 
-opencode runs as a container (`compose/opencode.yml`) in server mode (`opencode serve`, port 4096),
-exposed via traefik. A `socket-proxy` container mediates restricted docker API access for the
-opencode container: it may only inspect the web container (`tine20-web-1`) and start/resize exec
-sessions in it — how opencode runs commands inside the Tine container.
+opencode runs in server mode (`opencode serve`, port 4096), exposed via traefik.
 
 1. Add your LLM provider credentials: `METAWAYS_AI_BASE_URL` + `METAWAYS_AI_API_KEY` in `.env`
    (or export them in your shell before `./console docker:up`).
    Alternatively adjust `configs/opencode/config/opencode.json` for your own LLM provider
    (do not commit API keys to the repo).
-2. Add `"opencode"` to `composeFiles` in `pullup.json` and run `./console docker:up`.
+2. Add `"aicoding", "aicoding-opencode"` to `composeFiles` in `pullup.json` and run `./console docker:up`.
 3. Open https://opencode.local.tine-dev.de/
    - OR run in shell:
    ~~~
@@ -632,20 +774,28 @@ sessions in it — how opencode runs commands inside the Tine container.
    ~~~
 4. [browser] add project "tine20" via "+" button and adding the dir "/tine20"
    (your Tine checkout, writable; the tine-dev repo is mounted read-only at `/tine-dev`).
-5. The repo bundles an opencode skill with environment context:
-   `.opencode/skills/tine-dev-env/SKILL.md` (in the container: `/tine-dev/.opencode/...`).
+5. The repo bundles a skill with environment context:
+   `.agents/skills/tine-dev-env/SKILL.md` (in the container: `/tine-dev/.agents/...`).
 
 You can also run opencode directly on your host in this repo — `AGENTS.md` and the skill above
 provide the environment context.
 
-## Show available models of provider
+### Show available models of provider
 
 ~~~
 curl -s $METAWAYS_AI_BASE_URL/models -H "Authorization: Bearer $METAWAYS_AI_API_KEY" | jq
 ~~~
 
-## UFW rule
+### UFW rule
 
 You might need to add a UFW rule to allow outgoing connections to the AI-API server:
 
     sudo ufw route allow from any to $METAWAYS_AI_API_IPADDRESS
+
+## claude-code
+    docker exec -it claude-code claude --chrome
+
+Paths in the container:
+
+- `/workspace/tine20` — your Tine checkout (writable, work and commit here; git config, hooks etc. read-only)
+- no `/workspace/tine-dev` and no docker: the stack is controlled via the devctl MCP server (see above)

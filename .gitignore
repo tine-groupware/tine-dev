@@ -23,3 +23,7 @@
 /configs/traefik/dynamic/certs.yaml
 **/.decrypted~*
 /element-web
+
+# runtime data of the claude-code container (compose/aicoding-claude-code.yml)
+/claude-data/*
+!/claude-data/.gitkeep

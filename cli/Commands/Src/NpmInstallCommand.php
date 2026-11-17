@@ -52,6 +52,8 @@ class NpmInstallCommand extends DockerCommand
     protected function npmInstallLinked(ConsoleStyle $io, $branch): int
     {
         $tineDir = $this->getTineDir($io);
+        // host side rm/ln beneath the checkout, don't follow symlinks planted there
+        $this->ensureSrcDir($io, 'tine20/Tinebase/js');
         $nodeModulesPath = $tineDir . '/Tinebase/js/node_modules';
         $branchFolder = $this->createBranchFolder($io, $branch, $nodeModulesPath);
         if (! $branchFolder) return 1;
@@ -68,7 +70,7 @@ class NpmInstallCommand extends DockerCommand
             $io->error('linking node_modules failed');
             return 1;
         }
-        return $this->runNpmInstall($tineDir . '/Tinebase/js');
+        return $this->runNpmInstall($this->srcMount($io, 'tine20/Tinebase/js', '/usr/share/tine20/Tinebase/js'));
     }
 
     protected function npmInstallSynced(ConsoleStyle $io, $branch) : int
@@ -76,13 +78,15 @@ class NpmInstallCommand extends DockerCommand
         $cacheDir = $this->createBranchFolder($io, $branch, $this->baseDir . "/cache/node_modules");
         $io->info("cacheDir: $cacheDir");
 
-        passthru("cp $this->srcDir/tine20/Tinebase/js/package.* $cacheDir && cp $this->srcDir/tine20/Tinebase/js/npm-* $cacheDir", $result_code);
+        // host side cp/rsync beneath the checkout, don't follow symlinks planted there
+        $this->ensureSrcDir($io, 'tine20/Tinebase/js');
+        passthru("cp -P $this->srcDir/tine20/Tinebase/js/package.* $cacheDir && cp -P $this->srcDir/tine20/Tinebase/js/npm-* $cacheDir", $result_code);
         if (0 !== $result_code) {
             $io->error("can't copy dependencies definition");
             return 1;
         }
 
-        if (0 !== ($result_code = $this->runNpmInstall($cacheDir))) {
+        if (0 !== ($result_code = $this->runNpmInstall('-v ' . escapeshellarg($cacheDir) . ':/usr/share/tine20/Tinebase/js'))) {
             $io->error("npm prune failed with code $result_code");
             return $result_code;
         }
@@ -125,19 +129,22 @@ class NpmInstallCommand extends DockerCommand
         return $branchFolder;
     }
 
-    public function runNpmInstall($dir): int
+    /**
+     * @param string $jsMount docker run option mounting the dir to install into at /usr/share/tine20/Tinebase/js
+     */
+    public function runNpmInstall(string $jsMount): int
     {
         $env = $this->getComposeEnv();
 
-        $localCacheDir = trim(shell_exec('npm config get cache'));
+        $localCacheDir = $this->cacheDir('npm-cache');
 
         // NOTE: we can't use getComposeCommand here as mutagen has a ro filesystem and even if we skip mutagen here
         //       it runs in the existing node container with ro filesystem (well we could kill the node-container but
         //       this tradeoff seems to big
         passthru("docker run --rm \
-            --user " . trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g')) . " \
+            --user " . self::hostUser() . " \
             -v $localCacheDir:/.npm \
-            -v $dir:/usr/share/tine20/Tinebase/js \
+            $jsMount \
             {$env['WEBPACK_IMAGE']} \
             sh -c 'cd /usr/share/tine20/Tinebase/js && npm prune --no-optional --ignore-scripts'", $result_code); // --loglevel verbose
         return $result_code;

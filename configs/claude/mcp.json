@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "gitlab": {
+      "type": "http",
+      "url": "http://gitlab-mcp:3002/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_AUTH_TOKEN}"
+      }
+    },
+    "devctl": {
+      "type": "http",
+      "url": "http://devctl:3003/mcp",
+      "timeout": 3600000,
+      "headers": {
+        "Authorization": "Bearer ${MCP_AUTH_TOKEN}"
+      }
+    }
+  }
+}

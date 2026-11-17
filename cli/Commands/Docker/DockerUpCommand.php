@@ -73,7 +73,7 @@ class DockerUpCommand extends DockerCommand
 
             if (!is_dir($tinedir . '/images/icon-set') || count(glob($tinedir . '/images/icon-set' . '/*')) === 0) {
                 $io->infoWithTime('Init icon-set: ' . $tinedir . '/tine20/images/icon-set');
-                passthru('cd ' . $tinedir . ' && git submodule init && git submodule update && cd -');
+                passthru(self::git($this->srcDir) . 'submodule init && ' . self::git($this->srcDir) . 'submodule update');
             }
         }
 
@@ -81,9 +81,11 @@ class DockerUpCommand extends DockerCommand
             $this->updateConfig($io, ['composeFiles' => $inputContainer]);
         }
 
+        $this->assertSafeMounts($io);
+
         $io->infoWithTime('Starting containers ...');
 
-        $cmd = $this->getComposeString() . ' up --remove-orphans' . ($input->getOption('detached') === true ? ' -d' : '');
+        $cmd = $this->getComposeString() . ' up --remove-orphans' . ($input->getOption('detached') === true ? ' -d' : '') . $this->upServices();
 
         $io->infoWithTime("Running: $cmd");
         passthru($cmd, $result_code);

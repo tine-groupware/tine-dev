@@ -10,7 +10,12 @@ services:
     volumes:
       # Note: these volumes add to docker-compose.yml (not to be combined with src-volumes.yml !)
       - tinefiles:/var/lib/tine20/files
-      - ./tine20/tests/tine20/Tinebase/License/license_contract_MW-TEST-3.0.0.pem:/usr/share/tests/tine20/Tinebase/License/license_contract_MW-TEST-3.0.0.pem:ro
+      # tine checkout sub path via the tine20-src volume, see compose/src-volumes.yml
+      - type: volume
+        source: tine20-src
+        target: /usr/share/tests/tine20/Tinebase/License/license_contract_MW-TEST-3.0.0.pem
+        read_only: true
+        volume: { nocopy: true, subpath: tests/tine20/Tinebase/License/license_contract_MW-TEST-3.0.0.pem }
 
 volumes:
   tinefiles:

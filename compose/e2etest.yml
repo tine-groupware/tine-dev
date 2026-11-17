@@ -1,13 +1,29 @@
+# e2e test runner (jest + puppeteer), see README "E2E tests"
+#
+#   docker exec e2etests npm install   # once / after package.json changes (AI clients: devctl exec)
+#   docker exec e2etests npm test src/test/CrewScheduling/crewScheduling.test.js
+
 services:
-  e2e:
-    image: tine20/devsetup-puppeteer:1.0.2
-    environment:
-        TEST_DOCKER: "true"
-        TEST_URL: http://web:10443
-        TEST_BROWSER_LANGUAGE: en
+  e2etests:
+    # dockerfiles/puppeteer, the same image the e2e jobs of the tine CI use, multi-platform (amd64, arm64)
+    image: ghcr.io/tine-groupware/tine-dev/puppeteer:22-mw1
+    container_name: e2etests
     working_dir: /tine20/tests/e2etests
-    user: node
+    # the image has no long running command, keep it running for exec sessions
+    command: [ "sleep", "infinity" ]
+    init: true
+    shm_size: 1gb
     volumes:
       - "./tine20/:/tine20"
     networks:
       - internal_network
+      # npm install
+      - external_network
+
+  # tests use TEST_URL from tests/e2etests/.env (https://tine.local.tine-dev.de); inside the
+  # docker network that name has to point to traefik, which routes to web and webpack
+  traefik:
+    networks:
+      internal_network:
+        aliases:
+          - "tine.${DOMAIN_SUFFIX:-local.tine-dev.de}"

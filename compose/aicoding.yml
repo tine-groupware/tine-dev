@@ -1,0 +1,73 @@
+# Shared infrastructure for AI coding clients. Combine with one or more client modules in
+# pullup.json, e.g. "composeFiles": [..., "aicoding", "aicoding-claude-code"]
+#
+# Clients get no docker access. devctl offers a fixed set of operations as MCP server (change branch, up,
+# webpack restart, exec into the tine web container and the e2e test runner, logs, ...), see
+# dockerfiles/devctl/devctl.php. A client joins devctl-net and gets the MCP server
+# http://devctl:3003/mcp with "Authorization: Bearer ${MCP_AUTH_TOKEN}".
+
+services:
+  gitlab-mcp:
+    image: zereight050/gitlab-mcp:latest
+    container_name: gitlab-mcp
+    restart: unless-stopped
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3002"
+      STREAMABLE_HTTP: "true"
+      STREAMABLE_HTTP_AUTH_TOKEN: "${MCP_AUTH_TOKEN}"
+      MCP_ALLOWED_HOSTS: "gitlab-mcp,gitlab-mcp:3002"
+      GITLAB_API_URL: "${GITLAB_API_URL}"
+      # GITLAB_ACCESS_TOKEN of .env, see README "Settings and tokens" (the key is the name gitlab-mcp reads)
+      GITLAB_PERSONAL_ACCESS_TOKEN: "${GITLAB_ACCESS_TOKEN}"
+      GITLAB_PERMISSION_MODE: "full"
+      # pipeline and job tools (CI results)
+      USE_PIPELINE: "true"
+      # toolsets active from the start (otherwise e.g. replying in review threads needs discover_tools first)
+      GITLAB_TOOLSETS: "core,merge_requests"
+    networks:
+      - internal_network
+      - external_network
+
+  devctl:
+    # dockerfiles/devctl, built by the CI (tag devctl-image-<version>)
+    image: ghcr.io/tine-groupware/tine-dev/devctl:1.2.0
+    container_name: devctl
+    restart: unless-stopped
+    environment:
+      DEVCTL_TOKEN: "${MCP_AUTH_TOKEN}"
+      # ./console doesn't recreate these (DockerCommand::upServices): devctl itself, and the AI clients
+      # (their env, e.g. ANTHROPIC_API_KEY, may only be set in your shell)
+      DEVCTL_SKIP_SERVICES: "devctl claude-code opencode gitlab-mcp"
+      # tine-dev and the checkout are mounted at their host paths: compose resolves relative bind
+      # sources like on the host, the daemon gets host paths
+      TINE_DEV_DIR: "${TINE_DEV_DIR}"
+      TINE_DEV_USER: "${TINE_DEV_USER}"
+      TINE_DEV_ARM64: "${TINE_DEV_ARM64}"
+      HOME: "${HOMEDIR}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root}"
+      # tool push (optional): token with write access to the tine repo, pushes only pu/<DEVCTL_DEVELOPER>/...
+      # to DEVCTL_GIT_REMOTE, if its push url starts with DEVCTL_GIT_URL_PREFIX. The client never sees the token.
+      GITLAB_PUSH_TOKEN: "${GITLAB_PUSH_TOKEN:-}"
+      DEVCTL_DEVELOPER: "${DEVCTL_DEVELOPER:-}"
+      DEVCTL_GIT_URL_PREFIX: "${DEVCTL_GIT_URL_PREFIX:-https://gitlab.metaways.net/}"
+      DEVCTL_GIT_REMOTE: "${DEVCTL_GIT_REMOTE:-origin}"
+      # runs as root, the checkout belongs to the host user. ./console runs git with fsmonitor/hooks disabled.
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
+    working_dir: "${TINE_DEV_DIR}"
+    volumes:
+      # pullup.json "trustedServices" (default contains devctl), see ./console docker:checkmounts
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${TINE_DEV_DIR}:${TINE_DEV_DIR}"
+      - "${TINE20_DIR}:${TINE20_DIR}"
+    networks:
+      - devctl-net
+      # git fetch/push (tools fetch, push)
+      - external_network
+
+networks:
+  # only AI coding clients + devctl belong here
+  devctl-net:
+    internal: true

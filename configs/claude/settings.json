@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemastore.org",
+  "env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark"
+}

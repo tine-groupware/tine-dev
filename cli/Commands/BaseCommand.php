@@ -53,9 +53,58 @@ class BaseCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new ConsoleStyle($input, $output);
-        $this->branch = $input->hasOption('branch') && $input->getOption('branch') ?
-            $input->getOption('branch') :
-            trim(shell_exec("cd {$this->getTineDir($io)} && git rev-parse --abbrev-ref HEAD"));
+        if ($input->hasOption('branch') && $input->getOption('branch')) {
+            $this->branch = $input->getOption('branch');
+        } else {
+            // asks to clone tine if missing
+            $this->getTineDir($io);
+            // at the repo root - git in a sub dir would use a (planted) nested repo
+            $this->branch = trim(shell_exec(self::git($this->srcDir) . 'rev-parse --abbrev-ref HEAD'));
+        }
+    }
+
+    /**
+     * git command for the repo in $dir that doesn't run code configured in the repo (the checkout is writable
+     * for code running in the containers): no fsmonitor, no hooks. Filters, aliases etc. can only be defined in
+     * .git/config, see README "AI coding clients" for protecting it.
+     */
+    public static function git(string $dir): string
+    {
+        return 'git -c core.fsmonitor=false -c core.hooksPath=/dev/null -c protocol.ext.allow=never -C '
+            . escapeshellarg($dir) . ' ';
+    }
+
+    /**
+     * uid:gid for containers writing to the checkout. TINE_DEV_USER overrides it for ./console running in a
+     * container (devctl), where id -u is not the uid of the checkout owner.
+     */
+    public static function hostUser(): string
+    {
+        return getenv('TINE_DEV_USER') ?: trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g'));
+    }
+
+    /**
+     * TINE_DEV_ARM64=1/0 overrides it for ./console running in a container (uname: aarch64 instead of arm64)
+     */
+    public static function isArm64(): bool
+    {
+        $override = getenv('TINE_DEV_ARM64');
+        if ($override !== false && $override !== '') {
+            return $override === '1';
+        }
+        return (bool)stristr((string)shell_exec('uname -a'), 'arm64');
+    }
+
+    /**
+     * cache dir in tine-dev/data, the host caches (~/.npm etc.) must not be writable for code of the checkout
+     */
+    public function cacheDir(string $name): string
+    {
+        $dir = $this->baseDir . "/data/$name";
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        return $dir;
     }
 
     public function getTineDir($io)

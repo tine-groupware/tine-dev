@@ -55,6 +55,7 @@ DB setup and stores the license.
   missing). The CI Dockerfile is `tine20/ci/dockerimage/Dockerfile`; the license file is
   `tine20/tests/tine20/Tinebase/License/license_contract_MW-TEST-3.0.0.pem`.
 - `README.md` — user-facing docs (quickstart, prod-sim flow, xdebug, certs, mailcatcher, ...).
+- Tine docs: compose module `docs` serves `tine20/docs` (MkDocs, live reload) at https://docs.local.tine-dev.de/.
 
 ## Console commands (run `./console` to list)
 - Docker: `docker:up`, `docker:stop`, `docker:down`, `docker:pull`, `docker:log`, `docker:cli`,
@@ -67,8 +68,10 @@ DB setup and stores the license.
 How `./console` builds the docker command (see `DockerCommand.php`):
 - `getComposeString()` →
   `WEB_IMAGE=… WEBPACK_IMAGE=… HOMEDIR=… IMAGE_SUFFIX=-arm64 TINE20_DATABASE_TABLEPREFIX=… BUILT_IMAGE=… docker compose -f docker-compose.yml -f compose/<each pullup.json entry>.yml`.
-- `getComposeEnv()` derives `WEB_IMAGE`/`WEBPACK_IMAGE` from `$imageMap` (keyed by branch
-  basename; `main` → `tinegroupware/dev:main-8.5`), `IMAGE_SUFFIX` = `-arm64` on Apple Silicon,
+- `getComposeEnv()` derives `WEB_IMAGE`/`WEBPACK_IMAGE` from `$imageMap` (keyed by major branch;
+  `main` → `tinegroupware/dev:main-8.5`; other branches, e.g. `pu/cw/foo`, get the images of their
+  major branch as the CI defines it: `CUSTOMER_` + `BASE_MAJOR_COMMIT_REF_NAME` from
+  `tine20/ci/ci-config.yml` of the branch, see `findMajorBranch()`), `IMAGE_SUFFIX` = `-arm64` on Apple Silicon,
   `TINE20_DATABASE_TABLEPREFIX` = 7 chars of the sanitized branch (or `tine20.tableprefix` from
   config when < 9 chars), and `BUILT_IMAGE` from `pullup.json.builtImage`.
 - `initCompose()` reads `pullup.json` (falls back to `.pullup.json`); adds `compose/env.yml` if a

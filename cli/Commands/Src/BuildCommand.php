@@ -69,7 +69,7 @@ HELP
         $phpVersion = (string)($input->getOption('php-version') ?? $this->detectPhpVersion($env['WEB_IMAGE']));
         $codename = (string)($input->getOption('codename') ?? $this->branch);
         $revision = trim((string)($input->getOption('revision')
-            ?? shell_exec("git -C $repoDir rev-parse --short HEAD 2>/dev/null")));
+            ?? shell_exec(self::git($repoDir) . 'rev-parse --short HEAD 2>/dev/null')));
         if ($revision === '') {
             $revision = 'unknown';
         }

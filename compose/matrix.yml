@@ -18,7 +18,12 @@ services:
       SYNAPSE_CONFIG_PATH: /etc/synapse/homeserver.yaml
     volumes:
       - ./configs/matrix/synapse:/etc/synapse/
-      - ./tine20/docs/operators/matrix/rest_auth_provider.py:/usr/local/lib/python3.13/site-packages/rest_auth_provider.py
+      # tine checkout sub path via the tine20-src volume, see compose/src-volumes.yml
+      - type: volume
+        source: tine20-src
+        target: /usr/local/lib/python3.13/site-packages/rest_auth_provider.py
+        read_only: true
+        volume: { nocopy: true, subpath: docs/operators/matrix/rest_auth_provider.py }
       - ./configs/matrix/synapse/shared_secret_authenticator.py:/usr/local/lib/python3.13/site-packages/shared_secret_authenticator.py
       - synapse:/data
     networks:

@@ -25,13 +25,15 @@ class DockerWebpackRestartCommand extends DockerCommand
 
         $io = new ConsoleStyle($input, $output);
 
+        $this->assertSafeMounts($io);
+
         // NOTE: we need to support node version (container) change
         passthru($this->getComposeString() . " stop webpack", $result_code);
         passthru($this->getComposeString() . " rm -f", $result_code);
 
         $io->infoWithTime('Restarting containers ...');
 
-        passthru($this->getComposeString() . " up -d", $result_code);
+        passthru($this->getComposeString() . " up -d" . $this->upServices(), $result_code);
         // NOTE: `tail -1` as mutagen outputs volume status with ps 
         $webContainerId = trim(shell_exec("{$this->getComposeString()} ps -q web | tail -1"));
 
@@ -43,7 +45,7 @@ class DockerWebpackRestartCommand extends DockerCommand
             $io->info('waiting for web service to be available...');
             // give webpack time to finish compiling
             sleep(2);
-            passthru($this->getComposeString() . " up -d", $result_code);
+            passthru($this->getComposeString() . " up -d" . $this->upServices(), $result_code);
             // give web time to fail
             sleep(1);
         }

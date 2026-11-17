@@ -36,17 +36,17 @@ class NpmCommand extends DockerCommand
 
         $env = $this->getComposeEnv();
 
-        $localCacheDir = trim(shell_exec('npm config get cache'));
+        $localCacheDir = $this->cacheDir('npm-cache');
 
         // NOTE: we can't use getComposeCommand here as mutagen has a ro filesystem and even if we skip mutagen here
         //       it runs in the existing node container with ro filesystem (well we could kill the node-container but
         //       this tradeoff seems to big
         passthru("docker run --rm \
-            --user " . trim(shell_exec('id -u')) . ':' . trim(shell_exec('id -g')) . " \
+            --user " . self::hostUser() . " \
             -p 9229:9229 \
             -v $localCacheDir:/.npm \
-            -v {$this->getTineDir($io)}:/usr/share/tine20 \
-            -v {$this->getTineDir($io)}/../tests:/usr/share/tests \
+            {$this->srcMount($io, 'tine20', '/usr/share/tine20')} \
+            {$this->srcMount($io, 'tests', '/usr/share/tests')} \
             {$env['WEBPACK_IMAGE']} \
             sh -c 'cd /usr/share/tine20/Tinebase/js && npm {$input->getArgument('cmd')}'", $result_code); // --loglevel verbose
         return $result_code;
