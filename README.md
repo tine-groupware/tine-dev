@@ -633,6 +633,19 @@ The Release counter will be reset for each app version. It should start with
 * 0 if our modification was not by the update
 * 1 if our modification was changed in any way
 
+## Image not published yet
+
+Compose files reference the images as published on ghcr. Until the CI built an image (tag pushed, see above), build
+it locally with exactly that name and tag - compose only pulls images that don't exist locally, otherwise
+`docker:up` fails with `denied`:
+
+~~~
+# e.g. image ghcr.io/tine-groupware/tine-dev/puppeteer:22-mw1 from dockerfiles/puppeteer
+docker build -t ghcr.io/tine-groupware/tine-dev/puppeteer:22-mw1 \
+  --build-arg APP_VERSION=$(cat dockerfiles/puppeteer/.meta/app_version) dockerfiles/puppeteer
+# images without .meta/app_version (e.g. devctl): leave out --build-arg
+~~~
+
 ## New image repository (first time image push)
 
 When a new image is added, we need to create a new repository on ghcr.io by manually building and pushing the image:

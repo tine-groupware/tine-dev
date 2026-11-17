@@ -34,14 +34,18 @@ class DockerWebpackRestartCommand extends DockerCommand
         $io->infoWithTime('Restarting containers ...');
 
         passthru($this->getComposeString() . " up -d" . $this->upServices(), $result_code);
-        // NOTE: `tail -1` as mutagen outputs volume status with ps 
-        $webContainerId = trim(shell_exec("{$this->getComposeString()} ps -q web | tail -1"));
+        // NOTE: `tail -1` as mutagen outputs volume status with ps
+        $webRunning = function () {
+            $webContainerId = trim((string)shell_exec("{$this->getComposeString()} ps -q web | tail -1"));
+            // no web container (e.g. up failed): not running
+            return $webContainerId !== '' && trim((string)shell_exec('docker ps -q --no-trunc --filter '
+                . escapeshellarg("id=$webContainerId"))) !== '';
+        };
 
         $tries = 0;
         // give web time to fail
         sleep(1);
-        //                                 check if container id is running
-        while (++$tries < 20 && empty(trim(shell_exec("docker ps -q --no-trunc | grep $webContainerId")))) {
+        while (++$tries < 20 && !$webRunning()) {
             $io->info('waiting for web service to be available...');
             // give webpack time to finish compiling
             sleep(2);
