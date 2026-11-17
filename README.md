@@ -694,7 +694,7 @@ MCP_AUTH_TOKEN=...            # e.g. openssl rand -hex 32
 
 # gitlab-mcp: read MRs, pipelines and jobs, answer and resolve review threads, open MRs
 GITLAB_API_URL=https://gitlab.metaways.net/api/v4
-GITLAB_PERSONAL_ACCESS_TOKEN=...
+GITLAB_ACCESS_TOKEN=...
 
 # devctl tools push and fetch (optional)
 GITLAB_PUSH_TOKEN=...
@@ -708,16 +708,17 @@ DEVCTL_DEVELOPER=cw           # your short name: pushes only pu/cw/...
 
 Create both gitlab tokens as **personal access tokens** in gitlab (avatar → Preferences → Access tokens),
 preferably *fine-grained* tokens limited to the projects you work on (e.g. `tine20/tine20`), with an expiry date.
-Keep them separate: the AI client uses `GITLAB_PERSONAL_ACCESS_TOKEN` through gitlab-mcp for every request,
+Keep them separate: the AI client uses `GITLAB_ACCESS_TOKEN` through gitlab-mcp for every request,
 `GITLAB_PUSH_TOKEN` is used by devctl for git fetch and push only.
 
 | token | permissions (fine-grained) | not |
 |-------|----------------------------|-----|
-| `GITLAB_PERSONAL_ACCESS_TOKEN` | read: project, merge requests, pipelines/jobs; Merge Request: Create (notes, threads, new MRs); Merge Request: Update (resolve threads, edit MRs) | repository write, delete, admin |
+| `GITLAB_ACCESS_TOKEN` | Repository → Merge Request: Create, Read, Update (read MRs, notes, threads, resolve threads, new MRs); CI/CD → Pipeline: Read (pipelines, their jobs), CI/CD → Job: Read (job logs, failing CI of an MR), CI/CD → Job artifact: Read (e.g. test reports, screenshots) | repository write, delete, admin |
 | `GITLAB_PUSH_TOKEN` | Repository: Read and Write (git fetch, git push), Merge Request: Read | everything else |
 
+Limit the tokens to all projects you work on with the client (e.g. `tine20/tine20` and `tine20/docker`).
 The permission names of fine-grained tokens may differ between gitlab versions; gitlab names a missing permission
-in its 403 answer. Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scopes `read_repository` and `write_repository`, gitlab-mcp
+in its 403 answer (e.g. `insufficient_granular_scope` ... `[Job: Read]` when reading a job log without it). Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scopes `read_repository` and `write_repository`, gitlab-mcp
 `api` (which allows much more - prefer fine-grained tokens). After changing a token: `docker compose up -d
 gitlab-mcp` (gitlab-mcp is not recreated by devctl) resp. `./console docker:up -d` (devctl).
 

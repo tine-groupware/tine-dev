@@ -19,6 +19,9 @@ In the tine-dev AI coding setup the client has no docker access and no git crede
 * **gitlab-mcp** (`project_id` = `tine20%2Ftine20`): read MRs, diffs, discussions, pipelines and job logs; create
   threads and replies, resolve threads, open MRs. Gitlab is only reachable from within the company network / VPN -
   a 403 "Request forbidden by administrative rules" means: not reachable, tell the user, don't retry.
+  A 403 `insufficient_granular_scope` names the permission the token of gitlab-mcp lacks (e.g. `[Pipeline: Read]`
+  for the jobs of a pipeline): tell the user to add it to `GITLAB_ACCESS_TOKEN` (tine-dev README "Settings
+  and tokens") or to send the job log, don't retry.
 * **devctl**: `fetch`, `push`, `change_branch`, `tine_console`, `exec` (web, e2etests), `up`, `restart_webpack`,
   `ps`, `logs`.
 

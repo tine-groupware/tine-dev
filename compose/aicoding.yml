@@ -18,7 +18,8 @@ services:
       STREAMABLE_HTTP_AUTH_TOKEN: "${MCP_AUTH_TOKEN}"
       MCP_ALLOWED_HOSTS: "gitlab-mcp,gitlab-mcp:3002"
       GITLAB_API_URL: "${GITLAB_API_URL}"
-      GITLAB_PERSONAL_ACCESS_TOKEN: "${GITLAB_PERSONAL_ACCESS_TOKEN}"
+      # GITLAB_ACCESS_TOKEN of .env, see README "Settings and tokens" (the key is the name gitlab-mcp reads)
+      GITLAB_PERSONAL_ACCESS_TOKEN: "${GITLAB_ACCESS_TOKEN}"
       GITLAB_PERMISSION_MODE: "full"
       # pipeline and job tools (CI results)
       USE_PIPELINE: "true"
