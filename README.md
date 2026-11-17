@@ -210,6 +210,11 @@ The tests use `TEST_URL` etc. from `tine20/tests/e2etests/.env`. Inside the dock
 default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/screenshots/Error/`.
 AI coding clients run the tests with the devctl tool `exec` (see "AI coding clients").
 
+## Docs
+
+The `docs` compose module serves the tine docs (`tine20/docs`, MkDocs with live reload) at
+https://docs.local.tine-dev.de/. See `tine20/docs/developers/mkdocs.md`.
+
 ## Adding a compose module
 
 Create `compose/<name>.yml` (see the existing files), add `"<name>"` to `composeFiles` in `pullup.json`,
