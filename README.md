@@ -677,11 +677,26 @@ reachable in the internal network `devctl-net`):
 | `exec`            | `sh -c <command>` in `web` or `e2etests` (tests, tine cli, ...)                      |
 | `tine_console`    | `./console tine:<install\|demodata\|clearcache\|test\|...> [args]`                    |
 | `ps`, `logs`      | container status, log tail of a service                                              |
+| `push`            | push the checked out branch to `origin`, only `pu/<DEVCTL_DEVELOPER>/...`, optionally force with lease |
 
 devctl mounts tine-dev and the checkout at their host paths and runs `./console` as on the host
 (`TINE_DEV_DIR`, `TINE_DEV_USER`, `TINE_DEV_ARM64`, `HOMEDIR` are passed by `./console`); it never
 recreates itself and the AI clients (`DEVCTL_SKIP_SERVICES`, their env may only be set in your shell). It doesn't run git operations that check out or fetch — the
 client does the checkout in its container.
+
+**Push:** set in `.env`
+
+~~~
+DEVCTL_GIT_TOKEN=<gitlab token>   # fine-grained, write access to the tine repo only
+DEVCTL_DEVELOPER=cw               # your short name: pushes only pu/cw/...
+# DEVCTL_GIT_URL_PREFIX=https://gitlab.metaways.net/   (default)
+~~~
+
+The token stays in devctl, the client never sees it (git gets it via askpass from the environment). devctl
+pushes the checked out branch to `origin` only if the push url of `origin` starts with `DEVCTL_GIT_URL_PREFIX` -
+the client can't change it, `.git/config` is read-only for it - with hooks and fsmonitor disabled. Merge requests
+are created via gitlab-mcp (its token needs `Merge Request: Create`/`Update`). Note: anything pushed to
+`pu/...` can run in merge request pipelines, keep protected CI variables protected.
 
 **Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
 that make git run code — `config` (fsmonitor, filters, aliases, ...), `hooks`, `modules`, `worktrees`

@@ -87,6 +87,19 @@ function tools(): array
                 'required' => ['service'],
             ],
         ],
+        [
+            'name' => 'push',
+            'description' => 'Push the branch checked out in the tine repo to origin (gitlab) - only own branches '
+                . 'pu/<developer>/... (developer: DEVCTL_DEVELOPER). Commit first. Returns the git output incl. the '
+                . 'link to create a merge request.',
+            'inputSchema' => [
+                'type' => 'object',
+                'properties' => [
+                    'force' => ['type' => 'boolean', 'default' => false,
+                        'description' => 'force push with lease (after rebase/amend of the own branch)'],
+                ],
+            ],
+        ],
     ];
 }
 
@@ -137,8 +150,67 @@ function callTool(string $name, array $args, callable $keepalive): string
             $tail = max(1, min(5000, (int)($args['tail'] ?? 200)));
             return run(['docker', 'logs', '--tail', (string)$tail, containerId((string)($args['service'] ?? ''))],
                 $keepalive);
+        case 'push':
+            return locked(fn() => push((bool)($args['force'] ?? false), $keepalive));
     }
     throw new ToolError("unknown tool $name");
+}
+
+/**
+ * Pushes the checked out branch of the tine repo to origin with DEVCTL_GIT_TOKEN, which the client never sees.
+ *
+ * The client controls the checkout but not .git/config and hooks (read-only for it, see
+ * compose/aicoding-claude-code.yml): the remote url comes from there and is checked against DEVCTL_GIT_URL_PREFIX,
+ * so the token can't be sent elsewhere. Hooks and fsmonitor are disabled anyway. Only pu/<DEVCTL_DEVELOPER>/...,
+ * protected branches are protected by gitlab as well.
+ */
+function push(bool $force, callable $keepalive): string
+{
+    $token = (string)getenv('DEVCTL_GIT_TOKEN');
+    $developer = (string)getenv('DEVCTL_DEVELOPER');
+    $urlPrefix = (string)(getenv('DEVCTL_GIT_URL_PREFIX') ?: 'https://gitlab.metaways.net/');
+    if ($token === '' || !preg_match('/^[a-z0-9]+$/', $developer)) {
+        throw new ToolError('push is not configured: DEVCTL_GIT_TOKEN and DEVCTL_DEVELOPER (e.g. cw) in .env of tine-dev');
+    }
+    $repo = realpath(getenv('TINE_DEV_DIR') . '/tine20');
+    if ($repo === false) {
+        throw new ToolError('tine checkout not found');
+    }
+
+    $git = ['git', '-c', 'safe.directory=*', '-c', 'core.hooksPath=/dev/null', '-c', 'core.fsmonitor=false',
+        '-c', 'credential.helper=', '-c', 'protocol.allow=never', '-c', 'protocol.https.allow=always', '-C', $repo];
+    $gitOut = function (array $args) use ($git): string {
+        return trim((string)shell_exec(implode(' ', array_map('escapeshellarg', [...$git, ...$args])) . ' 2>/dev/null'));
+    };
+
+    $branch = $gitOut(['symbolic-ref', '--short', 'HEAD']);
+    $prefix = "pu/$developer/";
+    if (!str_starts_with($branch, $prefix) || !preg_match('#^[A-Za-z0-9][A-Za-z0-9._/-]*$#', $branch)
+        || str_contains($branch, '..') || str_ends_with($branch, '.lock') || str_ends_with($branch, '/')) {
+        throw new ToolError("only own branches $prefix... can be pushed, checked out: '$branch'");
+    }
+    $url = $gitOut(['remote', 'get-url', '--push', 'origin']);
+    if (!str_starts_with($url, $urlPrefix) || preg_match('#^https://[^/]*@#', $url)) {
+        throw new ToolError("push url of origin '$url' doesn't start with $urlPrefix");
+    }
+
+    // the token comes from the environment via askpass, never on the command line or in a file
+    $askpass = '/tmp/devctl-askpass.sh';
+    if (!is_file($askpass)) {
+        file_put_contents($askpass, "#!/bin/sh\ncase \"\$1\" in Username*) echo oauth2 ;; *) echo \"\$DEVCTL_GIT_TOKEN\" ;; esac\n");
+        chmod($askpass, 0700);
+    }
+    putenv("GIT_ASKPASS=$askpass");
+    putenv('GIT_TERMINAL_PROMPT=0');
+
+    $args = ['push'];
+    if ($force) {
+        $args[] = "--force-with-lease=refs/heads/$branch";
+    }
+    // origin (not the url): --force-with-lease compares with its remote-tracking branch. get-url --push above
+    // resolves pushurl and insteadOf like push does.
+    array_push($args, 'origin', "HEAD:refs/heads/$branch");
+    return str_replace($token, '***', run([...$git, ...$args], $keepalive));
 }
 
 function containerId(string $service): string
