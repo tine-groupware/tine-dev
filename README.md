@@ -211,14 +211,19 @@ default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/scr
 AI coding clients run the tests with the devctl tool `exec` (see "AI coding clients").
 
 **Watch the tests in your Chrome** (from tine 2026.11, see `tine20/tests/e2etests/README.md` "Debug in a
-Running Browser"): start a separate Chrome with `--remote-debugging-port=9222` on the host. Chrome only accepts
-debugging connections on 127.0.0.1, so forward the port for the containers (stop it when done - it listens on all
-interfaces, everyone who reaches the port controls that Chrome):
+Running Browser"): start a separate Chrome on the host with its own profile and
+`--remote-debugging-address=0.0.0.0 --remote-debugging-port=9222` (commands for macOS / Linux: client skill
+`browser`). Without `--remote-debugging-address` the containers can't reach it. With it, everyone who reaches port
+9222 of your machine controls that Chrome - close it when done.
 
 ~~~
-socat TCP-LISTEN:9223,fork,reuseaddr TCP:127.0.0.1:9222
-docker exec -e TEST_BROWSER_URL=http://host.docker.internal:9223 e2etests npm test src/test/...
+docker exec -e TEST_BROWSER_URL=http://172.118.200.1:9222 e2etests npm test src/test/...
 ~~~
+
+`172.118.200.1` is the service `chrome-proxy` (`compose/e2etest.yml`), which forwards to port 9222 of the host.
+Chrome rejects debugging requests with a host name like `host.docker.internal` ("Host header is specified and is not
+an IP address or localhost"), and the IP of the host differs per platform, so the proxy gives a fixed IP on all
+platforms.
 
 The same Chrome is used by Claude in Chrome (`claude --chrome` in the claude-code container, extension installed
 in that Chrome instance), see the client skill `browser`.

@@ -17,9 +17,19 @@ services:
       - "./tine20/:/tine20"
     networks:
       - internal_network
-      # npm install
+      # npm install, Chrome of the host via chrome-proxy
       - external_network
-    # Chrome of the host (TEST_BROWSER_URL=http://host.docker.internal:9223, see README "E2E tests")
+
+  # Chrome of the host for the tests (TEST_BROWSER_URL=http://172.118.200.1:9222, see README "E2E tests").
+  # Chrome only accepts debugging connections with an IP or localhost as Host header (not host.docker.internal),
+  # and the IP of the host differs per platform. This proxy has a fixed IP and forwards to port 9222 of the host.
+  chrome-proxy:
+    image: alpine/socat:1.8.1.3
+    container_name: chrome-proxy
+    command: [ "TCP-LISTEN:9222,fork,reuseaddr", "TCP:host.docker.internal:9222" ]
+    networks:
+      external_network:
+        ipv4_address: 172.118.200.1
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

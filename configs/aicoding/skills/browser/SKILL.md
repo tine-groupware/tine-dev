@@ -7,42 +7,44 @@ description: >-
 license: AGPL-3.0
 metadata:
   author: Cornelius Weiss with Claude Code
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Chrome of the user
 
-The client runs in a container. The user's Chrome runs on the host, so two things must be running there - the
-client can't start them, tell the user the commands (for their platform) when the debug port does not answer:
+The client runs in a container, the user's Chrome runs on the host. The client can't start it - tell the user the
+command (for their platform) when the debug port does not answer.
 
-1. **Chrome with remote debugging**, a separate instance with its own profile (since Chrome 136 remote debugging is
-   not possible with the default profile; install extensions like Claude in Chrome there once):
+**Chrome with remote debugging**, a separate instance with its own profile (since Chrome 136 remote debugging is not
+possible with the default profile; install extensions like Claude in Chrome there once):
 
-   macOS:
-   ```bash
-   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-     --user-data-dir="$HOME/Library/Application Support/Google/Chrome-e2etests" \
-     --remote-debugging-port=9222 --ignore-certificate-errors --window-size=1920,1080
-   ```
-   Linux:
-   ```bash
-   google-chrome \
-     --user-data-dir="$HOME/.config/google-chrome-e2etests" \
-     --remote-debugging-port=9222 --ignore-certificate-errors --window-size=1920,1080
-   ```
+macOS:
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --user-data-dir="$HOME/Library/Application Support/Google/Chrome-e2etests" \
+  --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222 \
+  --ignore-certificate-errors --window-size=1920,1080
+```
+Linux:
+```bash
+google-chrome \
+  --user-data-dir="$HOME/.config/google-chrome-e2etests" \
+  --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222 \
+  --ignore-certificate-errors --window-size=1920,1080
+```
 
-2. **Port forwarding** - Chrome only accepts debugging connections on 127.0.0.1 of the host:
-   ```bash
-   socat TCP-LISTEN:9223,fork,reuseaddr TCP:127.0.0.1:9222
-   ```
-   (`brew install socat` resp. the package manager.) It listens on all interfaces: everyone who can reach port
-   9223 of the machine controls that Chrome - the user should stop it when done.
+`--remote-debugging-address=0.0.0.0` is needed, the containers can't reach 127.0.0.1 of the host. With it, everyone
+who can reach port 9222 of the machine controls that Chrome (and the sessions of its profile) - the user should close
+it when done.
 
-From the containers the browser is then at `http://host.docker.internal:9223`:
+From the containers the browser is at `http://172.118.200.1:9222`: the service `chrome-proxy` (compose/e2etest.yml)
+with a fixed IP forwards to port 9222 of the host. Don't use `host.docker.internal`: Chrome rejects debugging
+requests with a host name ("Host header is specified and is not an IP address or localhost").
 
-* check: `curl -s http://host.docker.internal:9223/json/version` (from the client) - no answer: tell the user both
-  commands above
-* e2e tests in it: devctl `exec` in `e2etests` with `TEST_BROWSER_URL=http://host.docker.internal:9223` (inline,
+* check: `curl -s http://172.118.200.1:9222/json/version` (from the client)
+  * connection refused / no route: `chrome-proxy` is not running, the compose file `e2etest` has to be active
+  * empty reply: Chrome is not running or was started without the flags above - tell the user the command
+* e2e tests in it: devctl `exec` in `e2etests` with `TEST_BROWSER_URL=http://172.118.200.1:9222` (inline,
   e.g. `TEST_BROWSER_URL=... npm test src/test/...`) - the test runs visibly in the user's Chrome. Details and the
   workflow with the Claude in Chrome extension: README "Debug in a Running Browser" and skill `e2etests` of the tine
   repo (from 2026.11).
