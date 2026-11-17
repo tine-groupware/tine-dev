@@ -61,6 +61,8 @@ services:
       - "${TINE20_DIR}:${TINE20_DIR}"
     networks:
       - devctl-net
+      # git fetch/push (tools fetch, push)
+      - external_network
 
 networks:
   # only AI coding clients + devctl belong here
