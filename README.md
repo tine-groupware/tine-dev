@@ -448,6 +448,8 @@ Make sure to always fetch the latest production docker image for the tine broadc
 
 ## Configure
 There is a setup task in the tine repository for adding an `auth_token` record: `setup.php --add_auth_token --`.
+`tine:install` runs it with the token `longlongtoken` for tine20admin if the broadcasthub is active. The setup task
+was removed in 2026.11, there no token is created.
 
 Formerly this record had to be inserted manually via [phpMyAdmin](#open-tine20-in-browser) in order to connect with a websocket client to the tine Broadcasthub websocket server:
 

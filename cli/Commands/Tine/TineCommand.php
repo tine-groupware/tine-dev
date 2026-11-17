@@ -83,7 +83,13 @@ class TineCommand extends DockerCommand
             //            'name' => 'broadcasthub'
             //        ],
             //    ],
-            passthru($this->getComposeString() . ' exec --user tine20 -T web sh -c "cd tine20 && php setup.php --add_auth_token -- user=tine20admin id=longlongid auth_token=longlongtoken valid_until=' . date('Y-m-d', strtotime('+1 year', time())) . ' channels=broadcasthub"', $result_code);
+            // setup.php --add_auth_token was removed in 2026.11 (tine 619039c7f29), only call it where it exists
+            exec($this->getComposeString() . ' exec --user tine20 -T web sh -c "cd tine20 && php setup.php --help" 2>/dev/null', $help);
+            if (str_contains(implode("\n", $help), '--add_auth_token')) {
+                passthru($this->getComposeString() . ' exec --user tine20 -T web sh -c "cd tine20 && php setup.php --add_auth_token -- user=tine20admin id=longlongid auth_token=longlongtoken valid_until=' . date('Y-m-d', strtotime('+1 year', time())) . ' channels=broadcasthub"', $result_code);
+            } else {
+                $io->info('broadcasthub: setup.php of this branch has no --add_auth_token, no auth token "longlongtoken" created (see README "Add tine Broadcasthub")');
+            }
         }
 
         return $result_code;
