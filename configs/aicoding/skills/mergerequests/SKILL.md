@@ -43,6 +43,9 @@ Read everything via gitlab-mcp, no checkout needed:
 
 ## Code changes or tests on an MR
 
+Like switching a branch in skill `coding` (keep the local branch up to date with origin, stop on divergence),
+with the MR specifics:
+
 1. **Get the branch:** devctl `fetch` with `branch` = source branch of the MR. It is then available as
    `origin/<branch>`.
 2. **Check out:**
