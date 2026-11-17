@@ -25,7 +25,7 @@ class ChangeBranchCommand extends DockerCommand {
             'git',
             'g',
             InputOption::VALUE_NONE,
-            'run git checkout BRANCH and git submodule update operations (requires --branch options)'
+            'run git checkout BRANCH (requires --branch option), submodules are updated anyway'
         );
         $this->addOption(
             'nonpm',
@@ -52,11 +52,15 @@ class ChangeBranchCommand extends DockerCommand {
                 $io->error("git checkout {$this->branch} failed");
                 return 1;
             }
-            passthru(self::git($this->srcDir) . 'submodule update', $result_code);
-            if (0 !== $result_code) {
-                $io->error("git submodule install");
-                return 1;
-            }
+        }
+
+        // also after a checkout without --git (by hand, or by an AI client which can't write .git/modules): the
+        // submodules (icon-set) have to match the branch
+        $io->infoWithTime('git submodule update');
+        passthru(self::git($this->srcDir) . 'submodule update --init', $result_code);
+        if (0 !== $result_code) {
+            $io->error("git submodule update failed");
+            return 1;
         }
 
         // stop tine/web container to make sure DB PREFIX is correct & tine20_install is executed

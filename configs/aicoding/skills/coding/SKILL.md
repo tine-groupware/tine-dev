@@ -16,7 +16,8 @@ metadata:
 The client has no docker access and no git credentials. The stack and git remotes are reached via devctl
 (`fetch`, `push`, `change_branch`, `tine_console`, `exec`, ...), gitlab via gitlab-mcp - see the skill
 `mergerequests` for working on merge requests. The checkout is `/workspace/tine20`; its `.git/config` and hooks
-are read-only: run git with `-c safe.directory=*` if needed, `checkout --no-track`, no `git submodule update`.
+are read-only: run git with `-c safe.directory=*` if needed, `checkout --no-track`, no `git submodule update`
+(`change_branch` does it).
 
 ## Switch to a branch
 
@@ -28,17 +29,15 @@ Always in this order, each step finished before the next:
      local branch has own commits or diverged), stop and ask the user - never reset or rebase it on your own.
    * no local branch: `git checkout --no-track -b <branch> origin/<branch>`
    * uncommitted changes in the checkout: ask the user first (they are the user's work), don't stash or discard
-3. **Submodule:** if `git submodule status` shows `+` for `tine20/images/icon-set`, the submodule is outdated
-   (webpack then reports missing icons). Ask the user to run `git submodule update` on the host.
-4. **Apply the branch to the stack:** devctl `change_branch` (images and db table prefix of the branch, composer,
-   npm, webpack, cache). Takes minutes - wait for the result. Without it the stack runs the new code against the
+3. **Apply the branch to the stack:** devctl `change_branch` (submodules, images and db table prefix of the branch,
+   composer, npm, webpack, cache). Takes minutes - wait for the result. Without it the stack runs the new code against the
    database of the previous branch: login hangs, tests fail for no reason.
-5. **Database:** devctl `tine_console`:
+4. **Database:** devctl `tine_console`:
    * `install` if the table prefix of the branch was never installed (errors about missing tables / setup)
    * `reinstall` if it was installed with another code state (e.g. after big changes) - it drops the data of that
      prefix: fine for major branches and MR branches, ask first on the user's own working branches
-6. **Demo data** (if asked for, or for manual tests / e2e tests): `tine_console` `demodata`.
-7. Tell the user what was done and which branch the checkout and the stack are on now.
+5. **Demo data** (if asked for, or for manual tests / e2e tests): `tine_console` `demodata`.
+6. Tell the user what was done and which branch the checkout and the stack are on now.
 
 ## Fix a bug / implement something
 

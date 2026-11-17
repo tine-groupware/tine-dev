@@ -159,8 +159,8 @@ docker socket mounts, privileged mode etc. for services not in `pullup.json` `"t
 tine20_tine20-src tine-dev-tine20-src` (neither compose nor `docker run` of `./console` recreate them, `docker:checkmounts`
 refuses to start).
 
-Switching branches: `./console src:changeBranch --git --branch <branch>` does the git checkout +
-submodule update, then composer install, npm install, webpack restart and cache clear in one go
+Switching branches: `./console src:changeBranch --git --branch <branch>` does the git checkout (without
+`--git`: after a checkout by hand), submodule update, then composer install, npm install, webpack restart and cache clear in one go
 (`--nonpm` skips npm). The dev web image is selected per branch (`main` → `tinegroupware/dev:main-8.5`,
 see `$imageMap` in `cli/Commands/Docker/DockerCommand.php`), so run `./console docker:up` afterwards.
 

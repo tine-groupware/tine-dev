@@ -29,8 +29,8 @@ The checkout is `/workspace/tine20`. Its `.git/config` and hooks are read-only f
 
 * run git with `-c safe.directory=*` if git complains about the ownership
 * `git checkout --no-track -b ...` - tracking would write the config
-* no `git submodule update` (writes `.git/modules`); if the submodule `tine20/images/icon-set` is outdated (webpack
-  reports missing icons), ask the user to run it on the host. Never commit the submodule pointer by accident.
+* no `git submodule update` (writes `.git/modules`) - devctl `change_branch` updates the submodules. Never commit
+  the submodule pointer by accident.
 
 ## Just a review (no code changes, no tests)
 
