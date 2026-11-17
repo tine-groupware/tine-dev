@@ -67,6 +67,13 @@ with the MR specifics:
 7. **Push:** devctl `push` (only own branches `pu/<you>/...`, `force: true` = force with lease after amend/rebase).
 8. **MR:** gitlab-mcp `create_merge_request`. For a fix on top of someone else's MR: target branch = their source
    branch, and link it in the review thread of the original MR.
+   * **Changes under `.agents/`** (skills of the tine repo): the CI job `prevent_dot_agents_changes` fails every MR
+     pipeline that touches them - they are meant to be changed in the oldest major branch that has them and merged
+     upwards. If the file exists only from the target branch on (e.g. `.agents/skills/e2etests` from 2026.11), set
+     the label `allow-failure-prevent-dot-agents-changes` already in `create_merge_request` (`labels`) and mention
+     why in the description. Otherwise ask the user whether the change belongs into an older major branch.
+   * Labels count from the next pipeline on: after adding one later, a retry is not enough, a new pipeline is
+     needed (e.g. push the branch rebased onto the current target branch).
 9. **Afterwards:** tell the user which branch the checkout and the stack are on now; offer to switch back
    (checkout + `change_branch`).
 
