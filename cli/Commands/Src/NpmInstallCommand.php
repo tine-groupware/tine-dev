@@ -108,11 +108,13 @@ class NpmInstallCommand extends DockerCommand
         $branchFolder = $nodeModulesPath . '_' . $branch;
 
         // feature branches (e.g. pu/cw/foo) start with the modules of the major branch they will be merged into,
-        // npm install then only applies the differences instead of installing everything (takes 15+ minutes)
+        // npm install then only applies the differences instead of installing everything (takes 15+ minutes).
+        // cp -a: keep the timestamps, otherwise the rsync into the checkout (-a: size + mtime) copies every file again
+        // even if the checkout already has the modules of the major branch
         $majorFolder = $major !== null ? $nodeModulesPath . '_' . str_replace('/', '_', $major) : null;
         if (!is_dir($branchFolder) && $majorFolder !== null && $majorFolder !== $branchFolder && is_dir($majorFolder)) {
             $io->infoWithTime('initializing ' . $branchFolder . ' with ' . $majorFolder);
-            passthru('cp -r ' . escapeshellarg($majorFolder) . ' ' . escapeshellarg($branchFolder));
+            passthru('cp -a ' . escapeshellarg($majorFolder) . ' ' . escapeshellarg($branchFolder));
             clearstatcache();
         }
 
@@ -122,7 +124,7 @@ class NpmInstallCommand extends DockerCommand
                 $path = $nodeModulesPath . '_' . $year . '.11';
                 if (is_dir($path)) {
                     $io->infoWithTime('initializing ' . $branchFolder . ' with ' . $path);
-                    shell_exec("cp -r $path $branchFolder");
+                    shell_exec("cp -a $path $branchFolder");
                     break;
                 }
             } while (--$year >= 2022);
