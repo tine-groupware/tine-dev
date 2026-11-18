@@ -10,7 +10,7 @@
     const days = 180;
     const tokens = {
         // gitlab-mcp: MRs, review threads and notes, pipelines, job logs and artifacts, file contents
-        GITLAB_ACCESS_TOKEN: ['read_project', 'read_code', 'read_repository',
+        GITLAB_ACCESS_TOKEN: ['read_project', 'read_code', 'read_repository', 'read_commit',
             'read_merge_request', 'create_merge_request', 'update_merge_request',
             'read_work_item', 'create_work_item',
             'read_pipeline', 'read_job', 'read_job_artifact'],

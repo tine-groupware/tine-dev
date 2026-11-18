@@ -750,7 +750,7 @@ experiment status there) and prints the `.env` lines. By hand: avatar → Prefer
 
 | token | permissions (fine-grained, API name) | not |
 |-------|--------------------------------------|-----|
-| `GITLAB_ACCESS_TOKEN` | Project: Read (`read_project`); Code, Repository: Read (`read_code`, `read_repository`: file contents); Merge Request: Create, Read, Update (MRs, threads, resolve threads, new MRs); Work Item: Create, Read (`create_work_item`: plain MR comments, `create_merge_request_note` - threads work without it); Pipeline: Read (pipelines, their jobs); Job: Read (job logs); Job Artifact: Read (e.g. test reports, screenshots) | repository write, delete, admin |
+| `GITLAB_ACCESS_TOKEN` | Project: Read (`read_project`); Code, Repository, Commit: Read (`read_code`, `read_repository`, `read_commit`: file contents, commits); Merge Request: Create, Read, Update (MRs, threads, resolve threads, new MRs); Work Item: Create, Read (`create_work_item`: plain MR comments, `create_merge_request_note` - threads work without it); Pipeline: Read (pipelines, their jobs); Job: Read (job logs); Job Artifact: Read (e.g. test reports, screenshots) | repository write, delete, admin |
 | `GITLAB_PUSH_TOKEN` | Project: Read; Code: Read, Push (`read_code`, `push_code`: git fetch and push); Repository: Read; Merge Request: Read | everything else |
 
 The permission names may differ between gitlab versions (the list: GraphQL query `accessTokenPermissions`); gitlab
