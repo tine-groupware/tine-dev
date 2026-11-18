@@ -79,7 +79,8 @@ with the MR specifics:
 
 ## Review guidelines
 
-* Write in the language of the MR / its discussion (usually German).
+* Write reviews (threads, summary) in English - not all developers speak German, and gitlab doesn't tell the
+  language of another user. Replies in an existing thread: in the language of that thread.
 * Verify the claims of the description against the code; reproduce the bug or the fix when it is cheap
   (`exec`, a small puppeteer script) and say whether a finding was reproduced or only derived from the code.
 * Each finding: what goes wrong, in which situation (concrete inputs/state), and a concrete suggestion - code if
