@@ -30,16 +30,16 @@ In the tine-dev AI coding setup the client has no docker access and no git crede
 
 The user creates the tokens, the client never sees or handles them. When gitlab-mcp answers 401 (no / invalid /
 expired token) or 403 `insufficient_granular_scope`, or devctl `fetch` / `push` fail with an authentication error
-(`GITLAB_PUSH_TOKEN`), don't retry. Tell the user what failed and give them the token script to copy:
+(`GITLAB_GIT_TOKEN`), don't retry. Tell the user what failed and give them the token script to copy:
 
 1. Print the content of `gitlab-create-tokens.js` (next to this file, `~/.claude/skills/mergerequests/`) in a code
    block. If a permission is missing that the script doesn't request yet, add it to the list in your copy and say
    so (the permission names: GraphQL query `accessTokenPermissions`, e.g. `create_work_item`).
 2. Instructions: log in to gitlab in the browser, open the developer console on any gitlab page, paste the script,
-   Enter. It creates `GITLAB_ACCESS_TOKEN` and `GITLAB_PUSH_TOKEN` and prints the lines for the `.env` of tine-dev.
+   Enter. It creates `GITLAB_ACCESS_TOKEN` and `GITLAB_GIT_TOKEN` and prints the lines for the `.env` of tine-dev.
 3. Then: put them into `.env` of tine-dev and recreate on the host: `docker compose up -d gitlab-mcp` (gitlab-mcp)
-   resp. `./console docker:up -d` (devctl, push token). New tokens don't replace old ones - revoke those in gitlab
-   (avatar → Preferences → Access tokens).
+   resp. `docker compose up -d devctl` (git token; `./console docker:up` skips both). New tokens don't replace old
+   ones - revoke those in gitlab (avatar → Preferences → Access tokens).
 
 Never ask the user to paste a token into the chat.
 

@@ -171,7 +171,7 @@ function callTool(string $name, array $args, callable $keepalive): string
 }
 
 /**
- * git with GITLAB_PUSH_TOKEN on the tine repo, the client never sees the token.
+ * git with GITLAB_GIT_TOKEN on the tine repo, the client never sees the token.
  *
  * The client controls the checkout but not .git/config and hooks (read-only for it, see
  * compose/aicoding-claude-code.yml): the remote url comes from there and is checked against DEVCTL_GIT_URL_PREFIX,
@@ -181,14 +181,14 @@ function callTool(string $name, array $args, callable $keepalive): string
  */
 function gitContext(bool $forPush): array
 {
-    $token = (string)getenv('GITLAB_PUSH_TOKEN');
+    $token = (string)getenv('GITLAB_GIT_TOKEN');
     $urlPrefix = (string)(getenv('DEVCTL_GIT_URL_PREFIX') ?: 'https://gitlab.metaways.net/');
     $remote = (string)(getenv('DEVCTL_GIT_REMOTE') ?: 'origin');
     if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $remote)) {
         throw new ToolError("invalid DEVCTL_GIT_REMOTE '$remote'");
     }
     if ($token === '') {
-        throw new ToolError('not configured: GITLAB_PUSH_TOKEN in .env of tine-dev');
+        throw new ToolError('not configured: GITLAB_GIT_TOKEN in .env of tine-dev');
     }
     $repo = realpath(getenv('TINE_DEV_DIR') . '/tine20');
     if ($repo === false) {
@@ -209,7 +209,7 @@ function gitContext(bool $forPush): array
 
     // the token comes from the environment via askpass, never on the command line or in a file
     $askpass = '/tmp/devctl-askpass.sh';
-    file_put_contents($askpass, "#!/bin/sh\ncase \"\$1\" in Username*) echo oauth2 ;; *) echo \"\$GITLAB_PUSH_TOKEN\" ;; esac\n");
+    file_put_contents($askpass, "#!/bin/sh\ncase \"\$1\" in Username*) echo oauth2 ;; *) echo \"\$GITLAB_GIT_TOKEN\" ;; esac\n");
     chmod($askpass, 0700);
     putenv("GIT_ASKPASS=$askpass");
     putenv('GIT_TERMINAL_PROMPT=0');
