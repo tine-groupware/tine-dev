@@ -82,9 +82,26 @@ The file grows fast on DEBUG (a `tine_console install` writes ~20 MB): filter, d
 
 Reproduce before fixing - and say in the end whether a finding was reproduced or only derived from the code.
 
-* **UI bugs: in the user's Chrome** (skill `browser`): a temporary puppeteer script in `tests/e2etests`
-  (e.g. `tmp-<topic>.cjs`, never commit it, delete it when done), run via devctl `exec` in `e2etests` with
-  `puppeteer.connect({browserURL: 'http://172.118.200.1:9222'})`. The user sees what happens.
+* **UI bugs: headless by default** - a temporary puppeteer script in `tests/e2etests` (e.g. `tmp-<topic>.cjs`,
+  never commit it, delete it when done), run via devctl `exec` in `e2etests`. Its Chrome runs in the container,
+  doesn't take the focus on the user's desktop, and works the same when the stack runs on a remote host:
+  ```js
+  const puppeteer = require('puppeteer'); require('dotenv').config();
+  const browser = await puppeteer.launch({headless: true, defaultViewport: {width: 1920, height: 1080},
+      args: ['--lang=de-DE,de', '--no-sandbox', '--disable-dev-shm-usage', '--disable-popup-blocking', '--ignore-certificate-errors']});
+  const page = await browser.newPage();
+  await page.setExtraHTTPHeaders({'Accept-Language': 'de'});
+  await page.goto(process.env.TEST_URL, {waitUntil: 'networkidle2'});
+  // login (below), the steps, measure, page.screenshot(...)
+  await browser.close();
+  ```
+  Every run starts a new browser (logged out, no dialogs open): do the whole flow - login, setup, actions,
+  measurements, screenshots - in one run.
+* **The user's Chrome** (skill `browser`, `puppeteer.connect({browserURL: 'http://172.118.200.1:9222'})`) only when
+  the user wants to watch, asks for it, or the bug depends on their browser / OS (fonts, HiDPI, real focus /
+  keyboard, file chooser, clipboard, a bug that doesn't show up headless). Don't call `bringToFront()`, and expect
+  popups to open windows on their desktop. The session and open dialogs survive between runs there.
+* In both:
   * the main tab: the page with `TEST_URL` that has no opener (`!p.target().opener()`) - popups (edit dialogs)
     have the same URL
   * login page (`input[name=username]` exists, e.g. after a reinstall): empty the fields via
