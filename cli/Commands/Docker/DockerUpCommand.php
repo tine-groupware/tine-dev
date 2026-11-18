@@ -99,40 +99,6 @@ class DockerUpCommand extends DockerCommand
         return $result_code;
     }
 
-    /**
-     * Make sure the icon-set submodule is checked out at the commit recorded in HEAD.
-     * If a plain update does not get there (e.g. corrupted module dir in .git/modules
-     * or a stale index), remove worktree and module dir and re-clone.
-     */
-    protected function ensureIconSet(ConsoleStyle $io)
-    {
-        $subPath = 'tine20/images/icon-set';
-        // at the repo root: resolves the tine20 symlink to the canonical path and a (planted) nested repo
-        // in a sub dir would otherwise be picked up
-        $repoRoot = trim((string)shell_exec(self::git($this->srcDir) . 'rev-parse --show-toplevel 2>/dev/null'));
-
-        $want = trim((string)shell_exec(self::git($repoRoot) . 'rev-parse --verify HEAD:' . $subPath . ' 2>/dev/null'));
-        if ($want === '') {
-            return; // this branch has no icon-set gitlink
-        }
-
-        $have = trim((string)shell_exec(self::git($repoRoot . '/' . $subPath) . 'rev-parse --verify HEAD 2>/dev/null'));
-        if ($have === $want) {
-            return; // in sync
-        }
-
-        $io->infoWithTime('Init icon-set: ' . $repoRoot . '/' . $subPath . ' (commit bump, want ' . substr($want, 0, 7) . ')');
-        passthru(self::git($repoRoot) . 'reset -q -- ' . $subPath . ' && ' . self::git($repoRoot) . 'submodule update --init ' . $subPath);
-
-        $have = trim((string)shell_exec(self::git($repoRoot . '/' . $subPath) . 'rev-parse --verify HEAD 2>/dev/null'));
-        if ($have === $want) {
-            return;
-        }
-
-        $io->warning('icon-set update failed, resetting submodule (remove worktree + module dir, re-clone) ...');
-        passthru('rm -rf ' . escapeshellarg($repoRoot . '/' . $subPath) . ' ' . escapeshellarg($repoRoot . '/.git/modules/' . $subPath));
-        passthru(self::git($repoRoot) . 'submodule update --init ' . $subPath);
-    }
 
 
     protected function set_up_tls_certs(ConsoleStyle $io) {

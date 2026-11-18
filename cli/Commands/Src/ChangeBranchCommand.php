@@ -55,14 +55,8 @@ class ChangeBranchCommand extends DockerCommand {
         }
 
         // also after a checkout without --git (by hand, or by an AI client which can't write .git/modules): the
-        // submodules (icon-set) have to match the branch
-        // sync first: the url of a submodule can change between branches (icon-set moved from
-        // git@github.com:tine20 to https://github.com/tine-groupware), update uses the url of the existing clone
-        $io->infoWithTime('git submodule sync && git submodule update');
-        passthru(self::git($this->srcDir) . 'submodule sync --recursive && '
-            . self::git($this->srcDir) . 'submodule update --init', $result_code);
-        if (0 !== $result_code) {
-            $io->error("git submodule update failed");
+        // submodule (icon-set) has to match the branch - url sync, update, self-heal, see ensureIconSet()
+        if (!$this->ensureIconSet($io)) {
             return 1;
         }
 

@@ -210,6 +210,55 @@ class DockerCommand extends BaseCommand
     }
 
     /**
+     * Make sure the icon-set submodule is checked out at the commit recorded in HEAD (docker:up, src:changeBranch).
+     * The url is synced from .gitmodules first: it can change between branches (icon-set moved from
+     * git@github.com:tine20 to https://github.com/tine-groupware) and update / clone use the url in .git/config -
+     * without ssh (devctl) the old url fails. If a plain update does not get there (e.g. corrupted module dir in
+     * .git/modules or a stale index), remove worktree and module dir and re-clone.
+     *
+     * @return bool icon-set is at the wanted commit (or the branch has none)
+     */
+    public function ensureIconSet(ConsoleStyle $io): bool
+    {
+        $subPath = 'tine20/images/icon-set';
+        // at the repo root: resolves the tine20 symlink to the canonical path and a (planted) nested repo
+        // in a sub dir would otherwise be picked up
+        $repoRoot = trim((string)shell_exec(self::git($this->srcDir) . 'rev-parse --show-toplevel 2>/dev/null'));
+        if ($repoRoot === '') {
+            $io->error('tine checkout not found: ' . $this->srcDir);
+            return false;
+        }
+
+        $want = trim((string)shell_exec(self::git($repoRoot) . 'rev-parse --verify HEAD:' . $subPath . ' 2>/dev/null'));
+        if ($want === '') {
+            return true; // this branch has no icon-set gitlink
+        }
+        $have = fn() => trim((string)shell_exec(self::git($repoRoot . '/' . $subPath) . 'rev-parse --verify HEAD 2>/dev/null'));
+        if ($have() === $want) {
+            return true; // in sync
+        }
+
+        $io->infoWithTime('Init icon-set: ' . $repoRoot . '/' . $subPath . ' (want ' . substr($want, 0, 7) . ')');
+        passthru(self::git($repoRoot) . 'submodule sync -- ' . $subPath . ' && '
+            . self::git($repoRoot) . 'reset -q -- ' . $subPath . ' && '
+            . self::git($repoRoot) . 'submodule update --init ' . $subPath);
+        if ($have() === $want) {
+            return true;
+        }
+
+        $io->warning('icon-set update failed, resetting submodule (remove worktree + module dir, re-clone) ...');
+        passthru('rm -rf ' . escapeshellarg($repoRoot . '/' . $subPath) . ' '
+            . escapeshellarg($repoRoot . '/.git/modules/' . $subPath));
+        passthru(self::git($repoRoot) . 'submodule update --init ' . $subPath);
+
+        if ($have() !== $want) {
+            $io->error('icon-set is not at ' . substr($want, 0, 7) . ' (' . $repoRoot . '/' . $subPath . ')');
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * empties the logs for the AI coding clients (compose/aicoding.yml) after the web container was (re)started:
      * they would grow without limit on log level DEBUG. Creates them as tine20: whoever creates a log file first
      * owns it, and tine CLI commands run as root partly (tine20_install, exec), php-fpm runs as tine20.
