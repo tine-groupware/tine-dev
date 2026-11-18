@@ -159,8 +159,8 @@ docker socket mounts, privileged mode etc. for services not in `pullup.json` `"t
 tine20_tine20-src tine-dev-tine20-src` (neither compose nor `docker run` of `./console` recreate them, `docker:checkmounts`
 refuses to start).
 
-Switching branches: `./console src:changeBranch --git --branch <branch>` does the git checkout +
-submodule update, then composer install, npm install, webpack restart and cache clear in one go
+Switching branches: `./console src:changeBranch --git --branch <branch>` does the git checkout (without
+`--git`: after a checkout by hand), submodule update, then composer install, npm install, webpack restart and cache clear in one go
 (`--nonpm` skips npm). The dev web image is selected per branch (`main` → `tinegroupware/dev:main-8.5`,
 see `$imageMap` in `cli/Commands/Docker/DockerCommand.php`), so run `./console docker:up` afterwards.
 
@@ -209,6 +209,24 @@ The tests use `TEST_URL` etc. from `tine20/tests/e2etests/.env`. Inside the dock
 `tine.local.tine-dev.de` resolves to traefik (network alias set in `compose/e2etest.yml`), so the
 default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/screenshots/Error/`.
 AI coding clients run the tests with the devctl tool `exec` (see "AI coding clients").
+
+**Watch the tests in your Chrome** (from tine 2026.11, see `tine20/tests/e2etests/README.md` "Debug in a
+Running Browser"): start a separate Chrome on the host with its own profile and
+`--remote-debugging-address=0.0.0.0 --remote-debugging-port=9222` (commands for macOS / Linux: client skill
+`browser`). Without `--remote-debugging-address` the containers can't reach it. With it, everyone who reaches port
+9222 of your machine controls that Chrome - close it when done.
+
+~~~
+docker exec -e TEST_BROWSER_URL=http://172.118.200.1:9222 e2etests npm test src/test/...
+~~~
+
+`172.118.200.1` is the service `chrome-proxy` (`compose/e2etest.yml`), which forwards to port 9222 of the host.
+Chrome rejects debugging requests with a host name like `host.docker.internal` ("Host header is specified and is not
+an IP address or localhost"), and the IP of the host differs per platform, so the proxy gives a fixed IP on all
+platforms.
+
+The same Chrome is used by Claude in Chrome (`claude --chrome` in the claude-code container, extension installed
+in that Chrome instance), see the client skill `browser`.
 
 ## Docs
 
@@ -435,6 +453,8 @@ Make sure to always fetch the latest production docker image for the tine broadc
 
 ## Configure
 There is a setup task in the tine repository for adding an `auth_token` record: `setup.php --add_auth_token --`.
+`tine:install` runs it with the token `longlongtoken` for tine20admin if the broadcasthub is active. The setup task
+was removed in 2026.11, there no token is created.
 
 Formerly this record had to be inserted manually via [phpMyAdmin](#open-tine20-in-browser) in order to connect with a websocket client to the tine Broadcasthub websocket server:
 
@@ -617,7 +637,6 @@ image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). 
 * mailstackcontrol
 * postfix
 * opencode
-* socket-proxy
 * puppeteer (app version = node version; the image of the e2e tests, also used by the tine CI)
 * devctl (own software like mailstack: semantic version, no app_version file, no `-mw`)
 * claude-code (app version = Claude Code version)
@@ -632,6 +651,19 @@ mw version: Images we modify should have an mw version postfix `-0mw<release cou
 The Release counter will be reset for each app version. It should start with
 * 0 if our modification was not by the update
 * 1 if our modification was changed in any way
+
+## Image not published yet
+
+Compose files reference the images as published on ghcr. Until the CI built an image (tag pushed, see above), build
+it locally with exactly that name and tag - compose only pulls images that don't exist locally, otherwise
+`docker:up` fails with `denied`:
+
+~~~
+# e.g. image ghcr.io/tine-groupware/tine-dev/puppeteer:22-mw1 from dockerfiles/puppeteer
+docker build -t ghcr.io/tine-groupware/tine-dev/puppeteer:22-mw1 \
+  --build-arg APP_VERSION=$(cat dockerfiles/puppeteer/.meta/app_version) dockerfiles/puppeteer
+# images without .meta/app_version (e.g. devctl): leave out --build-arg
+~~~
 
 ## New image repository (first time image push)
 
@@ -677,7 +709,7 @@ reachable in the internal network `devctl-net`):
 | `restart_webpack` | `./console docker:webpackrestart`                                                    |
 | `exec`            | `sh -c <command>` in `web` or `e2etests` (tests, tine cli, ...)                      |
 | `tine_console`    | `./console tine:<install\|demodata\|clearcache\|test\|...> [args]`                    |
-| `ps`, `logs`      | container status, log tail of a service                                              |
+| `ps`, `logs`      | container status, log tail of a service (tine/PHP logs of web: `/workspace/logs`, below) |
 | `push`            | push the checked out branch to `origin`, only `pu/<DEVCTL_DEVELOPER>/...`, optionally force with lease |
 | `fetch`           | fetch a branch (any, e.g. of a merge request to review or build on) or the whole remote |
 
@@ -706,21 +738,26 @@ DEVCTL_DEVELOPER=cw           # your short name: pushes only pu/cw/...
 # ANTHROPIC_API_KEY=...
 ~~~
 
-Create both gitlab tokens as **personal access tokens** in gitlab (avatar → Preferences → Access tokens),
-preferably *fine-grained* tokens limited to the projects you work on (e.g. `tine20/tine20`), with an expiry date.
-Keep them separate: the AI client uses `GITLAB_ACCESS_TOKEN` through gitlab-mcp for every request,
-`GITLAB_PUSH_TOKEN` is used by devctl for git fetch and push only.
+Create both gitlab tokens as *fine-grained* **personal access tokens**, limited to the projects you work on with the
+client (e.g. `tine20/tine20` and `tine20/docker`), with an expiry date. Keep them separate: the AI client uses
+`GITLAB_ACCESS_TOKEN` through gitlab-mcp for every request, `GITLAB_PUSH_TOKEN` is used by devctl for git fetch and
+push only.
 
-| token | permissions (fine-grained) | not |
-|-------|----------------------------|-----|
-| `GITLAB_ACCESS_TOKEN` | Repository → Merge Request: Create, Read, Update (read MRs, notes, threads, resolve threads, new MRs); CI/CD → Pipeline: Read (pipelines, their jobs), CI/CD → Job: Read (job logs, failing CI of an MR), CI/CD → Job artifact: Read (e.g. test reports, screenshots) | repository write, delete, admin |
-| `GITLAB_PUSH_TOKEN` | Repository: Read and Write (git fetch, git push), Merge Request: Read | everything else |
+**Quick way:** log in to gitlab, open the browser developer console on a gitlab page, paste
+`configs/aicoding/skills/mergerequests/gitlab-create-tokens.js` and press Enter. It creates both tokens (180 days; projects and
+permissions are at the top of the file) with the GraphQL mutation `personalAccessTokenCreate` (gitlab >= 18.7,
+experiment status there) and prints the `.env` lines. By hand: avatar → Preferences → Access tokens.
 
-Limit the tokens to all projects you work on with the client (e.g. `tine20/tine20` and `tine20/docker`).
-The permission names of fine-grained tokens may differ between gitlab versions; gitlab names a missing permission
-in its 403 answer (e.g. `insufficient_granular_scope` ... `[Job: Read]` when reading a job log without it). Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scopes `read_repository` and `write_repository`, gitlab-mcp
-`api` (which allows much more - prefer fine-grained tokens). After changing a token: `docker compose up -d
-gitlab-mcp` (gitlab-mcp is not recreated by devctl) resp. `./console docker:up -d` (devctl).
+| token | permissions (fine-grained, API name) | not |
+|-------|--------------------------------------|-----|
+| `GITLAB_ACCESS_TOKEN` | Project: Read (`read_project`); Code, Repository: Read (`read_code`, `read_repository`: file contents); Merge Request: Create, Read, Update (MRs, threads, resolve threads, new MRs); Work Item: Create, Read (`create_work_item`: plain MR comments, `create_merge_request_note` - threads work without it); Pipeline: Read (pipelines, their jobs); Job: Read (job logs); Job Artifact: Read (e.g. test reports, screenshots) | repository write, delete, admin |
+| `GITLAB_PUSH_TOKEN` | Project: Read; Code: Read, Push (`read_code`, `push_code`: git fetch and push); Repository: Read; Merge Request: Read | everything else |
+
+The permission names may differ between gitlab versions (the list: GraphQL query `accessTokenPermissions`); gitlab
+names a missing permission in its 403 answer (e.g. `insufficient_granular_scope` ... `[Job: Read]` when reading a
+job log without it). Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scopes `read_repository` and
+`write_repository`, gitlab-mcp `api` (which allows much more - prefer fine-grained tokens). After changing a token:
+`docker compose up -d gitlab-mcp` (gitlab-mcp is not recreated by devctl) resp. `./console docker:up -d` (devctl).
 
 **Push:** the token stays in devctl, the client never sees it (git gets it via askpass from the environment).
 devctl pushes the checked out branch `pu/<DEVCTL_DEVELOPER>/...` to `DEVCTL_GIT_REMOTE`, only via https and only if
@@ -734,6 +771,13 @@ remote for that, ssh remotes are not supported. Merge requests are opened via gi
 read-only into the clients (Claude Code: `~/.claude/skills`), as the clients don't see tine-dev. Skills about the
 tine code itself belong into the tine repo (`.agents/skills`), skills for working on tine-dev into
 `.agents/skills` here.
+
+**Logs for the clients:** the `aicoding` module adds a second tine log writer (`configs/aicoding/logger.inc.php`,
+JSON, DEBUG) and writes PHP errors of web requests to a file (`configs/aicoding/php-fpm-errors.ini`; nginx cuts
+them after ~1 KB in docker logs, and they are no longer in docker logs of web then). Both live in the volume
+`tine20-logs` (`/var/log/tine20` in web), the clients get it read-only at `/workspace/logs`. `docker:up -d` and
+`docker:webpackrestart` empty them (they grow by MBs per minute on DEBUG). The normal log in docker logs is unchanged.
+After enabling it: `./console docker:up -d` (web) and `docker compose up -d claude-code` (the client).
 
 **Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
 that make git run code — `config` (fsmonitor, filters, aliases, ...), `hooks`, `modules`, `worktrees`

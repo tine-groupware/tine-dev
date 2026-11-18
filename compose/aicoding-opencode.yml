@@ -9,7 +9,7 @@ services:
     environment:
       METAWAYS_AI_BASE_URL: ${METAWAYS_AI_BASE_URL}
       METAWAYS_AI_API_KEY: ${METAWAYS_AI_API_KEY}
-      # no docker access (the image points to the removed socket-proxy), use the devctl MCP server
+      # no docker access, use the devctl MCP server (images up to 1.17.7-mw1 point to the removed socket-proxy)
       DOCKER_HOST: ""
     networks:
       - internal_network
@@ -20,6 +20,8 @@ services:
       - ./tine20:/tine20:rw
       - ./configs/opencode/config/opencode.json:/home/node/.config/opencode/opencode.json:ro
       #- ./configs/opencode/share:/home/opencode/.local/share/opencode:ro
+      # logs of the web container (tine log as JSON, PHP errors), see compose/aicoding.yml
+      - tine20-logs:/workspace/logs:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.opencode.rule=Host(`opencode.${DOMAIN_SUFFIX:-local.tine-dev.de}`)"

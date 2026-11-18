@@ -20,17 +20,34 @@ In the tine-dev AI coding setup the client has no docker access and no git crede
   threads and replies, resolve threads, open MRs. Gitlab is only reachable from within the company network / VPN -
   a 403 "Request forbidden by administrative rules" means: not reachable, tell the user, don't retry.
   A 403 `insufficient_granular_scope` names the permission the token of gitlab-mcp lacks (e.g. `[Pipeline: Read]`
-  for the jobs of a pipeline): tell the user to add it to `GITLAB_ACCESS_TOKEN` (tine-dev README "Settings
-  and tokens") or to send the job log, don't retry.
+  for the jobs of a pipeline). A plain MR comment (`create_merge_request_note`) needs `[Work Item: Create]` -
+  without it, post the same text as a thread (`create_merge_request_thread`).
 * **devctl**: `fetch`, `push`, `change_branch`, `tine_console`, `exec` (web, e2etests), `up`, `restart_webpack`,
   `ps`, `logs`.
+
+### Missing or insufficient gitlab tokens
+
+The user creates the tokens, the client never sees or handles them. When gitlab-mcp answers 401 (no / invalid /
+expired token) or 403 `insufficient_granular_scope`, or devctl `fetch` / `push` fail with an authentication error
+(`GITLAB_PUSH_TOKEN`), don't retry. Tell the user what failed and give them the token script to copy:
+
+1. Print the content of `gitlab-create-tokens.js` (next to this file, `~/.claude/skills/mergerequests/`) in a code
+   block. If a permission is missing that the script doesn't request yet, add it to the list in your copy and say
+   so (the permission names: GraphQL query `accessTokenPermissions`, e.g. `create_work_item`).
+2. Instructions: log in to gitlab in the browser, open the developer console on any gitlab page, paste the script,
+   Enter. It creates `GITLAB_ACCESS_TOKEN` and `GITLAB_PUSH_TOKEN` and prints the lines for the `.env` of tine-dev.
+3. Then: put them into `.env` of tine-dev and recreate on the host: `docker compose up -d gitlab-mcp` (gitlab-mcp)
+   resp. `./console docker:up -d` (devctl, push token). New tokens don't replace old ones - revoke those in gitlab
+   (avatar → Preferences → Access tokens).
+
+Never ask the user to paste a token into the chat.
 
 The checkout is `/workspace/tine20`. Its `.git/config` and hooks are read-only for the client, so:
 
 * run git with `-c safe.directory=*` if git complains about the ownership
 * `git checkout --no-track -b ...` - tracking would write the config
-* no `git submodule update` (writes `.git/modules`); if the submodule `tine20/images/icon-set` is outdated (webpack
-  reports missing icons), ask the user to run it on the host. Never commit the submodule pointer by accident.
+* no `git submodule update` (writes `.git/modules`) - devctl `change_branch` updates the submodules. Never commit
+  the submodule pointer by accident.
 
 ## Just a review (no code changes, no tests)
 
@@ -42,6 +59,9 @@ Read everything via gitlab-mcp, no checkout needed:
 3. Write the review (see "Review guidelines").
 
 ## Code changes or tests on an MR
+
+Like switching a branch in skill `coding` (keep the local branch up to date with origin, stop on divergence),
+with the MR specifics:
 
 1. **Get the branch:** devctl `fetch` with `branch` = source branch of the MR. It is then available as
    `origin/<branch>`.
@@ -64,12 +84,20 @@ Read everything via gitlab-mcp, no checkout needed:
 7. **Push:** devctl `push` (only own branches `pu/<you>/...`, `force: true` = force with lease after amend/rebase).
 8. **MR:** gitlab-mcp `create_merge_request`. For a fix on top of someone else's MR: target branch = their source
    branch, and link it in the review thread of the original MR.
+   * **Changes under `.agents/`** (skills of the tine repo): the CI job `prevent_dot_agents_changes` fails every MR
+     pipeline that touches them - they are meant to be changed in the oldest major branch that has them and merged
+     upwards. If the file exists only from the target branch on (e.g. `.agents/skills/e2etests` from 2026.11), set
+     the label `allow-failure-prevent-dot-agents-changes` already in `create_merge_request` (`labels`) and mention
+     why in the description. Otherwise ask the user whether the change belongs into an older major branch.
+   * Labels count from the next pipeline on: after adding one later, a retry is not enough, a new pipeline is
+     needed (e.g. push the branch rebased onto the current target branch).
 9. **Afterwards:** tell the user which branch the checkout and the stack are on now; offer to switch back
    (checkout + `change_branch`).
 
 ## Review guidelines
 
-* Write in the language of the MR / its discussion (usually German).
+* Write reviews (threads, summary) in English - not all developers speak German, and gitlab doesn't tell the
+  language of another user. Replies in an existing thread: in the language of that thread.
 * Verify the claims of the description against the code; reproduce the bug or the fix when it is cheap
   (`exec`, a small puppeteer script) and say whether a finding was reproduced or only derived from the code.
 * Each finding: what goes wrong, in which situation (concrete inputs/state), and a concrete suggestion - code if
@@ -89,3 +117,5 @@ Read everything via gitlab-mcp, no checkout needed:
 * Never test with fake credentials against the real gitlab (failed logins can get the IP blocked); use a local
   fake remote.
 * `exec` / `change_branch` / `tine_console` can run for minutes - wait for the result, don't start them twice.
+* Server errors (page errors, broken JSON responses): read `/workspace/logs` (tine log as JSON, complete PHP
+  errors), see "Read the logs" in skill `coding`.

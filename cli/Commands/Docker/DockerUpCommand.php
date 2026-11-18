@@ -61,20 +61,21 @@ class DockerUpCommand extends DockerCommand
 
         // composer install, npm install and icon-set init are getting baked into the image during build mode, so skip if applicable.
         if (!$this->active('build')) {
-            $io->infoWithTime('Init vendor: ' . $tinedir . '/tine20/vendor');
+            $io->infoWithTime('Init vendor: ' . $tinedir . '/vendor');
             passthru('./console src:composer install');
 
             if (in_array('compose/webpack.yml', $this->composeFiles)
                 && !is_dir($tinedir . '/Tinebase/js/node_modules')
             ) {
-                $io->infoWithTime('Init node_modules: ' . $tinedir . '/tine20/Tinebase/js/node_modules');
-                passthru('./console src:npminstall');
+                $io->infoWithTime('Init node_modules: ' . $tinedir . '/Tinebase/js/node_modules');
+                passthru('./console src:npminstall', $npminstallResultCode);
+                if (0 !== $npminstallResultCode) {
+                    $io->error("src:npminstall failed with code $npminstallResultCode, not starting containers");
+                    return $npminstallResultCode;
+                }
             }
 
-            if (!is_dir($tinedir . '/images/icon-set') || count(glob($tinedir . '/images/icon-set' . '/*')) === 0) {
-                $io->infoWithTime('Init icon-set: ' . $tinedir . '/tine20/images/icon-set');
-                passthru(self::git($this->srcDir) . 'submodule init && ' . self::git($this->srcDir) . 'submodule update');
-            }
+            $this->ensureIconSet($io);
         }
 
         if (!empty($inputContainer)) {
@@ -90,8 +91,14 @@ class DockerUpCommand extends DockerCommand
         $io->infoWithTime("Running: $cmd");
         passthru($cmd, $result_code);
 
+        // in the foreground (without -d) up only returns when the containers are stopped
+        if (0 === $result_code && $input->getOption('detached') === true) {
+            $this->prepareAiLogs($io);
+        }
+
         return $result_code;
     }
+
 
 
     protected function set_up_tls_certs(ConsoleStyle $io) {
