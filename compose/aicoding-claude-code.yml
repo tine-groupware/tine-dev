@@ -55,6 +55,8 @@ services:
       # of Claude Code ($CLAUDE_CONFIG_DIR/skills)
       - ./configs/aicoding/skills:/home/node/.claude/skills:ro
       - ./configs/claude/mcp.json:/etc/tine-dev/claude-mcp.json:ro
+      # logs of the web container (tine log as JSON, PHP errors), see compose/aicoding.yml
+      - tine20-logs:/workspace/logs:ro
     networks:
       - internal_network
       - external_network

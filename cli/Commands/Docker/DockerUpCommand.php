@@ -90,6 +90,11 @@ class DockerUpCommand extends DockerCommand
         $io->infoWithTime("Running: $cmd");
         passthru($cmd, $result_code);
 
+        // in the foreground (without -d) up only returns when the containers are stopped
+        if (0 === $result_code && $input->getOption('detached') === true) {
+            $this->prepareAiLogs($io);
+        }
+
         return $result_code;
     }
 

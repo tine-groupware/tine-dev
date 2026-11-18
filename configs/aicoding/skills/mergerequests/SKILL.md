@@ -100,3 +100,5 @@ with the MR specifics:
 * Never test with fake credentials against the real gitlab (failed logins can get the IP blocked); use a local
   fake remote.
 * `exec` / `change_branch` / `tine_console` can run for minutes - wait for the result, don't start them twice.
+* Server errors (page errors, broken JSON responses): read `/workspace/logs` (tine log as JSON, complete PHP
+  errors), see "Read the logs" in skill `coding`.

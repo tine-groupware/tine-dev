@@ -67,6 +67,19 @@ services:
       # git fetch/push (tools fetch, push)
       - external_network
 
+  # logs for the clients (read-only at /workspace/logs, see the client modules): tine20.jsonl (tine log as JSON,
+  # configs/aicoding/logger.inc.php) and php_errors.log (complete PHP errors of web requests). Emptied by
+  # docker:up -d and docker:webpackrestart (DockerCommand::prepareAiLogs).
+  web:
+    volumes:
+      - ./configs/aicoding/logger.inc.php:/etc/tine20/conf.d/aicoding-logger.inc.php:ro
+      - ./configs/aicoding/php-fpm-errors.ini:/etc/php/default/fpm/conf.d/60-aicoding-errors.ini:ro
+      # the image's /var/log/tine20 (owner tine20): a new volume takes over owner and content
+      - tine20-logs:/var/log/tine20
+
+volumes:
+  tine20-logs:
+
 networks:
   # only AI coding clients + devctl belong here
   devctl-net:

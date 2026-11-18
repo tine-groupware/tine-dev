@@ -54,6 +54,10 @@ class DockerWebpackRestartCommand extends DockerCommand
             sleep(1);
         }
 
-        return $tries < 20 ? 0 : 1;
+        if ($tries >= 20) {
+            return 1;
+        }
+        $this->prepareAiLogs($io);
+        return 0;
     }
 }

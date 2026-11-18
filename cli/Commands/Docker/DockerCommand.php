@@ -209,6 +209,24 @@ class DockerCommand extends BaseCommand
         return in_array($composeName, $this->composeNames);
     }
 
+    /**
+     * empties the logs for the AI coding clients (compose/aicoding.yml) after the web container was (re)started:
+     * they would grow without limit on log level DEBUG. Creates them as tine20: whoever creates a log file first
+     * owns it, and tine CLI commands run as root partly (tine20_install, exec), php-fpm runs as tine20.
+     */
+    public function prepareAiLogs(ConsoleStyle $io): void
+    {
+        if (!$this->active('aicoding')) {
+            return;
+        }
+        $files = '/var/log/tine20/tine20.jsonl /var/log/tine20/php_errors.log';
+        passthru($this->getComposeString() . ' exec -T web sh -c '
+            . escapeshellarg("for f in $files; do : > \$f && chown tine20:tine20 \$f; done"), $result_code);
+        if (0 !== $result_code) {
+            $io->warning('could not prepare the logs for the AI coding clients (web not running?)');
+        }
+    }
+
     public function initCompose(ConsoleStyle $io)
     {
         $conf = $this->getComposeConf();

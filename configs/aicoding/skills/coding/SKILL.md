@@ -39,6 +39,31 @@ Always in this order, each step finished before the next:
 5. **Demo data** (if asked for, or for manual tests / e2e tests): `tine_console` `demodata`.
 6. Tell the user what was done and which branch the checkout and the stack are on now.
 
+## Read the logs
+
+The logs of the web container are mounted read-only at `/workspace/logs` (compose/aicoding.yml). Both files are
+emptied when the web container is (re)started (devctl `up`, `change_branch`):
+
+* `tine20.jsonl` - the tine log on DEBUG, one JSON object per line: `message`, `priority` (3 ERR, 4 WARN,
+  5 NOTICE, 6 INFO, 7 DEBUG), `priorityName`, `user`, `request_id` (6 chars, one per request), `transaction_id`,
+  `timestamp`, `logruntime`. Exceptions with their traces are in `message`.
+* `php_errors.log` - PHP errors of web requests (php-fpm), complete. In docker logs nginx cuts them after ~1 KB
+  (e.g. the stack trace of a fatal error). PHP errors of CLI commands (`tine_console`) are in their output.
+
+Find the error, then read its whole request, e.g. with php (no jq in the client):
+
+```bash
+# errors and warnings of the last runs
+php -r '$f = fopen("/workspace/logs/tine20.jsonl", "r"); while (($l = fgets($f)) !== false) { $e = json_decode($l, true);
+  if ($e && $e["priority"] <= 4) echo $e["timestamp"], " ", $e["request_id"], " ", $e["priorityName"], " ", substr($e["message"], 0, 300), "\n"; }'
+# everything of one request
+grep '"request_id":"e30324"' /workspace/logs/tine20.jsonl | php -r 'while (($l = fgets(STDIN)) !== false) echo json_decode($l, true)["message"], "\n";'
+tail -50 /workspace/logs/php_errors.log
+```
+
+The file grows fast on DEBUG (a `tine_console install` writes ~20 MB): filter, don't `cat` it. The devctl tool
+`logs` (docker logs) is for the other containers (webpack, db, e2etests) and the nginx access log of web.
+
 ## Fix a bug / implement something
 
 1. Switch to the target branch (above): the oldest supported major branch the fix belongs into (e.g. `2025.11`) -

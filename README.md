@@ -709,7 +709,7 @@ reachable in the internal network `devctl-net`):
 | `restart_webpack` | `./console docker:webpackrestart`                                                    |
 | `exec`            | `sh -c <command>` in `web` or `e2etests` (tests, tine cli, ...)                      |
 | `tine_console`    | `./console tine:<install\|demodata\|clearcache\|test\|...> [args]`                    |
-| `ps`, `logs`      | container status, log tail of a service                                              |
+| `ps`, `logs`      | container status, log tail of a service (tine/PHP logs of web: `/workspace/logs`, below) |
 | `push`            | push the checked out branch to `origin`, only `pu/<DEVCTL_DEVELOPER>/...`, optionally force with lease |
 | `fetch`           | fetch a branch (any, e.g. of a merge request to review or build on) or the whole remote |
 
@@ -766,6 +766,13 @@ remote for that, ssh remotes are not supported. Merge requests are opened via gi
 read-only into the clients (Claude Code: `~/.claude/skills`), as the clients don't see tine-dev. Skills about the
 tine code itself belong into the tine repo (`.agents/skills`), skills for working on tine-dev into
 `.agents/skills` here.
+
+**Logs for the clients:** the `aicoding` module adds a second tine log writer (`configs/aicoding/logger.inc.php`,
+JSON, DEBUG) and writes PHP errors of web requests to a file (`configs/aicoding/php-fpm-errors.ini`; nginx cuts
+them after ~1 KB in docker logs, and they are no longer in docker logs of web then). Both live in the volume
+`tine20-logs` (`/var/log/tine20` in web), the clients get it read-only at `/workspace/logs`. `docker:up -d` and
+`docker:webpackrestart` empty them (they grow by MBs per minute on DEBUG). The normal log in docker logs is unchanged.
+After enabling it: `./console docker:up -d` (web) and `docker compose up -d claude-code` (the client).
 
 **Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
 that make git run code — `config` (fsmonitor, filters, aliases, ...), `hooks`, `modules`, `worktrees`
