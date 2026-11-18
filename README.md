@@ -738,21 +738,26 @@ DEVCTL_DEVELOPER=cw           # your short name: pushes only pu/cw/...
 # ANTHROPIC_API_KEY=...
 ~~~
 
-Create both gitlab tokens as **personal access tokens** in gitlab (avatar → Preferences → Access tokens),
-preferably *fine-grained* tokens limited to the projects you work on (e.g. `tine20/tine20`), with an expiry date.
-Keep them separate: the AI client uses `GITLAB_ACCESS_TOKEN` through gitlab-mcp for every request,
-`GITLAB_PUSH_TOKEN` is used by devctl for git fetch and push only.
+Create both gitlab tokens as *fine-grained* **personal access tokens**, limited to the projects you work on with the
+client (e.g. `tine20/tine20` and `tine20/docker`), with an expiry date. Keep them separate: the AI client uses
+`GITLAB_ACCESS_TOKEN` through gitlab-mcp for every request, `GITLAB_PUSH_TOKEN` is used by devctl for git fetch and
+push only.
 
-| token | permissions (fine-grained) | not |
-|-------|----------------------------|-----|
-| `GITLAB_ACCESS_TOKEN` | Repository → Merge Request: Create, Read, Update (read MRs, notes, threads, resolve threads, new MRs); CI/CD → Pipeline: Read (pipelines, their jobs), CI/CD → Job: Read (job logs, failing CI of an MR), CI/CD → Job artifact: Read (e.g. test reports, screenshots) | repository write, delete, admin |
-| `GITLAB_PUSH_TOKEN` | Repository: Read and Write (git fetch, git push), Merge Request: Read | everything else |
+**Quick way:** log in to gitlab, open the browser developer console on a gitlab page, paste
+`configs/aicoding/gitlab-create-tokens.js` and press Enter. It creates both tokens (180 days; projects and
+permissions are at the top of the file) with the GraphQL mutation `personalAccessTokenCreate` (gitlab >= 18.7,
+experiment status there) and prints the `.env` lines. By hand: avatar → Preferences → Access tokens.
 
-Limit the tokens to all projects you work on with the client (e.g. `tine20/tine20` and `tine20/docker`).
-The permission names of fine-grained tokens may differ between gitlab versions; gitlab names a missing permission
-in its 403 answer (e.g. `insufficient_granular_scope` ... `[Job: Read]` when reading a job log without it). Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scopes `read_repository` and `write_repository`, gitlab-mcp
-`api` (which allows much more - prefer fine-grained tokens). After changing a token: `docker compose up -d
-gitlab-mcp` (gitlab-mcp is not recreated by devctl) resp. `./console docker:up -d` (devctl).
+| token | permissions (fine-grained, API name) | not |
+|-------|--------------------------------------|-----|
+| `GITLAB_ACCESS_TOKEN` | Project: Read (`read_project`); Code, Repository: Read (`read_code`, `read_repository`: file contents); Merge Request: Create, Read, Update (MRs, threads, resolve threads, new MRs); Work Item: Create, Read (`create_work_item`: plain MR comments, `create_merge_request_note` - threads work without it); Pipeline: Read (pipelines, their jobs); Job: Read (job logs); Job Artifact: Read (e.g. test reports, screenshots) | repository write, delete, admin |
+| `GITLAB_PUSH_TOKEN` | Project: Read; Code: Read, Push (`read_code`, `push_code`: git fetch and push); Repository: Read; Merge Request: Read | everything else |
+
+The permission names may differ between gitlab versions (the list: GraphQL query `accessTokenPermissions`); gitlab
+names a missing permission in its 403 answer (e.g. `insufficient_granular_scope` ... `[Job: Read]` when reading a
+job log without it). Without fine-grained tokens: `GITLAB_PUSH_TOKEN` needs the scopes `read_repository` and
+`write_repository`, gitlab-mcp `api` (which allows much more - prefer fine-grained tokens). After changing a token:
+`docker compose up -d gitlab-mcp` (gitlab-mcp is not recreated by devctl) resp. `./console docker:up -d` (devctl).
 
 **Push:** the token stays in devctl, the client never sees it (git gets it via askpass from the environment).
 devctl pushes the checked out branch `pu/<DEVCTL_DEVELOPER>/...` to `DEVCTL_GIT_REMOTE`, only via https and only if

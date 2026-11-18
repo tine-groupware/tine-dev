@@ -21,7 +21,8 @@ In the tine-dev AI coding setup the client has no docker access and no git crede
   a 403 "Request forbidden by administrative rules" means: not reachable, tell the user, don't retry.
   A 403 `insufficient_granular_scope` names the permission the token of gitlab-mcp lacks (e.g. `[Pipeline: Read]`
   for the jobs of a pipeline): tell the user to add it to `GITLAB_ACCESS_TOKEN` (tine-dev README "Settings
-  and tokens") or to send the job log, don't retry.
+  and tokens") or to send the job log, don't retry. A plain MR comment (`create_merge_request_note`) needs
+  `[Work Item: Create]` - without it, post the same text as a thread (`create_merge_request_thread`).
 * **devctl**: `fetch`, `push`, `change_branch`, `tine_console`, `exec` (web, e2etests), `up`, `restart_webpack`,
   `ps`, `logs`.
 
