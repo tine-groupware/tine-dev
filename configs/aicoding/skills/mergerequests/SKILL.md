@@ -8,7 +8,7 @@ description: >-
 license: AGPL-3.0
 metadata:
   author: Cornelius Weiss with Claude Code
-  version: "1.1"
+  version: "1.2"
 ---
 
 # Merge requests
@@ -78,7 +78,8 @@ with the MR specifics:
    `demodata` if tests need demo data. reinstall drops the data of that table prefix - fine for MR branches, ask
    before doing it on the user's own working branch.
 5. **Run tests:** PHPUnit via `tine_console` `test` (e.g. `args: ["Admin_Controller_SchedulerTaskTest"]`), e2e tests
-   via `exec` in `e2etests` (`npm test src/test/...`), see the skills `phpunit` and `e2etests` of the tine repo. For a quick check of
+   via `exec` in `e2etests` (`npm test src/test/...`), see the skills `phpunit` and `e2etests` of the tine repo. Only the
+   tests the change needs, the full suites run in the CI (skill `coding`, "Which tests to run"). For a quick check of
    a JS fix a small puppeteer script in `tests/e2etests` run via `exec` works too (e.g. on the login page, which loads
    ExtJS without login) - never commit it.
 6. **Commit:** conventional commits (see AGENTS.md of the tine repo: `fix(App): ...`), explain the why in the body.

@@ -8,7 +8,7 @@ description: >-
 license: AGPL-3.0
 metadata:
   author: Cornelius Weiss with Claude Code
-  version: "1.1"
+  version: "1.2"
 ---
 
 # Coding in the tine-dev AI coding setup
@@ -72,7 +72,7 @@ The file grows fast on DEBUG (a `tine_console install` writes ~20 MB): filter, d
 2. Create an own branch on top of it: `git checkout --no-track -b pu/<you>/<topic> <target branch>`.
 3. Reproduce, find the cause, fix, verify - see the sections below. Read AGENTS.md of the tine repo for conventions.
 4. Tests: PHPUnit via `tine_console` `test`, e2e via `exec` in `e2etests` (skills `phpunit`, `e2etests` of the tine
-   repo). Add tests for the fix where the repo has them.
+   repo). Add tests for the fix where the repo has them. Run them targeted - see "Which tests to run".
 5. Commit (conventional commits, why in the body) - only when the user asks for it.
 6. Push: devctl `push` (only own branches `pu/<you>/...`). Merge request: skill `mergerequests`, "Create a merge
    request" (target = the target branch, assign it to the user). Authentication errors of `fetch` / `push` or
@@ -135,5 +135,21 @@ Reproduce before fixing - and say in the end whether a finding was reproduced or
 * All places that use the changed code: other views / dialogs / apps (`git grep` the class / function), edge cases
   (empty values, many values, narrow / long content, other users / grants), and that nothing else moved (e.g.
   elements without the feature look as before).
-* Tests of the repo for the area (e2e / PHPUnit), with a connected browser and headless where it matters.
+* Tests of the repo for the area (e2e / PHPUnit), with a connected browser and headless where it matters - targeted,
+  see below.
+
+## Which tests to run
+
+The CI runs the full suites on every MR pipeline. Locally run only what the change needs:
+
+* the new / changed tests (`--filter <testMethod>`), and the tests of the code you changed directly (e.g. the test
+  methods of the class / feature, an e2e test of the dialog)
+* not whole test classes, app suites or all e2e tests for a simple fix / feature - they take minutes, and failures
+  that come from the environment (e.g. eDocument validation, external services) cost time without telling anything
+  about the change
+* broader runs only when the task needs it (changes in shared code like Tinebase, the filesystem, the controller /
+  model base classes, update scripts touching many records, a refactoring) or the user asks for it
+* a test that fails: check against the target branch before blaming the change (e.g. `git stash`, run that one test,
+  `git stash pop`), and say in the MR which local failures exist without the change
+* after pushing: the pipeline is the full check - if the user asks, read its result (skill `mergerequests`)
 * Clean up: temporary scripts, screenshots, test data.
