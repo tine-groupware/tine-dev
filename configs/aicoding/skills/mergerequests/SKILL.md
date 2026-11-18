@@ -1,13 +1,14 @@
 ---
 name: mergerequests
 description: >-
-  Review merge requests, work on them (fixes, follow-ups) and answer review threads in the tine-dev AI coding
-  setup (gitlab-mcp + devctl). Use when the user mentions a merge request / MR (e.g. "MR 9568", "!9568"), asks for
-  a review, review comments, or code changes / tests on the code of a merge request.
+  Create merge requests (assigned to the user), review merge requests, work on them (fixes, follow-ups) and answer
+  review threads in the tine-dev AI coding setup (gitlab-mcp + devctl). Use when the user mentions a merge request /
+  MR (e.g. "MR 9568", "!9568"), asks to create / open an MR, for a review, review comments, or code changes / tests
+  on the code of a merge request.
 license: AGPL-3.0
 metadata:
   author: Cornelius Weiss with Claude Code
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Merge requests
@@ -82,17 +83,32 @@ with the MR specifics:
    ExtJS without login) - never commit it.
 6. **Commit:** conventional commits (see AGENTS.md of the tine repo: `fix(App): ...`), explain the why in the body.
 7. **Push:** devctl `push` (only own branches `pu/<you>/...`, `force: true` = force with lease after amend/rebase).
-8. **MR:** gitlab-mcp `create_merge_request`. For a fix on top of someone else's MR: target branch = their source
-   branch, and link it in the review thread of the original MR.
-   * **Changes under `.agents/`** (skills of the tine repo): the CI job `prevent_dot_agents_changes` fails every MR
-     pipeline that touches them - they are meant to be changed in the oldest major branch that has them and merged
-     upwards. If the file exists only from the target branch on (e.g. `.agents/skills/e2etests` from 2026.11), set
-     the label `allow-failure-prevent-dot-agents-changes` already in `create_merge_request` (`labels`) and mention
-     why in the description. Otherwise ask the user whether the change belongs into an older major branch.
-   * Labels count from the next pipeline on: after adding one later, a retry is not enough, a new pipeline is
-     needed (e.g. push the branch rebased onto the current target branch).
+8. **MR:** see "Create a merge request" below. For a fix on top of someone else's MR: target branch = their
+   source branch, and link it in the review thread of the original MR.
 9. **Afterwards:** tell the user which branch the checkout and the stack are on now; offer to switch back
    (checkout + `change_branch`).
+
+## Create a merge request
+
+For every new MR (fixes, features, follow-ups - also from skill `coding`), only after the user asked for it:
+
+1. **Push first** (devctl `push`), then gitlab-mcp `create_merge_request`: `target_branch` = the target branch,
+   `title` = the subject of the (main) commit, `remove_source_branch: true`.
+2. **Description in English:** what was wrong / is new, the cause (and which commit introduced it, if known), the
+   fix, what was tested (reproduced or only derived from the code, before / after), what is known but not done. End
+   with "🤖 Generated with [Claude Code](https://claude.com/claude-code)".
+3. **Assign it to the user:** the gitlab token belongs to the user, so the user is the author of the MR - set
+   `update_merge_request` with `assignee_ids: [<author.id from the create_merge_request result>]` (or pass
+   `assignee_ids` already when creating, if the user's gitlab id is known from a former MR). Never assign other
+   people and don't set reviewers unless the user names them.
+4. **Changes under `.agents/`** (skills of the tine repo): the CI job `prevent_dot_agents_changes` fails every MR
+   pipeline that touches them - they are meant to be changed in the oldest major branch that has them and merged
+   upwards. If the file exists only from the target branch on (e.g. `.agents/skills/e2etests` from 2026.11), set
+   the label `allow-failure-prevent-dot-agents-changes` already in `create_merge_request` (`labels`) and mention
+   why in the description. Otherwise ask the user whether the change belongs into an older major branch. Labels
+   count from the next pipeline on: after adding one later, a retry is not enough, a new pipeline is needed (e.g.
+   push the branch rebased onto the current target branch).
+5. Tell the user the MR link (and later the pipeline result if asked).
 
 ## Review guidelines
 
