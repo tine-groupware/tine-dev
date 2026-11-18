@@ -1,13 +1,14 @@
 ---
 name: mergerequests
 description: >-
-  Review merge requests, work on them (fixes, follow-ups) and answer review threads in the tine-dev AI coding
-  setup (gitlab-mcp + devctl). Use when the user mentions a merge request / MR (e.g. "MR 9568", "!9568"), asks for
-  a review, review comments, or code changes / tests on the code of a merge request.
+  Create merge requests (assigned to the user), review merge requests, work on them (fixes, follow-ups) and answer
+  review threads in the tine-dev AI coding setup (gitlab-mcp + devctl). Use when the user mentions a merge request /
+  MR (e.g. "MR 9568", "!9568"), asks to create / open an MR, for a review, review comments, or code changes / tests
+  on the code of a merge request.
 license: AGPL-3.0
 metadata:
   author: Cornelius Weiss with Claude Code
-  version: "1.0"
+  version: "1.2"
 ---
 
 # Merge requests
@@ -29,16 +30,16 @@ In the tine-dev AI coding setup the client has no docker access and no git crede
 
 The user creates the tokens, the client never sees or handles them. When gitlab-mcp answers 401 (no / invalid /
 expired token) or 403 `insufficient_granular_scope`, or devctl `fetch` / `push` fail with an authentication error
-(`GITLAB_PUSH_TOKEN`), don't retry. Tell the user what failed and give them the token script to copy:
+(`GITLAB_GIT_TOKEN`), don't retry. Tell the user what failed and give them the token script to copy:
 
 1. Print the content of `gitlab-create-tokens.js` (next to this file, `~/.claude/skills/mergerequests/`) in a code
    block. If a permission is missing that the script doesn't request yet, add it to the list in your copy and say
    so (the permission names: GraphQL query `accessTokenPermissions`, e.g. `create_work_item`).
 2. Instructions: log in to gitlab in the browser, open the developer console on any gitlab page, paste the script,
-   Enter. It creates `GITLAB_ACCESS_TOKEN` and `GITLAB_PUSH_TOKEN` and prints the lines for the `.env` of tine-dev.
+   Enter. It creates `GITLAB_ACCESS_TOKEN` and `GITLAB_GIT_TOKEN` and prints the lines for the `.env` of tine-dev.
 3. Then: put them into `.env` of tine-dev and recreate on the host: `docker compose up -d gitlab-mcp` (gitlab-mcp)
-   resp. `./console docker:up -d` (devctl, push token). New tokens don't replace old ones - revoke those in gitlab
-   (avatar → Preferences → Access tokens).
+   resp. `docker compose up -d devctl` (git token; `./console docker:up` skips both). New tokens don't replace old
+   ones - revoke those in gitlab (avatar → Preferences → Access tokens).
 
 Never ask the user to paste a token into the chat.
 
@@ -77,22 +78,38 @@ with the MR specifics:
    `demodata` if tests need demo data. reinstall drops the data of that table prefix - fine for MR branches, ask
    before doing it on the user's own working branch.
 5. **Run tests:** PHPUnit via `tine_console` `test` (e.g. `args: ["Admin_Controller_SchedulerTaskTest"]`), e2e tests
-   via `exec` in `e2etests` (`npm test src/test/...`), see the skills `phpunit` and `e2etests` of the tine repo. For a quick check of
+   via `exec` in `e2etests` (`npm test src/test/...`), see the skills `phpunit` and `e2etests` of the tine repo. Only the
+   tests the change needs, the full suites run in the CI (skill `coding`, "Which tests to run"). For a quick check of
    a JS fix a small puppeteer script in `tests/e2etests` run via `exec` works too (e.g. on the login page, which loads
    ExtJS without login) - never commit it.
 6. **Commit:** conventional commits (see AGENTS.md of the tine repo: `fix(App): ...`), explain the why in the body.
 7. **Push:** devctl `push` (only own branches `pu/<you>/...`, `force: true` = force with lease after amend/rebase).
-8. **MR:** gitlab-mcp `create_merge_request`. For a fix on top of someone else's MR: target branch = their source
-   branch, and link it in the review thread of the original MR.
-   * **Changes under `.agents/`** (skills of the tine repo): the CI job `prevent_dot_agents_changes` fails every MR
-     pipeline that touches them - they are meant to be changed in the oldest major branch that has them and merged
-     upwards. If the file exists only from the target branch on (e.g. `.agents/skills/e2etests` from 2026.11), set
-     the label `allow-failure-prevent-dot-agents-changes` already in `create_merge_request` (`labels`) and mention
-     why in the description. Otherwise ask the user whether the change belongs into an older major branch.
-   * Labels count from the next pipeline on: after adding one later, a retry is not enough, a new pipeline is
-     needed (e.g. push the branch rebased onto the current target branch).
+8. **MR:** see "Create a merge request" below. For a fix on top of someone else's MR: target branch = their
+   source branch, and link it in the review thread of the original MR.
 9. **Afterwards:** tell the user which branch the checkout and the stack are on now; offer to switch back
    (checkout + `change_branch`).
+
+## Create a merge request
+
+For every new MR (fixes, features, follow-ups - also from skill `coding`), only after the user asked for it:
+
+1. **Push first** (devctl `push`), then gitlab-mcp `create_merge_request`: `target_branch` = the target branch,
+   `title` = the subject of the (main) commit, `remove_source_branch: true`.
+2. **Description in English:** what was wrong / is new, the cause (and which commit introduced it, if known), the
+   fix, what was tested (reproduced or only derived from the code, before / after), what is known but not done. End
+   with "🤖 Generated with [Claude Code](https://claude.com/claude-code)".
+3. **Assign it to the user:** the gitlab token belongs to the user, so the user is the author of the MR - set
+   `update_merge_request` with `assignee_ids: [<author.id from the create_merge_request result>]` (or pass
+   `assignee_ids` already when creating, if the user's gitlab id is known from a former MR). Never assign other
+   people and don't set reviewers unless the user names them.
+4. **Changes under `.agents/`** (skills of the tine repo): the CI job `prevent_dot_agents_changes` fails every MR
+   pipeline that touches them - they are meant to be changed in the oldest major branch that has them and merged
+   upwards. If the file exists only from the target branch on (e.g. `.agents/skills/e2etests` from 2026.11), set
+   the label `allow-failure-prevent-dot-agents-changes` already in `create_merge_request` (`labels`) and mention
+   why in the description. Otherwise ask the user whether the change belongs into an older major branch. Labels
+   count from the next pipeline on: after adding one later, a retry is not enough, a new pipeline is needed (e.g.
+   push the branch rebased onto the current target branch).
+5. Tell the user the MR link (and later the pipeline result if asked).
 
 ## Review guidelines
 

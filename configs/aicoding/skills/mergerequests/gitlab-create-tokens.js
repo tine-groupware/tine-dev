@@ -10,12 +10,12 @@
     const days = 180;
     const tokens = {
         // gitlab-mcp: MRs, review threads and notes, pipelines, job logs and artifacts, file contents
-        GITLAB_ACCESS_TOKEN: ['read_project', 'read_code', 'read_repository',
+        GITLAB_ACCESS_TOKEN: ['read_project', 'read_code', 'read_repository', 'read_commit',
             'read_merge_request', 'create_merge_request', 'update_merge_request',
             'read_work_item', 'create_work_item',
             'read_pipeline', 'read_job', 'read_job_artifact'],
-        // devctl tools fetch and push (git over https)
-        GITLAB_PUSH_TOKEN: ['read_project', 'read_code', 'read_repository', 'push_code', 'read_merge_request'],
+        // git over https: devctl tools fetch and push (download_code: clone / fetch / git archive)
+        GITLAB_GIT_TOKEN: ['read_project', 'read_code', 'download_code', 'read_repository', 'push_code', 'read_merge_request'],
     };
 
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;

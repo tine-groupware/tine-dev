@@ -31,7 +31,7 @@ services:
 
   devctl:
     # dockerfiles/devctl, built by the CI (tag devctl-image-<version>)
-    image: ghcr.io/tine-groupware/tine-dev/devctl:1.2.0
+    image: ghcr.io/tine-groupware/tine-dev/devctl:1.3.0
     container_name: devctl
     restart: unless-stopped
     environment:
@@ -46,9 +46,9 @@ services:
       TINE_DEV_ARM64: "${TINE_DEV_ARM64}"
       HOME: "${HOMEDIR}"
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root}"
-      # tool push (optional): token with write access to the tine repo, pushes only pu/<DEVCTL_DEVELOPER>/...
+      # tools fetch / push (optional): git token of the tine repo, pushes only pu/<DEVCTL_DEVELOPER>/...
       # to DEVCTL_GIT_REMOTE, if its push url starts with DEVCTL_GIT_URL_PREFIX. The client never sees the token.
-      GITLAB_PUSH_TOKEN: "${GITLAB_PUSH_TOKEN:-}"
+      GITLAB_GIT_TOKEN: "${GITLAB_GIT_TOKEN:-}"
       DEVCTL_DEVELOPER: "${DEVCTL_DEVELOPER:-}"
       DEVCTL_GIT_URL_PREFIX: "${DEVCTL_GIT_URL_PREFIX:-https://gitlab.metaways.net/}"
       DEVCTL_GIT_REMOTE: "${DEVCTL_GIT_REMOTE:-origin}"

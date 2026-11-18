@@ -2,15 +2,22 @@
 name: browser
 description: >-
   Use a real Chrome of the user from the tine-dev AI coding setup: watch / debug e2e tests in it (TEST_BROWSER_URL)
-  and inspect the tine UI. Use when the user wants to see a test or the UI in a browser, when the Claude in Chrome
-  tools are missing / not connected, or when the debug port of Chrome is needed.
+  and inspect the tine UI. Use when the user wants to see a test or the UI in their browser, when a bug depends on
+  their browser / OS, when the Claude in Chrome tools are missing / not connected, or when the debug port of Chrome
+  is needed. Not needed for reproducing / checking UI bugs in general - that runs headless (skill coding).
 license: AGPL-3.0
 metadata:
   author: Cornelius Weiss with Claude Code
-  version: "1.1"
+  version: "1.2"
 ---
 
 # Chrome of the user
+
+**When:** only if the user wants to watch (demo, debugging together) or asks for it, or the bug depends on their
+browser / OS (fonts, HiDPI, real focus / keyboard, file chooser, clipboard, it doesn't show up headless), or the
+Claude in Chrome extension is needed. Otherwise use a headless Chrome in the `e2etests` container (skill `coding`,
+"Reproduce a bug"; e2e tests run headless without `TEST_BROWSER_URL`): it doesn't take the focus on the user's
+desktop. When using the user's Chrome: no `bringToFront()`, and popups (edit dialogs) open windows on their desktop.
 
 The client runs in a container, the user's Chrome runs on the host. The client can't start it - tell the user the
 command (for their platform) when the debug port does not answer.
@@ -49,3 +56,16 @@ requests with a host name ("Host header is specified and is not an IP address or
   workflow with the Claude in Chrome extension: README "Debug in a Running Browser" and skill `e2etests` of the tine
   repo (from 2026.11).
 * the tine URL in that Chrome is `https://tine.local.tine-dev.de` (the host's name, not the docker network's).
+
+## Stack on a remote host
+
+chrome-proxy forwards to port 9222 of the docker host - with the stack on a remote host that is not the user's
+machine. The user's Chrome then needs two ssh tunnels (not tested, tell the user it's fiddly and prefer headless):
+
+* reverse, so the containers reach the debug port: e.g. `ssh -R <docker bridge ip of the remote>:9222:localhost:9222
+  <remote>` (binding to another address than localhost needs `GatewayPorts clientspecified` in the sshd config of
+  the remote; don't bind to `0.0.0.0` - the port would be open on the remote host)
+* forward, so the user's Chrome reaches tine: `tine.local.tine-dev.de` points to 127.0.0.1, e.g.
+  `ssh -L 443:localhost:443 <remote>` (port 443 locally needs root) or another name / port for the remote
+
+Headless runs in the `e2etests` container and works on a remote host without any of this.
