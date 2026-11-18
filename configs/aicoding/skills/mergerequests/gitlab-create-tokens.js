@@ -44,7 +44,7 @@
         const {personalAccessTokenCreate: r} = await gql(`mutation($input: PersonalAccessTokenCreateInput!) {
             personalAccessTokenCreate(input: $input) { token errors } }`, {input: {
             name: `tine-dev ${name} ${new Date().toISOString().slice(0, 10)}`,
-            description: 'tine-dev AI coding setup (configs/aicoding/gitlab-create-tokens.js)',
+            description: 'tine-dev AI coding setup (configs/aicoding/skills/mergerequests/gitlab-create-tokens.js)',
             expiresAt,
             granularScopes: [{access: 'SELECTED_MEMBERSHIPS', resourceIds: ids, permissions}],
         }});

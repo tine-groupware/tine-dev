@@ -744,7 +744,7 @@ client (e.g. `tine20/tine20` and `tine20/docker`), with an expiry date. Keep the
 push only.
 
 **Quick way:** log in to gitlab, open the browser developer console on a gitlab page, paste
-`configs/aicoding/gitlab-create-tokens.js` and press Enter. It creates both tokens (180 days; projects and
+`configs/aicoding/skills/mergerequests/gitlab-create-tokens.js` and press Enter. It creates both tokens (180 days; projects and
 permissions are at the top of the file) with the GraphQL mutation `personalAccessTokenCreate` (gitlab >= 18.7,
 experiment status there) and prints the `.env` lines. By hand: avatar → Preferences → Access tokens.
 

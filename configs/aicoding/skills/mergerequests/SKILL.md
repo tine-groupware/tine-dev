@@ -20,11 +20,27 @@ In the tine-dev AI coding setup the client has no docker access and no git crede
   threads and replies, resolve threads, open MRs. Gitlab is only reachable from within the company network / VPN -
   a 403 "Request forbidden by administrative rules" means: not reachable, tell the user, don't retry.
   A 403 `insufficient_granular_scope` names the permission the token of gitlab-mcp lacks (e.g. `[Pipeline: Read]`
-  for the jobs of a pipeline): tell the user to add it to `GITLAB_ACCESS_TOKEN` (tine-dev README "Settings
-  and tokens") or to send the job log, don't retry. A plain MR comment (`create_merge_request_note`) needs
-  `[Work Item: Create]` - without it, post the same text as a thread (`create_merge_request_thread`).
+  for the jobs of a pipeline). A plain MR comment (`create_merge_request_note`) needs `[Work Item: Create]` -
+  without it, post the same text as a thread (`create_merge_request_thread`).
 * **devctl**: `fetch`, `push`, `change_branch`, `tine_console`, `exec` (web, e2etests), `up`, `restart_webpack`,
   `ps`, `logs`.
+
+### Missing or insufficient gitlab tokens
+
+The user creates the tokens, the client never sees or handles them. When gitlab-mcp answers 401 (no / invalid /
+expired token) or 403 `insufficient_granular_scope`, or devctl `fetch` / `push` fail with an authentication error
+(`GITLAB_PUSH_TOKEN`), don't retry. Tell the user what failed and give them the token script to copy:
+
+1. Print the content of `gitlab-create-tokens.js` (next to this file, `~/.claude/skills/mergerequests/`) in a code
+   block. If a permission is missing that the script doesn't request yet, add it to the list in your copy and say
+   so (the permission names: GraphQL query `accessTokenPermissions`, e.g. `create_work_item`).
+2. Instructions: log in to gitlab in the browser, open the developer console on any gitlab page, paste the script,
+   Enter. It creates `GITLAB_ACCESS_TOKEN` and `GITLAB_PUSH_TOKEN` and prints the lines for the `.env` of tine-dev.
+3. Then: put them into `.env` of tine-dev and recreate on the host: `docker compose up -d gitlab-mcp` (gitlab-mcp)
+   resp. `./console docker:up -d` (devctl, push token). New tokens don't replace old ones - revoke those in gitlab
+   (avatar → Preferences → Access tokens).
+
+Never ask the user to paste a token into the chat.
 
 The checkout is `/workspace/tine20`. Its `.git/config` and hooks are read-only for the client, so:
 

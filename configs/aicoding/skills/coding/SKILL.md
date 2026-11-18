@@ -75,4 +75,5 @@ The file grows fast on DEBUG (a `tine_console install` writes ~20 MB): filter, d
    repo). Add tests for the fix where the repo has them.
 5. Commit (conventional commits, why in the body) - only when the user asks for it.
 6. Push: devctl `push` (only own branches `pu/<you>/...`). Merge request: gitlab-mcp `create_merge_request`,
-   target = the target branch, see skill `mergerequests`.
+   target = the target branch, see skill `mergerequests`. Authentication errors of `fetch` / `push` or gitlab-mcp:
+   skill `mergerequests`, "Missing or insufficient gitlab tokens" (gives the user a script to create the tokens).
