@@ -3,7 +3,7 @@ services:
   # create element web repo link: ln -s /path/to/element-web-repo element-web
   # yarn install first: docker compose -f docker-compose.yml -f compose/matrix-element-dev.yml run element-integration yarn install
   element-integration:
-    image: ghcr.io/tine-groupware/tine-dev/node-element:24
+    image: ghcr.io/tine-groupware/tine-dev/node-element:24.22.3-mw1
     volumes:
       - ./element-web:/app/
       - ./configs/matrix/element-config.json:/app/config.json
