@@ -629,7 +629,7 @@ This is our git tag schema for docker images. It needs to be followed other wise
 `<image name>-image-<app version>[-mw<release counter>][-<extra eg. rc>]`
 
 image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). eg.:
-* docker
+* docker (helper image of the tine CI, still tagged with the old `-0mw1` - move it to `-mw<n>` when it is rebuilt)
 * ldap
 * node
 * node-element
