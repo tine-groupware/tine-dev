@@ -76,7 +76,18 @@ the checked out branch: if it doesn't have them yet, read them from the newest b
 3. Reproduce, find the cause, fix, verify - see the sections below.
 4. Tests: PHPUnit via `tine_console` `test`, e2e via `exec` in `e2etests` (skills `phpunit`, `e2etests` of the tine
    repo) - targeted, see skill `contributing`, "Which tests to run".
-5. Commit - only when the user asks for it.
+5. Commit - only when the user asks for it. The client has no git identity and `.git/config` is read-only: pass the
+   user's name / e-mail (ask once, keep them in memory) with every commit, best via a shell function - a string
+   variable breaks on the space in the name:
+   ```bash
+   G() { git -c safe.directory='*' -c user.name='<name>' -c user.email=<email> -c core.hooksPath=/dev/null "$@"; }
+   G add <files> && G commit -F - <<'EOF'
+   ...
+   EOF
+   ```
+   A failed commit ("Author identity unknown") leaves the files staged - check `git status` before retrying, so
+   the next commit doesn't take more than intended. If tine-dev is mounted into the client (local, uncommitted
+   line in `compose/aicoding-claude-code.yml`): never commit that line.
 6. Push: devctl `push` (only own branches `pu/<you>/...`). Merge request: skill `mergerequests`. Authentication
    errors of `fetch` / `push` or gitlab-mcp: skill `mergerequests`, "Missing or insufficient gitlab tokens".
 
