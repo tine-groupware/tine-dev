@@ -111,6 +111,27 @@ For every new MR (fixes, features, follow-ups - also from skill `coding`), only 
    push the branch rebased onto the current target branch).
 5. Tell the user the MR link (and later the pipeline result if asked).
 
+## Failed pipeline
+
+When the pipeline of an MR failed:
+
+1. **Rebase first:** fetch the source and the target branch (devctl `fetch`), rebase the branch onto
+   `origin/<target branch>` and push it (`force: true`) - that starts a new pipeline on the current target branch.
+   Failures already fixed on the target branch (or caused by it and fixed meanwhile) are gone then. Only own
+   branches; for an MR of someone else tell the user instead. A rebase that stops on a file the MR changes although
+   `git status` shows no local changes: `git update-index --refresh`, then `git rebase --continue` (stale index
+   stat on the mount) - and compare the rebased patch with the original (`diff <(git show <old>) <(git show HEAD)`).
+2. **Find the failing test:** `list_pipeline_jobs` (`scope: failed`), the summary at the end of the job log
+   (`get_pipeline_job_output`, offset counts from the end, "Summary of all failing tests") or
+   `get_pipeline_test_report` (failed test cases of all jobs).
+3. **Related or random?** A failure in code the MR doesn't touch, which also fails or passes on other pipelines of
+   the target branch with the same code, is a random fail (flaky test or race in the code).
+4. **Random fails are fixed, not retried:** find the cause (race in the test: fixed sleeps, clicks before a load /
+   mask finished, waiting for the wrong thing; or a race in the code) and fix it on an own branch of the oldest
+   major branch that has the test (it is merged upwards), with its own MR - not in the MR that happened to hit it.
+   Reproduce the race if possible (e.g. delay the request in a puppeteer script via request interception) and show
+   it before / after. Mention the fix MR in the original MR.
+
 ## Review guidelines
 
 * Write reviews (threads, summary) in English - not all developers speak German, and gitlab doesn't tell the
