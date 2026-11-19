@@ -8,7 +8,7 @@ description: >-
 license: AGPL-3.0
 metadata:
   author: Cornelius Weiss with Claude Code
-  version: "1.2"
+  version: "1.3"
 ---
 
 # Coding in the tine-dev AI coding setup
@@ -66,17 +66,30 @@ The file grows fast on DEBUG (a `tine_console install` writes ~20 MB): filter, d
 
 ## Fix a bug / implement something
 
-1. Find out which branches have the bug (ask the user if unclear; a feature may exist only on `main`, e.g.
-   `git log origin/2026.11..origin/main -S<symbol>`). Then switch to the target branch (above): the oldest supported
-   major branch the fix belongs into (e.g. `2025.11`) - it is merged forward into the newer ones.
+The project conventions - target branch, which tests to run locally, commit, merge request, failed pipeline - are
+in the skill `contributing` of the tine repo (`.agents/skills/contributing`, AGENTS.md). The repo skills come from
+the checked out branch: if it doesn't have them yet, read them from the newest branch
+(`git show origin/main:.agents/skills/contributing/SKILL.md`). Here only the steps with the tools of this setup:
+
+1. Determine the target branch (skill `contributing`), switch to it (above).
 2. Create an own branch on top of it: `git checkout --no-track -b pu/<you>/<topic> <target branch>`.
-3. Reproduce, find the cause, fix, verify - see the sections below. Read AGENTS.md of the tine repo for conventions.
+3. Reproduce, find the cause, fix, verify - see the sections below.
 4. Tests: PHPUnit via `tine_console` `test`, e2e via `exec` in `e2etests` (skills `phpunit`, `e2etests` of the tine
-   repo). Add tests for the fix where the repo has them. Run them targeted - see "Which tests to run".
-5. Commit (conventional commits, why in the body) - only when the user asks for it.
-6. Push: devctl `push` (only own branches `pu/<you>/...`). Merge request: skill `mergerequests`, "Create a merge
-   request" (target = the target branch, assign it to the user). Authentication errors of `fetch` / `push` or
-   gitlab-mcp: skill `mergerequests`, "Missing or insufficient gitlab tokens".
+   repo) - targeted, see skill `contributing`, "Which tests to run".
+5. Commit - only when the user asks for it. The client has no git identity and `.git/config` is read-only: pass the
+   user's name / e-mail (ask once, keep them in memory) with every commit, best via a shell function - a string
+   variable breaks on the space in the name:
+   ```bash
+   G() { git -c safe.directory='*' -c user.name='<name>' -c user.email=<email> -c core.hooksPath=/dev/null "$@"; }
+   G add <files> && G commit -F - <<'EOF'
+   ...
+   EOF
+   ```
+   A failed commit ("Author identity unknown") leaves the files staged - check `git status` before retrying, so
+   the next commit doesn't take more than intended. If tine-dev is mounted into the client (local, uncommitted
+   line in `compose/aicoding-claude-code.yml`): never commit that line.
+6. Push: devctl `push` (only own branches `pu/<you>/...`). Merge request: skill `mergerequests`. Authentication
+   errors of `fetch` / `push` or gitlab-mcp: skill `mergerequests`, "Missing or insufficient gitlab tokens".
 
 ## Reproduce a bug
 
@@ -140,16 +153,7 @@ Reproduce before fixing - and say in the end whether a finding was reproduced or
 
 ## Which tests to run
 
-The CI runs the full suites on every MR pipeline. Locally run only what the change needs:
-
-* the new / changed tests (`--filter <testMethod>`), and the tests of the code you changed directly (e.g. the test
-  methods of the class / feature, an e2e test of the dialog)
-* not whole test classes, app suites or all e2e tests for a simple fix / feature - they take minutes, and failures
-  that come from the environment (e.g. eDocument validation, external services) cost time without telling anything
-  about the change
-* broader runs only when the task needs it (changes in shared code like Tinebase, the filesystem, the controller /
-  model base classes, update scripts touching many records, a refactoring) or the user asks for it
-* a test that fails: check against the target branch before blaming the change (e.g. `git stash`, run that one test,
-  `git stash pop`), and say in the MR which local failures exist without the change
-* after pushing: the pipeline is the full check - if the user asks, read its result (skill `mergerequests`)
-* Clean up: temporary scripts, screenshots, test data.
+Skill `contributing` of the tine repo, "Which tests to run" (targeted - the CI runs the full suites). With the tools
+here: a failing test checked against the target branch via `git stash` / one `tine_console test` / `git stash pop`;
+after pushing read the pipeline result if the user asks (skill `mergerequests`). Clean up: temporary scripts,
+screenshots, test data.

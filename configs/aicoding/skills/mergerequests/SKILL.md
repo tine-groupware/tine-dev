@@ -8,7 +8,7 @@ description: >-
 license: AGPL-3.0
 metadata:
   author: Cornelius Weiss with Claude Code
-  version: "1.2"
+  version: "1.3"
 ---
 
 # Merge requests
@@ -17,9 +17,10 @@ metadata:
 
 In the tine-dev AI coding setup the client has no docker access and no git credentials. It uses two MCP servers:
 
-* **gitlab-mcp** (`project_id` = `tine20%2Ftine20`): read MRs, diffs, discussions, pipelines and job logs; create
-  threads and replies, resolve threads, open MRs. Gitlab is only reachable from within the company network / VPN -
-  a 403 "Request forbidden by administrative rules" means: not reachable, tell the user, don't retry.
+* **gitlab-mcp**: read MRs, diffs, discussions, pipelines and job logs; create threads and replies, resolve threads,
+  open MRs. `project_id` = the URL-encoded path of the project in gitlab (from `git remote get-url origin`, e.g.
+  `group%2Fproject`). If gitlab is reachable only from an internal network / VPN, a 403 "Request forbidden by
+  administrative rules" means: not reachable, tell the user, don't retry.
   A 403 `insufficient_granular_scope` names the permission the token of gitlab-mcp lacks (e.g. `[Pipeline: Read]`
   for the jobs of a pipeline). A plain MR comment (`create_merge_request_note`) needs `[Work Item: Create]` -
   without it, post the same text as a thread (`create_merge_request_thread`).
@@ -57,7 +58,7 @@ Read everything via gitlab-mcp, no checkout needed:
 1. `get_merge_request` (title, description, `diff_refs`, target branch), `list_merge_request_changed_files`,
    `get_merge_request_file_diff` for the files, `mr_discussions` (existing threads).
 2. Read the code around the changes (local checkout of the target branch, or `get_file_contents` with `ref`).
-3. Write the review (see "Review guidelines").
+3. Write the review (see "Reviews").
 
 ## Code changes or tests on an MR
 
@@ -79,10 +80,10 @@ with the MR specifics:
    before doing it on the user's own working branch.
 5. **Run tests:** PHPUnit via `tine_console` `test` (e.g. `args: ["Admin_Controller_SchedulerTaskTest"]`), e2e tests
    via `exec` in `e2etests` (`npm test src/test/...`), see the skills `phpunit` and `e2etests` of the tine repo. Only the
-   tests the change needs, the full suites run in the CI (skill `coding`, "Which tests to run"). For a quick check of
+   tests the change needs, the full suites run in the CI (skill `contributing`, "Which tests to run"). For a quick check of
    a JS fix a small puppeteer script in `tests/e2etests` run via `exec` works too (e.g. on the login page, which loads
    ExtJS without login) - never commit it.
-6. **Commit:** conventional commits (see AGENTS.md of the tine repo: `fix(App): ...`), explain the why in the body.
+6. **Commit:** as in skill `contributing` - only when the user asks.
 7. **Push:** devctl `push` (only own branches `pu/<you>/...`, `force: true` = force with lease after amend/rebase).
 8. **MR:** see "Create a merge request" below. For a fix on top of someone else's MR: target branch = their
    source branch, and link it in the review thread of the original MR.
@@ -91,42 +92,46 @@ with the MR specifics:
 
 ## Create a merge request
 
-For every new MR (fixes, features, follow-ups - also from skill `coding`), only after the user asked for it:
+Conventions (title, description, assignee, `.agents` changes): skill `contributing` of the tine repo, "Merge
+request" (read it from `origin/main` if the checkout doesn't have it). For every new MR, only after the user asked:
 
-1. **Push first** (devctl `push`), then gitlab-mcp `create_merge_request`: `target_branch` = the target branch,
-   `title` = the subject of the (main) commit, `remove_source_branch: true`.
-2. **Description in English:** what was wrong / is new, the cause (and which commit introduced it, if known), the
-   fix, what was tested (reproduced or only derived from the code, before / after), what is known but not done. End
-   with "🤖 Generated with [Claude Code](https://claude.com/claude-code)".
-3. **Assign it to the user:** the gitlab token belongs to the user, so the user is the author of the MR - set
-   `update_merge_request` with `assignee_ids: [<author.id from the create_merge_request result>]` (or pass
-   `assignee_ids` already when creating, if the user's gitlab id is known from a former MR). Never assign other
-   people and don't set reviewers unless the user names them.
-4. **Changes under `.agents/`** (skills of the tine repo): the CI job `prevent_dot_agents_changes` fails every MR
-   pipeline that touches them - they are meant to be changed in the oldest major branch that has them and merged
-   upwards. If the file exists only from the target branch on (e.g. `.agents/skills/e2etests` from 2026.11), set
-   the label `allow-failure-prevent-dot-agents-changes` already in `create_merge_request` (`labels`) and mention
-   why in the description. Otherwise ask the user whether the change belongs into an older major branch. Labels
-   count from the next pipeline on: after adding one later, a retry is not enough, a new pipeline is needed (e.g.
-   push the branch rebased onto the current target branch).
-5. Tell the user the MR link (and later the pipeline result if asked).
+1. **Push first** (devctl `push`), then gitlab-mcp `create_merge_request`: `target_branch`, `title`,
+   `remove_source_branch: true`, labels if needed (e.g. `allow-failure-prevent-dot-agents-changes`). Labels count
+   from the next pipeline on: after adding one later, a retry is not enough - push the branch rebased onto the
+   current target branch.
+2. **Description** as in skill `contributing`, ending with
+   "🤖 Generated with [Claude Code](https://claude.com/claude-code)".
+3. **Assign it to the user:** the gitlab token belongs to the user, so the user is the author of the MR - pass
+   `assignee_ids: [<user's gitlab id>]` (known from a former MR) or set it afterwards with `update_merge_request`
+   (`author.id` of the `create_merge_request` result). Reviewers only when the user names them.
+4. Tell the user the MR link (and later the pipeline result if asked).
 
-## Review guidelines
+## Failed pipeline
 
-* Write reviews (threads, summary) in English - not all developers speak German, and gitlab doesn't tell the
-  language of another user. Replies in an existing thread: in the language of that thread.
-* Verify the claims of the description against the code; reproduce the bug or the fix when it is cheap
-  (`exec`, a small puppeteer script) and say whether a finding was reproduced or only derived from the code.
-* Each finding: what goes wrong, in which situation (concrete inputs/state), and a concrete suggestion - code if
-  short. No style nitpicks without a reason.
+The procedure (rebase first, random fails are fixed in an own MR) is in skill `contributing`, "Failed pipeline".
+With the tools here:
+
+1. **Rebase:** devctl `fetch` of the source and the target branch, `git rebase origin/<target branch>`, devctl
+   `push` with `force: true`. A rebase that stops on a file the MR changes although `git status` shows no local
+   changes: `git update-index --refresh`, then `git rebase --continue` (stale index stat on the mount).
+2. **Failing test:** `list_pipeline_jobs` (`scope: failed`), `get_pipeline_job_output` (`offset` counts from the end
+   of the log - the e2e summary is in the last ~120 lines) or `get_pipeline_test_report` (with `jmespath`, e.g.
+   `test_suites[].test_cases[?status=='failed'].name`). Artifacts (screenshots) come back as text - not usable.
+3. **Other pipelines** of the target branch / other MRs: `list_pipelines`, `list_merge_request_pipelines`.
+4. **Reproduce** the race with a temporary e2e test / puppeteer script via `exec` in `e2etests` (never commit it,
+   always `afterAll(() => lib.closeBrowser())` - otherwise jest doesn't exit and `exec` hangs until its timeout;
+   run it with `timeout 300 npm test ... > /tmp/x.log 2>&1` and grep the log).
+
+## Reviews
+
+The guidelines (what to check, how to write findings, English, marking agent posts, answering threads): skill
+`review` of the tine repo. With the tools here:
+
 * Findings at a line: `create_merge_request_thread` with `position` (`base_sha`, `head_sha`, `start_sha` from
-  `diff_refs`, `position_type: text`, `new_path`/`old_path`, `new_line` of the changed line). One thread per finding.
-* One summary thread: overall assessment, list of the findings, what was checked.
-* Mark posts as written by the agent, e.g. "Review (Claude Code, im Auftrag von <user>)" - they appear under the
-  user's gitlab account.
-* Answering review threads on the user's MR: reply with what was changed and in which commit, then resolve the
-  thread. Don't resolve threads of others' MRs, and don't resolve a thread when the reviewer has to decide.
-* Never approve or merge, never push to branches of others.
+  `diff_refs`, `position_type: text`, `new_path` / `old_path`, `new_line` of the changed line).
+* Summary: `create_merge_request_thread` without position (or `create_merge_request_note`, see "Tooling").
+* Answer / resolve threads: `create_merge_request_discussion_note`, `resolve_merge_request_thread`.
+* Reproduce cheaply: `exec`, a small puppeteer script.
 
 ## Pitfalls
 

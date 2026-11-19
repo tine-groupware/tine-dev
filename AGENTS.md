@@ -23,3 +23,14 @@ targets, the Tine license mechanism, and common pitfalls.
 - Two modes: **dev** (source bind-mounted, DEVELOPMENT mode, xdebug, webpack) and **prod-sim**
   (locally built release image via `./console src:build`, RELEASE mode, no xdebug).
 - User-facing docs: `README.md`.
+
+## Skills and public content
+
+- This repo and the tine repo are public (GitHub). No internal hostnames / URLs, internal project paths, customer
+  names or customer data in skills, docs, compose files or code.
+- Skills of the AI coding setup (`configs/aicoding/skills`: coding, mergerequests, browser) contain only what is
+  specific to this setup: the devctl / gitlab-mcp tools, the limits of the client, the stack. Project conventions
+  (target branch, which tests to run, merge requests, failed pipelines, reviews) belong into the skills of the tine
+  repo (`.agents/skills/contributing`, `review`, maintained in the oldest supported major branch and merged forward)
+  - the skills here refer to them.
+- Skills for this repo itself (stack, `./console`, images): `.agents/skills/tine-dev-env`.
