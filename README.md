@@ -647,10 +647,15 @@ Updating the app version: Update app version file and create a new tag.
 Mailstack is an exception exception. It dose not has app_version files. Its app version is a semantic version of the mailstack container image. It should be increased by semantic version standart.
 Mailstack container tags do not have an `-mw`.
 
-mw version: Images we modify should have an mw version postfix `-0mw<release counter>`.
-The Release counter will be reset for each app version. It should start with
-* 0 if our modification was not by the update
+mw version: Images we modify have an mw version postfix `-mw<release counter>`, e.g. `opencode:1.17.7-mw2`
+(tag `opencode-image-1.17.7-mw2`): the release of our image for the same app version. The release counter is reset
+for each app version. It starts with
+* 0 if our modification was not changed by the update
 * 1 if our modification was changed in any way
+
+and is increased when the image changes without a new app version (e.g. a changed Dockerfile).
+Images are pushed to ghcr only by the tag pipeline; new ghcr packages are private - make them public
+(github.com/orgs/tine-groupware/packages -> package settings -> change visibility).
 
 ## Image not published yet
 
