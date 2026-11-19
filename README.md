@@ -626,10 +626,10 @@ The gitlab container registry dose not support multi architecture image. Images 
 
 ### git tag schema for images
 This is our git tag schema for docker images. It needs to be followed other wise the ci will not work.
-`<image name>-image-<app version>[-0mw<release counter>][-<extra eg. rc>]`
+`<image name>-image-<app version>[-mw<release counter>][-<extra eg. rc>]`
 
 image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). eg.:
-* docker
+* docker (helper image of the tine CI, still tagged with the old `-0mw1` - move it to `-mw<n>` when it is rebuilt)
 * ldap
 * node
 * node-element
@@ -643,14 +643,21 @@ image name (normaly the same `./dockerfiles/<image name>`, see .gitlab-ci.yml). 
 
 App version is the version of the base image / software. It is specified in `./dockerfiles/<image name>/.meta/app_version`. The `tag app_version` and `app_version file` muss match otherwise the ci will fail!
 Updating the app version: Update app version file and create a new tag.
+The app version must be a full `x.y.z` version (e.g. `24.22.3`, not `24`): the CI additionally tags `<x>` and
+`<x>.<y>` (and `latest`) - with a bare major version it produces a broken `<x>-mw<n>.undefined` tag.
 
 Mailstack is an exception exception. It dose not has app_version files. Its app version is a semantic version of the mailstack container image. It should be increased by semantic version standart.
 Mailstack container tags do not have an `-mw`.
 
-mw version: Images we modify should have an mw version postfix `-0mw<release counter>`.
-The Release counter will be reset for each app version. It should start with
-* 0 if our modification was not by the update
+mw version: Images we modify have an mw version postfix `-mw<release counter>`, e.g. `opencode:1.17.7-mw2`
+(tag `opencode-image-1.17.7-mw2`): the release of our image for the same app version. The release counter is reset
+for each app version. It starts with
+* 0 if our modification was not changed by the update
 * 1 if our modification was changed in any way
+
+and is increased when the image changes without a new app version (e.g. a changed Dockerfile).
+Images are pushed to ghcr only by the tag pipeline; new ghcr packages are private - make them public
+(github.com/orgs/tine-groupware/packages -> package settings -> change visibility).
 
 ## Image not published yet
 

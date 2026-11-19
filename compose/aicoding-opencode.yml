@@ -2,7 +2,7 @@
 
 services:
   opencode:
-    image: ghcr.io/tine-groupware/tine-dev/opencode:1.17.7-mw1
+    image: ghcr.io/tine-groupware/tine-dev/opencode:1.17.7-mw2
     container_name: opencode
     command: opencode serve --hostname 0.0.0.0 --port 4096
     user: "1000:1000"
