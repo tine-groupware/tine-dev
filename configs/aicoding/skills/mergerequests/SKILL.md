@@ -108,7 +108,8 @@ request" (read it from `origin/main` if the checkout doesn't have it). For every
 
 ## Failed pipeline
 
-The procedure (rebase first, random fails are fixed in an own MR) is in skill `contributing`, "Failed pipeline".
+The procedure (rebase first, random fails are fixed - in the same MR if it isn't a draft and targets the oldest
+major branch with the test, otherwise in an own MR) is in skill `contributing`, "Failed pipeline".
 With the tools here:
 
 1. **Rebase:** devctl `fetch` of the source and the target branch, `git rebase origin/<target branch>`, devctl
