@@ -17,6 +17,8 @@
         // git over https: devctl tools fetch and push (download_code: clone / fetch / git archive)
         GITLAB_GIT_TOKEN: ['read_project', 'read_code', 'download_code', 'read_repository', 'push_code', 'read_merge_request'],
     };
+    // permissions at the user boundary (not limited to the projects): whoami of gitlab-mcp (GET /user)
+    const userPermissions = {GITLAB_ACCESS_TOKEN: ['read_user']};
 
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
     if (!csrf) throw new Error('run this on a gitlab page while logged in (no csrf token found)');
@@ -46,7 +48,8 @@
             name: `tine-dev ${name} ${new Date().toISOString().slice(0, 10)}`,
             description: 'tine-dev AI coding setup (configs/aicoding/skills/mergerequests/gitlab-create-tokens.js)',
             expiresAt,
-            granularScopes: [{access: 'SELECTED_MEMBERSHIPS', resourceIds: ids, permissions}],
+            granularScopes: [{access: 'SELECTED_MEMBERSHIPS', resourceIds: ids, permissions},
+                ...(userPermissions[name] ? [{access: 'USER', permissions: userPermissions[name]}] : [])],
         }});
         if (r.errors?.length || !r.token) throw new Error(name + ': ' + JSON.stringify(r.errors));
         env.push(`${name}=${r.token}`);
