@@ -31,7 +31,7 @@ services:
 
   devctl:
     # dockerfiles/devctl, built by the CI (tag devctl-image-<version>)
-    image: ghcr.io/tine-groupware/tine-dev/devctl:1.3.0
+    image: ghcr.io/tine-groupware/tine-dev/devctl:1.4.0
     container_name: devctl
     restart: unless-stopped
     environment:
@@ -52,7 +52,8 @@ services:
       DEVCTL_DEVELOPER: "${DEVCTL_DEVELOPER:-}"
       DEVCTL_GIT_URL_PREFIX: "${DEVCTL_GIT_URL_PREFIX:-https://gitlab.metaways.net/}"
       DEVCTL_GIT_REMOTE: "${DEVCTL_GIT_REMOTE:-origin}"
-      # runs as root, the checkout belongs to the host user. ./console runs git with fsmonitor/hooks disabled.
+      # runs as root, git and ./console as the owner of the checkout (devctl.php asOwner()). ./console runs git
+      # with fsmonitor/hooks disabled.
       GIT_CONFIG_COUNT: "1"
       GIT_CONFIG_KEY_0: safe.directory
       GIT_CONFIG_VALUE_0: "*"

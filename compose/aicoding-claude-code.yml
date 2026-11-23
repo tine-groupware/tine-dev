@@ -8,7 +8,11 @@ services:
     # register the MCP servers of configs/claude/mcp.json at user scope ($CLAUDE_CONFIG_DIR/.claude.json),
     # Claude Code doesn't read ~/.claude/mcp.json. ${MCP_AUTH_TOKEN} is stored as is
     # and resolved by Claude Code at runtime.
-    entrypoint: [ "/bin/sh", "-c" ]
+    #
+    # Starts as root: configs/aicoding/run-as-checkout-owner.sh gives node the uid/gid of the owner of the checkout
+    # (Linux: bind mounts keep the host uid) and runs the command as node. Sessions: docker exec -it -u node ...
+    user: root
+    entrypoint: [ "/etc/tine-dev/run-as-checkout-owner.sh", "/bin/sh", "-c" ]
     command:
       - |
         CONF=/etc/tine-dev/claude-mcp.json
@@ -23,6 +27,8 @@ services:
       # ~/.claude.json (onboarding, theme, trusted folders, ...) in the persisted config dir (claude-data),
       # otherwise every recreation of the container asks again
       CLAUDE_CONFIG_DIR: /home/node/.claude
+      # its owner is the user the client runs as, see run-as-checkout-owner.sh
+      CHECKOUT_PATH: /workspace/tine20
     volumes:
       # Only the tine checkout - tine-dev (./console, compose files, devctl) is not visible to the client, it
       # controls the stack via the devctl MCP server.
@@ -55,6 +61,7 @@ services:
       # of Claude Code ($CLAUDE_CONFIG_DIR/skills)
       - ./configs/aicoding/skills:/home/node/.claude/skills:ro
       - ./configs/claude/mcp.json:/etc/tine-dev/claude-mcp.json:ro
+      - ./configs/aicoding/run-as-checkout-owner.sh:/etc/tine-dev/run-as-checkout-owner.sh:ro
       # logs of the web container (tine log as JSON, PHP errors), see compose/aicoding.yml
       - tine20-logs:/workspace/logs:ro
     networks:
