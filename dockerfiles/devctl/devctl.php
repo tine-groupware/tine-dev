@@ -124,7 +124,8 @@ class ToolError extends Exception
  */
 function callTool(string $name, array $args, callable $keepalive): string
 {
-    $console = ['./console'];
+    // as the owner of the checkout, see asOwner()
+    $console = asOwner(['./console']);
     switch ($name) {
         case 'change_branch':
             return locked(fn() => run([...$console, 'src:changeBranch', '-n'], $keepalive));
@@ -211,10 +212,51 @@ function gitContext(bool $forPush): array
     $askpass = '/tmp/devctl-askpass.sh';
     file_put_contents($askpass, "#!/bin/sh\ncase \"\$1\" in Username*) echo oauth2 ;; *) echo \"\$GITLAB_GIT_TOKEN\" ;; esac\n");
     chmod($askpass, 0700);
+    // git runs as the owner of the checkout, see asOwner()
+    if (($owner = checkoutOwner()) !== null) {
+        chown($askpass, $owner[0]);
+    }
     putenv("GIT_ASKPASS=$askpass");
     putenv('GIT_TERMINAL_PROMPT=0');
 
     return ['git' => $git, 'out' => $out, 'remote' => $remote, 'token' => $token];
+}
+
+/**
+ * uid/gid of the owner of the tine checkout, null if commands can run as devctl itself: devctl runs as root, on Linux
+ * files root creates in the checkout (.git/objects, .git/modules, ...) or in tine-dev break git and ./console of the
+ * host user. Root-owned checkout (e.g. Docker Desktop, which maps the ownership anyway): nothing to do.
+ *
+ * @return array{int, int}|null
+ */
+function checkoutOwner(): ?array
+{
+    $st = @stat(getenv('TINE_DEV_DIR') . '/tine20');
+    if ($st === false || $st['uid'] === 0 || posix_geteuid() !== 0) {
+        return null;
+    }
+    return [$st['uid'], $st['gid']];
+}
+
+/**
+ * runs $cmd as the owner of the checkout (see checkoutOwner()), with the group of the docker socket (./console)
+ */
+function asOwner(array $cmd): array
+{
+    $owner = checkoutOwner();
+    if ($owner === null) {
+        return $cmd;
+    }
+    [$uid, $gid] = $owner;
+    // $HOME (host home dir path, see Dockerfile) is created by root in the container, git and docker read it
+    $home = (string)getenv('HOME');
+    if ($home !== '' && is_dir($home) && fileowner($home) !== $uid) {
+        chown($home, $uid);
+        chgrp($home, $gid);
+    }
+    $sock = @stat('/var/run/docker.sock');
+    return ['setpriv', "--reuid=$uid", "--regid=$gid",
+        $sock === false ? '--clear-groups' : '--groups=' . $sock['gid'], '--', ...$cmd];
 }
 
 function isBranchName(string $branch): bool
@@ -247,7 +289,7 @@ function push(bool $force, callable $keepalive): string
     }
     // the remote (not the url): --force-with-lease compares with its remote-tracking branch
     array_push($args, $ctx['remote'], "HEAD:refs/heads/$branch");
-    return str_replace($ctx['token'], '***', run([...$ctx['git'], ...$args], $keepalive));
+    return str_replace($ctx['token'], '***', run(asOwner([...$ctx['git'], ...$args]), $keepalive));
 }
 
 /**
@@ -264,7 +306,7 @@ function fetch(string $branch, callable $keepalive): string
     if ($branch !== '') {
         $args[] = "+refs/heads/$branch:refs/remotes/$remote/$branch";
     }
-    return str_replace($ctx['token'], '***', run([...$ctx['git'], ...$args], $keepalive));
+    return str_replace($ctx['token'], '***', run(asOwner([...$ctx['git'], ...$args]), $keepalive));
 }
 
 function containerId(string $service): string

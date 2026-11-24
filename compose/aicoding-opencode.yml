@@ -5,12 +5,17 @@ services:
     image: ghcr.io/tine-groupware/tine-dev/opencode:1.17.7-mw2
     container_name: opencode
     command: opencode serve --hostname 0.0.0.0 --port 4096
-    user: "1000:1000"
+    # starts as root: configs/aicoding/run-as-checkout-owner.sh gives node the uid/gid of the owner of the checkout
+    # (Linux: bind mounts keep the host uid) and runs the command as node. Sessions: docker exec -it -u node ...
+    user: root
+    entrypoint: [ "/etc/tine-dev/run-as-checkout-owner.sh" ]
     environment:
       METAWAYS_AI_BASE_URL: ${METAWAYS_AI_BASE_URL}
       METAWAYS_AI_API_KEY: ${METAWAYS_AI_API_KEY}
       # no docker access, use the devctl MCP server (images up to 1.17.7-mw1 point to the removed socket-proxy)
       DOCKER_HOST: ""
+      # its owner is the user opencode runs as, see run-as-checkout-owner.sh
+      CHECKOUT_PATH: /tine20
     networks:
       - internal_network
       - external_network
@@ -19,6 +24,7 @@ services:
       - ./:/tine-dev:ro
       - ./tine20:/tine20:rw
       - ./configs/opencode/config/opencode.json:/home/node/.config/opencode/opencode.json:ro
+      - ./configs/aicoding/run-as-checkout-owner.sh:/etc/tine-dev/run-as-checkout-owner.sh:ro
       #- ./configs/opencode/share:/home/opencode/.local/share/opencode:ro
       # logs of the web container (tine log as JSON, PHP errors), see compose/aicoding.yml
       - tine20-logs:/workspace/logs:ro

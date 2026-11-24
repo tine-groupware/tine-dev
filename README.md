@@ -786,6 +786,14 @@ them after ~1 KB in docker logs, and they are no longer in docker logs of web th
 `docker:webpackrestart` empty them (they grow by MBs per minute on DEBUG). The normal log in docker logs is unchanged.
 After enabling it: `./console docker:up -d` (web) and `docker compose up -d claude-code` (the client).
 
+**Users / Linux:** bind mounts keep the uid of the host. The clients start as root, their entrypoint
+(`configs/aicoding/run-as-checkout-owner.sh`) gives the user `node` the uid/gid of the owner of the checkout and
+runs the client as `node` - so open sessions with `docker exec -u node ...` (without `-u node` they run as root).
+devctl runs as root, but runs git (fetch, push) and `./console` as the owner of the checkout, with the group of
+the docker socket. On Docker Desktop (macOS) the ownership is mapped anyway, nothing changes there. Files that
+older devctl versions created as root in the checkout break git of the host user, check once:
+`find tine20/.git ! -user $(id -u)` (fix: `sudo chown -R $(id -u):$(id -g) tine20/.git`).
+
 **Git protection:** clients get a writable checkout incl. `.git` (commits), but the parts of `.git`
 that make git run code — `config` (fsmonitor, filters, aliases, ...), `hooks`, `modules`, `worktrees`
 and `commondir` (git reads config and hooks from the dir it names) — are mounted read-only, and every
@@ -820,7 +828,7 @@ opencode runs in server mode (`opencode serve`, port 4096), exposed via traefik.
 3. Open https://opencode.local.tine-dev.de/
    - OR run in shell:
    ~~~
-   docker exec -it opencode bash
+   docker exec -it -u node opencode bash
    opencode
    ~~~
 4. [browser] add project "tine20" via "+" button and adding the dir "/tine20"
@@ -844,7 +852,7 @@ You might need to add a UFW rule to allow outgoing connections to the AI-API ser
     sudo ufw route allow from any to $METAWAYS_AI_API_IPADDRESS
 
 ## claude-code
-    docker exec -it claude-code claude --chrome
+    docker exec -it -u node claude-code claude --chrome
 
 Paths in the container:
 
