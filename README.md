@@ -852,7 +852,7 @@ You might need to add a UFW rule to allow outgoing connections to the AI-API ser
     sudo ufw route allow from any to $METAWAYS_AI_API_IPADDRESS
 
 ## claude-code
-    docker exec -it -u node claude-code claude --chrome
+    docker exec -it -u node -w /workspace/tine20 claude-code claude --chrome
 
 Paths in the container:
 
