@@ -96,8 +96,9 @@ Conventions (title, description, assignee, `.agents` changes): skill `contributi
 request" (read it from `origin/main` if the checkout doesn't have it). For every new MR, only after the user asked:
 
 1. **Push first** (devctl `push`), then gitlab-mcp `create_merge_request`: `target_branch`, `title`,
-   `remove_source_branch: true`, labels if needed (e.g. `allow-failure-prevent-dot-agents-changes`). Labels count
-   from the next pipeline on: after adding one later, a retry is not enough - push the branch rebased onto the
+   `remove_source_branch: true`, `squash: false` (the gitlab project preselects squash, the commits are merged as
+   they are - see skill `contributing`), labels if needed (e.g. `allow-failure-prevent-dot-agents-changes`). Labels
+   count from the next pipeline on: after adding one later, a retry is not enough - push the branch rebased onto the
    current target branch.
 2. **Description** as in skill `contributing`, ending with
    "🤖 Generated with [Claude Code](https://claude.com/claude-code)".
