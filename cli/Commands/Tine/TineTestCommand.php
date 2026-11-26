@@ -57,6 +57,7 @@ class TineTestCommand extends TineCommand
             $stopOnFailure = false;
         }
 
+        $failed = false;
         foreach ($paths as $path) {
             $filter = null;
             if (strpos($path, "::")) {
@@ -79,15 +80,18 @@ class TineTestCommand extends TineCommand
                 . "\""
                 . ' 2>&1', $result_code
             );
-        }
-        
-        
-        if ($result_code === 0) {
-            $io->success("There were 0 errors");
-        } else {
-            $io->error('TESTS FAILED');
+            // remember failures of every suite, not only the last one
+            if ($result_code !== 0) {
+                $failed = true;
+            }
         }
 
-        return $result_code;
+        if (! $failed) {
+            $io->success("There were 0 errors");
+            return self::SUCCESS;
+        }
+
+        $io->error('TESTS FAILED');
+        return self::FAILURE;
     }
 }
