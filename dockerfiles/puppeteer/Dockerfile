@@ -5,6 +5,10 @@
 # Debian's chromium on both architectures instead of puppeteer's Chrome for Testing download: the latter has no
 # linux/arm64 build. Same browser everywhere, CI and local (e.g. Apple Silicon).
 #
+# Debian's firefox-esr for the tests in Firefox (TEST_BROWSER=firefox in tests/e2etests, puppeteer drives it via
+# WebDriver BiDi): puppeteer's own Firefox download has no linux/arm64 build either. The tests find it at
+# /usr/bin/firefox-esr (PUPPETEER_EXECUTABLE_PATH is chromium).
+#
 # No npm install of the e2e test dependencies in the image (they are in the tine repo): the CI job and tine-dev run
 # npm install in tests/e2etests.
 
@@ -13,8 +17,8 @@ ARG APP_VERSION
 FROM node:${APP_VERSION}-trixie-slim
 
 RUN apt-get update &&\
-    apt-get install -y --no-install-recommends chromium fonts-liberation fonts-noto-color-emoji ca-certificates \
-                       wget jq curl php-cli php-mbstring git unzip s3cmd && \
+    apt-get install -y --no-install-recommends chromium firefox-esr fonts-liberation fonts-noto-color-emoji \
+                       ca-certificates wget jq curl php-cli php-mbstring git unzip s3cmd && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \

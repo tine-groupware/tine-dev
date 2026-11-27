@@ -210,6 +210,10 @@ The tests use `TEST_URL` etc. from `tine20/tests/e2etests/.env`. Inside the dock
 default `TEST_URL` works. Error screenshots end up in `tine20/tests/e2etests/screenshots/Error/`.
 AI coding clients run the tests with the devctl tool `exec` (see "AI coding clients").
 
+**Firefox:** the image has Debian's `firefox-esr` as well. With `TEST_BROWSER=firefox` (from tine 2026.11) the
+tests run headless in Firefox instead of chromium, e.g.
+`docker exec -e TEST_BROWSER=firefox e2etests npm test src/test/...`.
+
 **Watch the tests in your Chrome** (from tine 2026.11, see `tine20/tests/e2etests/README.md` "Debug in a
 Running Browser"): start a separate Chrome on the host with its own profile and
 `--remote-debugging-address=0.0.0.0 --remote-debugging-port=9222` (commands for macOS / Linux: client skill
