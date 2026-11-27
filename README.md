@@ -252,6 +252,11 @@ then `./console docker:up`.
 
 https://docs.docker.com/engine/install/
 
+Docker Compose v2 (the plugin, `docker compose`) **2.30 or newer** is needed - `./console` checks it. Older
+versions fail with the mounts of the tine source (`invalid mount path: 'tine20_tine20-src' mount path must be
+absolute`). On Linux use the packages of Docker's apt repository (`docker-ce`, `docker-compose-plugin`, see the link
+above), the distribution packages (`docker.io`, `docker-compose` = Compose v1) are often too old.
+
 ## Add user to docker group (Linux)
 
 https://docs.docker.com/engine/install/linux-postinstall/

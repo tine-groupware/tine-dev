@@ -3,13 +3,13 @@ services:
     volumes:
       - type: volume
         source: tine20-src
-        target: /usr/share/tine20/
+        target: /usr/share/tine20
         volume: { nocopy: true, subpath: tine20 }
       - type: volume
         source: tine20-src
-        target: /usr/share/tests/
+        target: /usr/share/tests
         volume: { nocopy: true, subpath: tests }
       - type: volume
         source: tine20-src
-        target: /usr/share/scripts/
+        target: /usr/share/scripts
         volume: { nocopy: true, subpath: scripts }
