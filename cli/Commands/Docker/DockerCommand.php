@@ -23,6 +23,12 @@ class DockerCommand extends BaseCommand
     public const SRC_VOLUME = 'tine20_tine20-src';
     /** the same for docker run of ./console (src:composer, ...), created by docker run, see srcMount() */
     public const RUN_SRC_VOLUME = 'tine-dev-tine20-src';
+    /**
+     * Docker Compose before 2.30 turned mounts of tine20-src with a trailing slash in the target into bind mounts of
+     * the volume name (fixed by docker/compose#12208: "invalid mount path: 'tine20_tine20-src' mount path must be
+     * absolute"), and volume.subpath of volumes bound to a host dir failed (docker/desktop-linux#222)
+     */
+    public const MIN_COMPOSE_VERSION = '2.30.0';
     protected string $bchub_repo = 'https://github.com/tine-groupware/broadcasthub.git';
     protected string $elementWebRepo = 'https://github.com/ecclesias-de/element-web/';
 
@@ -515,6 +521,28 @@ class DockerCommand extends BaseCommand
     }
 
     /**
+     * Docker Compose v2 (the plugin, `docker compose`) of at least MIN_COMPOSE_VERSION - older versions fail with the
+     * mounts of the tine20-src volume. Not for mutagen-compose, it brings its own compose.
+     */
+    public function assertComposeVersion(ConsoleStyle $io): void
+    {
+        if ($this->composeCommand !== ['docker', 'compose']) {
+            return;
+        }
+        // e.g. "2.29.7", "v2.31.1", "2.30.0-desktop.1" (Docker Desktop) - only the numeric part counts
+        preg_match('/(\d+\.\d+\.\d+)/', (string)shell_exec('docker compose version --short 2>/dev/null'), $matches);
+        $version = $matches[1] ?? '';
+        if ($version === '' || version_compare($version, self::MIN_COMPOSE_VERSION, '<')) {
+            $io->error('Docker Compose ' . self::MIN_COMPOSE_VERSION . ' or newer is needed (`docker compose`, found: '
+                . ($version === '' ? 'none' : $version) . '). Older versions fail with the mounts of the tine source,'
+                . " e.g. \"invalid mount path: '" . self::SRC_VOLUME . "' mount path must be absolute\"."
+                . ' Update the docker-compose-plugin package, see README "Install and Setup Docker"'
+                . ' (docker-compose v1 is not used).');
+            exit(1);
+        }
+    }
+
+    /**
      * To be called before containers are created/started: checks SRC_VOLUME and the compose config.
      *
      * - bind mounts of the tine checkout are only allowed for the checkout root (see checkSrcVolume)
@@ -524,6 +552,7 @@ class DockerCommand extends BaseCommand
      */
     public function assertSafeMounts(ConsoleStyle $io): void
     {
+        $this->assertComposeVersion($io);
         $this->checkSrcVolume($io);
         if (array_filter($this->composeNames, fn($name) => str_starts_with($name, 'aicoding-'))) {
             $this->ensureGitProtection($io);

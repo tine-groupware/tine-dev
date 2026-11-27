@@ -6,11 +6,11 @@ volumes:
 services:
   web:
     volumes:
-      - code:/usr/share/tine20/:ro
-      - tests:/usr/share/tests/:ro
+      - code:/usr/share/tine20:ro
+      - tests:/usr/share/tests:ro
   webpack:
     volumes:
-      - code:/usr/share/tine20/:ro
+      - code:/usr/share/tine20:ro
 
 x-mutagen:
   sync:

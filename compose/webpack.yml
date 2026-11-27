@@ -17,21 +17,21 @@ services:
       # tine checkout sub paths via the tine20-src volume, see compose/src-volumes.yml
       - type: volume
         source: tine20-src
-        target: /usr/share/tine20/
+        target: /usr/share/tine20
         read_only: true
         volume: { nocopy: true, subpath: tine20 }
       - type: volume
         source: tine20-src
-        target: /usr/share/tine20/Tinebase/styles/build/
+        target: /usr/share/tine20/Tinebase/styles/build
         volume: { nocopy: true, subpath: tine20/Tinebase/styles/build }
       - type: volume
         source: tine20-src
-        target: /usr/share/tine20/Tinebase/js/build/
+        target: /usr/share/tine20/Tinebase/js/build
         volume: { nocopy: true, subpath: tine20/Tinebase/js/build }
       # deprecated - can be removed when we no longer support <= 2025.11 versions
       - type: volume
         source: tine20-src
-        target: /usr/share/tine20/Tinebase/css/build/
+        target: /usr/share/tine20/Tinebase/css/build
         volume: { nocopy: true, subpath: tine20/Tinebase/css/build }
     command: "npm --prefix /usr/share/tine20/Tinebase/js/ start"
     labels:
